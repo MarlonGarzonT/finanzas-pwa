@@ -1,0 +1,29 @@
+.balance-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 20px 32px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--color-green), var(--color-blue));
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(10, 132, 255, 0.25);
+}
+
+.balance-card__label {
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 0.85;
+  letter-spacing: -0.2px;
+}
+
+.balance-card__valor {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  font-variant-numeric: proportional-nums;
+}
+
+.balance-card__valor--negativo {
+  color: #ffe2e0;
+}

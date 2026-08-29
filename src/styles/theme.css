@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI',
+    Roboto, system-ui, sans-serif;
+
+  /* iOS system colors */
+  --color-blue: #0a84ff;
+  --color-green: #34c759;
+  --color-red: #ff3b30;
+  --color-orange: #ff9500;
+  --color-gray: #8e8e93;
+  --color-gray-light: #f2f2f7;
+  --color-gray-fill: #e5e5ea;
+
+  --bg-primary: #f2f2f7;
+  --bg-elevated: rgba(255, 255, 255, 0.86);
+  --bg-card: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: #6e6e73;
+  --separator: rgba(60, 60, 67, 0.12);
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* dataviz palette (validated, see references/palette.md) */
+  --chart-blue: #2a78d6;
+  --chart-green: #008300;
+  --chart-red: #e34948;
+  --chart-muted: #898781;
+  --chart-grid: #e1e0d9;
+  --chart-surface: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg-primary: #000000;
+    --bg-elevated: rgba(28, 28, 30, 0.86);
+    --bg-card: #1c1c1e;
+    --text-primary: #ffffff;
+    --text-secondary: #98989d;
+    --separator: rgba(84, 84, 88, 0.55);
+    --color-gray-light: #1c1c1e;
+    --color-gray-fill: #2c2c2e;
+
+    --chart-blue: #3987e5;
+    --chart-green: #008300;
+    --chart-red: #e66767;
+    --chart-muted: #898781;
+    --chart-grid: #2c2c2a;
+    --chart-surface: #1c1c1e;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-cargando {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}

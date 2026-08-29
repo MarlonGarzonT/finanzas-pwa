@@ -1,0 +1,68 @@
+.resumen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto;
+}
+
+.resumen__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(12px + var(--safe-top)) 20px 4px;
+}
+
+.resumen__header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  margin: 0;
+}
+
+.resumen__acciones {
+  display: flex;
+  gap: 4px;
+}
+
+.resumen__acciones button {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.resumen__cargando {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.resumen__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 16px 96px;
+}
+
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(76px + var(--safe-bottom));
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-blue);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(10, 132, 255, 0.4);
+  cursor: pointer;
+  z-index: 15;
+}
