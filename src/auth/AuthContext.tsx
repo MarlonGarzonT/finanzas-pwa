@@ -30,8 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function registrar(email: string, password: string) {
-    const { error } = await supabase.auth.signUp({ email, password });
-    return { error: error?.message ?? null };
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return { error: error.message };
+    // Supabase no devuelve error si el correo ya existe (para no revelar cuentas registradas):
+    // en ese caso el usuario devuelto trae identities vacío y no se crea sesión.
+    if (data.user && data.user.identities?.length === 0) {
+      return { error: 'Ya existe una cuenta con ese correo. Inicia sesión en su lugar.' };
+    }
+    return { error: null };
   }
 
   async function iniciarSesion(email: string, password: string) {
