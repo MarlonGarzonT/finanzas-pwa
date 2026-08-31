@@ -49,22 +49,24 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg-primary: #000000;
-    --bg-elevated: rgba(28, 28, 30, 0.86);
-    --bg-card: #1c1c1e;
-    --text-primary: #ffffff;
+    /* softened dark palette: avoid pure black/white and oversaturated accents, which read
+       as excessive contrast/glow on OLED-style dark surfaces */
+    --bg-primary: #121212;
+    --bg-elevated: rgba(30, 30, 30, 0.86);
+    --bg-card: #1e1e1e;
+    --text-primary: #e0e0e0;
     --text-secondary: #98989d;
     --separator: rgba(84, 84, 88, 0.55);
-    --color-gray-light: #1c1c1e;
-    --color-gray-fill: #2c2c2e;
-    --color-accent: #1dcbae;
+    --color-gray-light: #1e1e1e;
+    --color-gray-fill: #232323;
+    --color-accent: #4dcbbd;
 
     --chart-blue: #3987e5;
     --chart-green: #008300;
     --chart-red: #e66767;
     --chart-muted: #898781;
     --chart-grid: #2c2c2a;
-    --chart-surface: #1c1c1e;
+    --chart-surface: #1e1e1e;
   }
 }
 
