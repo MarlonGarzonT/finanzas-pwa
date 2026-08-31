@@ -28,7 +28,7 @@ export function GraficoCategorias({ datos }: { datos: Fila[] }) {
       <div style={{ width: '100%', height: alto }}>
         <ResponsiveContainer>
           <BarChart data={ordenados} layout="vertical" margin={{ top: 4, right: 48, left: 0, bottom: 4 }}>
-            <XAxis type="number" hide />
+            <XAxis type="number" hide domain={[0, (max: number) => Math.ceil(max * 1.25)]} />
             <YAxis
               type="category"
               dataKey="categoria"
