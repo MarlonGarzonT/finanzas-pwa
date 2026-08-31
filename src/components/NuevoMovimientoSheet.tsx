@@ -36,7 +36,7 @@ export function NuevoMovimientoSheet({
     if (!abierto) return;
     if (transaccion) {
       setTipo(transaccion.tipo);
-      setMonto(String(transaccion.monto));
+      setMonto(String(Math.round(transaccion.monto)));
       setItem(transaccion.item);
       setCategoriaId(transaccion.categoriaId);
     } else {
@@ -96,10 +96,10 @@ export function NuevoMovimientoSheet({
         <div className="monto-input">
           <span>$</span>
           <input
-            inputMode="decimal"
+            inputMode="numeric"
             placeholder="0"
-            value={monto}
-            onChange={(e) => setMonto(e.target.value.replace(/[^0-9.]/g, ''))}
+            value={monto ? Number(monto).toLocaleString('es-CO') : ''}
+            onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
             autoFocus
           />
         </div>
