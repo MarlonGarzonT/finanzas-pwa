@@ -36,7 +36,7 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
   - Gráfico comparativo de ingresos y egresos de los últimos seis meses.
   - Gráfico de gastos del mes en curso, desglosado por categoría.
 - Historial completo de movimientos, agrupado por mes, con edición y eliminación de cualquier registro.
-- Autenticación sin contraseña mediante enlace mágico enviado por correo electrónico (Supabase Auth).
+- Registro e inicio de sesión con correo y contraseña, cuentas privadas por usuario (Supabase Auth).
 - Aislamiento de datos por usuario mediante Row Level Security a nivel de base de datos.
 - Instalable como PWA (ícono propio, pantalla completa, funciona con la app cerrada en segundo plano).
 - Interfaz construida siguiendo el lenguaje visual de iOS: tipografía del sistema, colores del sistema, tarjetas y hojas modales (sheets), barra de navegación inferior traslúcida.
@@ -127,10 +127,8 @@ finanzas-pwa/
 3. En **Project Settings → API Keys**, obtener:
    - La **Project URL**.
    - La **Publishable key** (también llamada `anon` en proyectos anteriores). Esta clave está diseñada para exponerse en el navegador; la protección real de los datos la proporciona RLS, no la confidencialidad de esta clave.
-4. En **Authentication → Providers**, confirmar que el proveedor **Email** esté habilitado (viene activo por defecto). Este proveedor es el que sustenta el inicio de sesión mediante enlace mágico.
-5. En **Authentication → URL Configuration → Redirect URLs**, agregar las URLs desde las que se accederá a la aplicación, por ejemplo:
-   - `http://localhost:5173/**` para desarrollo local.
-   - `https://<usuario>.github.io/**` para producción.
+4. En **Authentication → Providers**, confirmar que el proveedor **Email** esté habilitado (viene activo por defecto). Este proveedor es el que sustenta el registro e inicio de sesión con correo y contraseña.
+5. En ese mismo panel de **Email**, desactivar **"Confirm email"**. Así una cuenta nueva puede iniciar sesión de inmediato con su contraseña, sin depender de un enlace de correo (evita problemas de redirección entre `localhost` y el dominio publicado).
 
 ## Instalación y desarrollo local
 
@@ -145,7 +143,7 @@ Completar `.env.local` con los valores obtenidos de Supabase (ver [Variables de 
 npm run dev
 ```
 
-La consola indicará la URL local (por defecto `http://localhost:5173`). Al abrirla, la aplicación solicitará un correo electrónico y enviará un enlace de acceso sin contraseña.
+La consola indicará la URL local (por defecto `http://localhost:5173`). Al abrirla, crea una cuenta con correo y contraseña desde la pestaña "Crear cuenta".
 
 ## Variables de entorno
 
@@ -166,7 +164,6 @@ El repositorio incluye un flujo de GitHub Actions ([`.github/workflows/deploy.ym
    - `SUPABASE_ANON_KEY`
 3. Confirmar que `base` en `vite.config.ts`, y `start_url` / `scope` en la configuración del manifest de la PWA, coincidan con el nombre del repositorio (`/finanzas-pwa/` en este caso). Si el repositorio se renombra, estos valores deben actualizarse.
 4. Realizar un `push` a `main`. El flujo compila el proyecto y publica el contenido de `dist/` en GitHub Pages.
-5. Agregar la URL publicada (`https://<usuario>.github.io/finanzas-pwa/`) a la lista de **Redirect URLs** en Supabase, de lo contrario el enlace mágico de acceso no podrá completar la redirección en producción.
 
 ## Instalación en dispositivos móviles
 
@@ -176,7 +173,7 @@ En Android, Chrome ofrece un mecanismo equivalente (**Instalar aplicación** o *
 
 ## Seguridad
 
-- La autenticación es sin contraseña (enlace mágico por correo electrónico), gestionada íntegramente por Supabase Auth.
+- La autenticación es por correo y contraseña, gestionada íntegramente por Supabase Auth: las contraseñas se hashean (bcrypt) del lado del servidor y nunca se manejan ni se almacenan en texto plano desde el cliente.
 - El aislamiento de datos entre usuarios se garantiza mediante Row Level Security en PostgreSQL: cada consulta está restringida por la base de datos al usuario autenticado, independientemente de lo que el cliente solicite.
 - La clave pública de Supabase incluida en el bundle no otorga acceso a datos ajenos; su exposición en el código cliente es el modelo de uso previsto por Supabase para aplicaciones sin backend propio.
 - La clave `secret`/`service_role` del proyecto de Supabase no se utiliza ni se almacena en ningún punto de este repositorio y no debe incorporarse a él bajo ninguna circunstancia.
@@ -194,4 +191,4 @@ En Android, Chrome ofrece un mecanismo equivalente (**Instalar aplicación** o *
 
 - La aplicación requiere conexión a internet para leer y escribir datos; el service worker únicamente cachea el shell de la interfaz, no el contenido dinámico.
 - No existe actualmente exportación ni respaldo manual de los datos fuera de Supabase.
-- El acceso a la aplicación depende de que el correo del usuario esté habilitado como proveedor de autenticación y de que las URLs de redirección estén correctamente configuradas en Supabase.
+- No hay flujo de recuperación de contraseña ("olvidé mi contraseña") todavía; si se pierde el acceso, hay que restablecerla manualmente desde el panel de Supabase (Authentication → Users).

@@ -44,6 +44,33 @@
   font-size: 15px;
 }
 
+.login__tabs {
+  display: flex;
+  width: 100%;
+  background: var(--surface-tertiary);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: 16px;
+}
+
+.login__tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--label-secondary);
+  padding: 10px 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login__tab--activo {
+  background: var(--surface);
+  color: var(--label);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
 .login__form {
   width: 100%;
   display: flex;
@@ -76,12 +103,6 @@
 
 .login__form button:disabled {
   opacity: 0.6;
-}
-
-.login__enviado {
-  color: var(--label-secondary);
-  font-size: 15px;
-  line-height: 1.4;
 }
 
 .login__error {

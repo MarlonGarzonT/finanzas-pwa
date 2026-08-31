@@ -5,7 +5,8 @@ import { supabase } from '../supabaseClient';
 interface AuthContextValue {
   session: Session | null;
   cargando: boolean;
-  enviarEnlaceMagico: (email: string) => Promise<{ error: string | null }>;
+  registrar: (email: string, password: string) => Promise<{ error: string | null }>;
+  iniciarSesion: (email: string, password: string) => Promise<{ error: string | null }>;
   cerrarSesion: () => Promise<void>;
 }
 
@@ -28,11 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  async function enviarEnlaceMagico(email: string) {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + window.location.pathname },
-    });
+  async function registrar(email: string, password: string) {
+    const { error } = await supabase.auth.signUp({ email, password });
+    return { error: error?.message ?? null };
+  }
+
+  async function iniciarSesion(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   }
 
@@ -41,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, cargando, enviarEnlaceMagico, cerrarSesion }}>
+    <AuthContext.Provider value={{ session, cargando, registrar, iniciarSesion, cerrarSesion }}>
       {children}
     </AuthContext.Provider>
   );
