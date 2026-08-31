@@ -10,8 +10,8 @@
   padding: 14px 0;
   border: none;
   border-radius: var(--radius-md);
-  background: var(--color-gray-light);
-  color: var(--text-secondary);
+  background: var(--surface-tertiary);
+  color: var(--label-secondary);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -19,12 +19,12 @@
 }
 
 .segmented__btn--activo.segmented__btn--entrada {
-  background: var(--color-green);
+  background: var(--income);
   color: #fff;
 }
 
 .segmented__btn--activo.segmented__btn--salida {
-  background: var(--color-red);
+  background: var(--expense);
   color: #fff;
 }
 
@@ -39,7 +39,7 @@
 .monto-input span {
   font-size: 28px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--label-secondary);
 }
 
 .monto-input input {
@@ -47,7 +47,7 @@
   background: transparent;
   font-size: 40px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--label);
   width: 100%;
   max-width: 220px;
   text-align: center;
@@ -56,11 +56,11 @@
 
 .texto-input {
   border: none;
-  background: var(--color-gray-light);
+  background: var(--surface-tertiary);
   border-radius: var(--radius-md);
   padding: 14px 16px;
   font-size: 16px;
-  color: var(--text-primary);
+  color: var(--label);
   outline: none;
   width: 100%;
 }
@@ -83,8 +83,8 @@
   align-items: center;
   gap: 6px;
   border: none;
-  background: var(--color-gray-light);
-  color: var(--text-primary);
+  background: var(--surface-tertiary);
+  color: var(--label);
   padding: 10px 16px;
   border-radius: 999px;
   font-size: 14px;
@@ -98,24 +98,25 @@
   height: 8px;
   border-radius: 50%;
   flex: none;
-  box-shadow: 0 0 0 1.5px var(--bg-card);
+  box-shadow: 0 0 0 1.5px var(--surface);
 }
 
 .chip--activo {
-  background: var(--color-accent);
-  color: #fff;
+  background: var(--brand-tint);
+  color: var(--brand);
+  font-weight: 600;
 }
 
 .chip--nueva {
-  color: var(--color-accent);
+  color: var(--brand);
   background: transparent;
-  border: 1.5px dashed var(--color-accent);
+  border: 1.5px dashed var(--brand);
 }
 
 .btn-eliminar {
   border: none;
   background: transparent;
-  color: var(--color-red);
+  color: var(--expense);
   padding: 8px 0;
   font-size: 15px;
   font-weight: 500;

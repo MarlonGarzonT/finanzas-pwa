@@ -7,6 +7,7 @@ Progressive Web App (PWA) para el registro y control de ingresos y egresos perso
 - [Descripción general](#descripción-general)
 - [Características](#características)
 - [Arquitectura y stack tecnológico](#arquitectura-y-stack-tecnológico)
+- [Sistema de color](#sistema-de-color)
 - [Modelo de datos](#modelo-de-datos)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Requisitos previos](#requisitos-previos)
@@ -56,6 +57,10 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 | Hosting / CI-CD | GitHub Pages, desplegado mediante GitHub Actions |
 
 La aplicación es una SPA (Single Page Application) estática: no existe un servidor propio. Toda la persistencia y autenticación se delegan a Supabase, consumido directamente desde el navegador mediante su cliente JavaScript y protegido por políticas de seguridad a nivel de fila.
+
+## Sistema de color
+
+El esquema de color de la interfaz sigue la especificación en [`docs/paleta-color.md`](docs/paleta-color.md) (sistema "Saldo", estilo Apple HIG). Regla de oro: **verde y rojo están reservados exclusivamente para representar dinero** (ingreso/egreso); ningún botón, tab o elemento de navegación puede tomar prestado esos colores, y todo monto siempre lleva el signo `+`/`-` en texto, nunca solo el color. Los tokens (`--brand`, `--income`, `--expense`, `--surface`, `--label`, etc.) están definidos como variables CSS en [`src/styles/theme.css`](src/styles/theme.css), con sus valores de claro/oscuro resueltos automáticamente vía `prefers-color-scheme`, sin lógica condicional en los componentes.
 
 ## Modelo de datos
 

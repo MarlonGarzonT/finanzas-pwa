@@ -21,7 +21,7 @@
   width: 64px;
   height: 64px;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--color-green), var(--color-accent));
+  background: linear-gradient(135deg, var(--brand), var(--info));
   color: #fff;
   font-size: 32px;
   font-weight: 700;
@@ -40,7 +40,7 @@
 
 .login__subtitulo {
   margin: 0 0 20px;
-  color: var(--text-secondary);
+  color: var(--label-secondary);
   font-size: 15px;
 }
 
@@ -53,11 +53,11 @@
 
 .login__form input {
   border: none;
-  background: var(--color-gray-light);
+  background: var(--surface-tertiary);
   border-radius: var(--radius-md);
   padding: 15px 16px;
   font-size: 16px;
-  color: var(--text-primary);
+  color: var(--label);
   outline: none;
   width: 100%;
   text-align: center;
@@ -65,7 +65,7 @@
 
 .login__form button {
   border: none;
-  background: var(--color-accent);
+  background: var(--brand);
   color: #fff;
   padding: 15px 0;
   border-radius: var(--radius-md);
@@ -79,12 +79,12 @@
 }
 
 .login__enviado {
-  color: var(--text-secondary);
+  color: var(--label-secondary);
   font-size: 15px;
   line-height: 1.4;
 }
 
 .login__error {
-  color: var(--color-red);
+  color: var(--expense);
   font-size: 14px;
 }

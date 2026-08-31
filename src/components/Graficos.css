@@ -1,5 +1,5 @@
 .grafico-card {
-  background: var(--bg-card);
+  background: var(--surface);
   border-radius: var(--radius-lg);
   padding: 16px 12px 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -15,5 +15,5 @@
 .grafico-card__vacio {
   margin: 0 8px 16px;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--label-secondary);
 }

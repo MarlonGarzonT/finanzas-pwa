@@ -24,9 +24,11 @@ export function GraficoMensual({ datos }: { datos: FilaMes[] }) {
             />
             <YAxis hide />
             <Tooltip
-              cursor={{ fill: 'var(--color-gray-fill)' }}
+              cursor={{ fill: 'var(--surface-tertiary)' }}
               formatter={(value) => formatearMonto(Number(value))}
               contentStyle={{
+                background: 'var(--surface-elevated)',
+                color: 'var(--label)',
                 borderRadius: 10,
                 border: 'none',
                 boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
@@ -36,12 +38,12 @@ export function GraficoMensual({ datos }: { datos: FilaMes[] }) {
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 13, color: 'var(--text-secondary)' }}
+              wrapperStyle={{ fontSize: 13, color: 'var(--label-secondary)' }}
             />
             <Bar
               dataKey="ingresos"
               name="Ingresos"
-              fill="var(--chart-green)"
+              fill="var(--income)"
               radius={[4, 4, 0, 0]}
               barSize={16}
               isAnimationActive={false}
@@ -49,7 +51,7 @@ export function GraficoMensual({ datos }: { datos: FilaMes[] }) {
             <Bar
               dataKey="egresos"
               name="Egresos"
-              fill="var(--chart-red)"
+              fill="var(--expense)"
               radius={[4, 4, 0, 0]}
               barSize={16}
               isAnimationActive={false}

@@ -25,7 +25,7 @@
 .categorias-lista button {
   border: none;
   background: transparent;
-  color: var(--color-red);
+  color: var(--expense);
   font-size: 16px;
   cursor: pointer;
   padding: 4px 8px;

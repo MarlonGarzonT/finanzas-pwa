@@ -1,10 +1,10 @@
 const PALETA = [
   'var(--color-sky)',
-  'var(--color-orange)',
+  'var(--warning)',
   'var(--color-purple)',
   'var(--color-teal)',
   'var(--color-pink)',
-  'var(--color-indigo)',
+  'var(--color-turquoise)',
   'var(--color-yellow)',
   'var(--color-brown)',
 ];

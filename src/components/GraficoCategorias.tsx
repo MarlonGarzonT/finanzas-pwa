@@ -1,5 +1,5 @@
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { formatearMonto } from '../utils/fechas';
+import { formatearMontoConSigno } from '../utils/fechas';
 import './Graficos.css';
 
 interface Fila {
@@ -8,8 +8,8 @@ interface Fila {
 }
 
 function colorNeto(neto: number): string {
-  if (neto > 0) return 'var(--chart-green)';
-  if (neto < 0) return 'var(--chart-red)';
+  if (neto > 0) return 'var(--income)';
+  if (neto < 0) return 'var(--expense)';
   return 'var(--chart-muted)';
 }
 
@@ -47,9 +47,11 @@ export function GraficoCategorias({ datos }: { datos: Fila[] }) {
               tick={{ fill: 'var(--chart-muted)', fontSize: 12.5 }}
             />
             <Tooltip
-              cursor={{ fill: 'var(--color-gray-fill)' }}
-              formatter={(_value, _name, entry) => formatearMonto(Number(entry?.payload?.neto ?? 0))}
+              cursor={{ fill: 'var(--surface-tertiary)' }}
+              formatter={(_value, _name, entry) => formatearMontoConSigno(Number(entry?.payload?.neto ?? 0))}
               contentStyle={{
+                background: 'var(--surface-elevated)',
+                color: 'var(--label)',
                 borderRadius: 10,
                 border: 'none',
                 boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
@@ -63,9 +65,9 @@ export function GraficoCategorias({ datos }: { datos: Fila[] }) {
               <LabelList
                 dataKey="neto"
                 position="right"
-                fill="var(--text-secondary)"
+                fill="var(--label-secondary)"
                 fontSize={12}
-                formatter={(value: unknown) => formatearMonto(Number(value))}
+                formatter={(value: unknown) => formatearMontoConSigno(Number(value))}
               />
             </Bar>
           </BarChart>

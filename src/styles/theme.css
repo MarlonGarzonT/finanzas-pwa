@@ -4,31 +4,38 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI',
     Roboto, system-ui, sans-serif;
 
-  /* Vichy palette (figma.com/resource-library/website-color-schemes, scheme 9): soft gray +
-     crisp white base, vibrant teal accent */
-  --color-accent: #05ad98;
-  --color-green: #34c759;
-  --color-red: #ff3b30;
-  --color-orange: #ff9500;
-  --color-gray: #878787;
-  --color-gray-light: #f0f0f0;
-  --color-gray-fill: #e2e2e2;
+  /* Saldo palette (prompt-desarrollador-paleta.md): Apple HIG-style system. Green/red are
+     reserved exclusively for money (regla de oro) - never reused for brand/nav/buttons. */
+  --brand: #5856d6;
+  --brand-tint: #ededfc;
+  --info: #007aff;
 
-  /* extra hues for category identity (kept apart from green/red/accent, which are reserved) */
+  --income: #34c759;
+  --income-tint: rgba(52, 199, 89, 0.12);
+  --expense: #ff3b30;
+  --expense-tint: rgba(255, 59, 48, 0.12);
+  --warning: #ff9500;
+  --warning-tint: rgba(255, 149, 0, 0.12);
+
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-tertiary: #e5e5ea;
+  --surface-translucent: rgba(255, 255, 255, 0.86);
+  --separator: rgba(60, 60, 67, 0.29);
+
+  --label: #1c1c1e;
+  --label-secondary: #6e6e73;
+  --label-tertiary: #aeaeb2;
+
+  /* extra hues for category identity only - never money, never brand */
   --color-sky: #0a84ff;
   --color-purple: #af52de;
-  --color-indigo: #5e5ce6;
+  --color-turquoise: #05ad98;
   --color-teal: #30b0c7;
   --color-pink: #ff375f;
   --color-yellow: #ffcc00;
   --color-brown: #a2845e;
-
-  --bg-primary: #f0f0f0;
-  --bg-elevated: rgba(255, 255, 255, 0.86);
-  --bg-card: #ffffff;
-  --text-primary: #000000;
-  --text-secondary: #6b6b6b;
-  --separator: rgba(60, 60, 67, 0.12);
 
   --radius-lg: 20px;
   --radius-md: 14px;
@@ -37,36 +44,38 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* dataviz palette (validated, see references/palette.md) */
-  --chart-blue: #2a78d6;
-  --chart-green: #008300;
-  --chart-red: #e34948;
+  /* chart-only axis/grid tones (not part of the money/brand system) */
   --chart-muted: #898781;
   --chart-grid: #e1e0d9;
-  --chart-surface: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    /* softened dark palette: avoid pure black/white and oversaturated accents, which read
-       as excessive contrast/glow on OLED-style dark surfaces */
-    --bg-primary: #121212;
-    --bg-elevated: rgba(30, 30, 30, 0.86);
-    --bg-card: #1e1e1e;
-    --text-primary: #e0e0e0;
-    --text-secondary: #98989d;
-    --separator: rgba(84, 84, 88, 0.55);
-    --color-gray-light: #1e1e1e;
-    --color-gray-fill: #232323;
-    --color-accent: #4dcbbd;
+    --brand: #7d7aff;
+    --brand-tint: rgba(125, 122, 255, 0.16);
+    --info: #0a84ff;
 
-    --chart-blue: #3987e5;
-    --chart-green: #008300;
-    --chart-red: #e66767;
+    --income: #30d158;
+    --income-tint: rgba(48, 209, 88, 0.16);
+    --expense: #ff453a;
+    --expense-tint: rgba(255, 69, 58, 0.16);
+    --warning: #ff9f0a;
+    --warning-tint: rgba(255, 159, 10, 0.16);
+
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-elevated: #2c2c2e;
+    --surface-tertiary: #2c2c2e;
+    --surface-translucent: rgba(28, 28, 30, 0.86);
+    --separator: rgba(84, 84, 88, 0.65);
+
+    --label: #ffffff;
+    --label-secondary: #98989d;
+    --label-tertiary: #636366;
+
     --chart-muted: #898781;
     --chart-grid: #2c2c2a;
-    --chart-surface: #1e1e1e;
   }
 }
 
@@ -82,8 +91,8 @@ body {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--bg);
+  color: var(--label);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
 }
@@ -108,5 +117,5 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--label-secondary);
 }

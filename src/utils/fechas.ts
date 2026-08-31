@@ -16,6 +16,11 @@ export function formatearMonto(monto: number): string {
   return `$${monto.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
 }
 
+// El signo (+/-) nunca depende solo del color: siempre acompaña al monto en texto.
+export function formatearMontoConSigno(monto: number): string {
+  return monto > 0 ? `+${formatearMonto(monto)}` : formatearMonto(monto);
+}
+
 export function nombreMes(fecha: Date): string {
   return fecha.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
 }

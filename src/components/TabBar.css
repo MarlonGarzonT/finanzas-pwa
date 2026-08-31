@@ -2,7 +2,7 @@
   position: sticky;
   bottom: 0;
   display: flex;
-  background: var(--bg-elevated);
+  background: var(--surface-translucent);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-top: 0.5px solid var(--separator);
@@ -17,12 +17,12 @@
   align-items: center;
   gap: 2px;
   padding: 8px 0 6px;
-  color: var(--color-gray);
+  color: var(--label-secondary);
   text-decoration: none;
   font-size: 10px;
   font-weight: 500;
 }
 
 .tab-bar__item--activo {
-  color: var(--color-accent);
+  color: var(--brand);
 }

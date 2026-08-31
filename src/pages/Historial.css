@@ -19,7 +19,7 @@
 .historial__vacio {
   padding: 40px 20px;
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--label-secondary);
 }
 
 .historial__contenido {
@@ -34,14 +34,14 @@
   font-size: 13px;
   font-weight: 600;
   text-transform: capitalize;
-  color: var(--text-secondary);
+  color: var(--label-secondary);
 }
 
 .historial__grupo ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  background: var(--bg-card);
+  background: var(--surface);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -73,11 +73,11 @@
 }
 
 .movimiento__icono--ingreso {
-  background: var(--color-green);
+  background: var(--income);
 }
 
 .movimiento__icono--egreso {
-  background: var(--color-red);
+  background: var(--expense);
 }
 
 .movimiento__detalle {
@@ -102,7 +102,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12.5px;
-  color: var(--text-secondary);
+  color: var(--label-secondary);
   line-height: 1.4;
 }
 
@@ -132,9 +132,9 @@
 }
 
 .movimiento__monto--ingreso {
-  color: var(--color-green);
+  color: var(--income);
 }
 
 .movimiento__monto--egreso {
-  color: var(--color-red);
+  color: var(--expense);
 }
