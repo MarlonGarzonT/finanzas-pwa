@@ -29,16 +29,16 @@ export function Resumen() {
   const datosCategorias = useMemo(() => {
     const ahora = new Date();
     const claveMesActual = `${ahora.getFullYear()}-${ahora.getMonth()}`;
-    const totales = new Map<string, number>();
+    const netos = new Map<string, number>();
     for (const t of transacciones) {
-      if (t.tipo !== 'egreso') continue;
       const fecha = new Date(t.fecha);
       const clave = `${fecha.getFullYear()}-${fecha.getMonth()}`;
       if (clave !== claveMesActual) continue;
       const nombre = nombrePorId(t.categoriaId);
-      totales.set(nombre, (totales.get(nombre) ?? 0) + t.monto);
+      const signo = t.tipo === 'ingreso' ? 1 : -1;
+      netos.set(nombre, (netos.get(nombre) ?? 0) + signo * t.monto);
     }
-    return Array.from(totales, ([categoria, total]) => ({ categoria, total }));
+    return Array.from(netos, ([categoria, neto]) => ({ categoria, neto }));
   }, [transacciones, nombrePorId]);
 
   const datosMensuales = useMemo(() => {
