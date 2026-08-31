@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Categoria, Tipo, Transaccion } from '../types';
+import { colorCategoria } from '../utils/colorCategoria';
 import './NuevoMovimientoSheet.css';
 
 interface Props {
@@ -118,6 +119,7 @@ export function NuevoMovimientoSheet({
               className={`chip ${categoriaId === c.id ? 'chip--activo' : ''}`}
               onClick={() => setCategoriaId(c.id)}
             >
+              <span className="chip__punto" style={{ background: colorCategoria(c.id) }} />
               {c.nombre}
             </button>
           ))}

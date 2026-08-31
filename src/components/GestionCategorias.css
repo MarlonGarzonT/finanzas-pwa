@@ -30,3 +30,16 @@
   cursor: pointer;
   padding: 4px 8px;
 }
+
+.categorias-lista__nombre {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.categorias-lista__punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}

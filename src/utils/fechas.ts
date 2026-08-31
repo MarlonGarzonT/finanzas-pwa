@@ -7,6 +7,11 @@ export function formatearFecha(iso: string): string {
   return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+export function formatearFechaCorta(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+}
+
 export function formatearMonto(monto: number): string {
   return `$${monto.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
 }

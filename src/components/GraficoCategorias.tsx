@@ -19,21 +19,23 @@ export function GraficoCategorias({ datos }: { datos: Fila[] }) {
 
   const ordenados = [...datos].sort((a, b) => b.total - a.total).slice(0, 7);
   const alto = Math.max(160, ordenados.length * 42);
+  const nombreMasLargo = Math.max(...ordenados.map((f) => f.categoria.length));
+  const anchoEje = Math.min(132, Math.max(76, nombreMasLargo * 6.5 + 16));
 
   return (
     <div className="grafico-card">
       <h3 className="grafico-card__titulo">Gastos del mes por categoría</h3>
       <div style={{ width: '100%', height: alto }}>
         <ResponsiveContainer>
-          <BarChart data={ordenados} layout="vertical" margin={{ top: 4, right: 44, left: 0, bottom: 4 }}>
+          <BarChart data={ordenados} layout="vertical" margin={{ top: 4, right: 48, left: 0, bottom: 4 }}>
             <XAxis type="number" hide />
             <YAxis
               type="category"
               dataKey="categoria"
-              width={104}
+              width={anchoEje}
               tickLine={false}
               axisLine={false}
-              tick={{ fill: 'var(--chart-muted)', fontSize: 13 }}
+              tick={{ fill: 'var(--chart-muted)', fontSize: 12.5 }}
             />
             <Tooltip
               cursor={{ fill: 'var(--color-gray-fill)' }}

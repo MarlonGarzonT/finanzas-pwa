@@ -13,6 +13,14 @@
   --color-gray-light: #f2f2f7;
   --color-gray-fill: #e5e5ea;
 
+  /* extra hues for category identity (kept apart from green/red, reserved for ingreso/egreso) */
+  --color-purple: #af52de;
+  --color-indigo: #5e5ce6;
+  --color-teal: #30b0c7;
+  --color-pink: #ff375f;
+  --color-yellow: #ffcc00;
+  --color-brown: #a2845e;
+
   --bg-primary: #f2f2f7;
   --bg-elevated: rgba(255, 255, 255, 0.86);
   --bg-card: #ffffff;

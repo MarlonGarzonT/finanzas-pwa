@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
-import { formatearFecha, formatearMonto, nombreMes } from '../utils/fechas';
+import { colorCategoria } from '../utils/colorCategoria';
+import { formatearFechaCorta, formatearMonto, nombreMes } from '../utils/fechas';
 import './Historial.css';
 
 export function Historial() {
@@ -78,7 +79,17 @@ export function Historial() {
                     <div className="movimiento__detalle">
                       <span className="movimiento__item">{t.item}</span>
                       <span className="movimiento__meta">
-                        {nombrePorId(t.categoriaId)} · {formatearFecha(t.fecha)} · Semana {t.semanaDelMes}
+                        <span className="movimiento__categoria">
+                          <span
+                            className="movimiento__categoria-punto"
+                            style={{ background: colorCategoria(t.categoriaId) }}
+                          />
+                          {nombrePorId(t.categoriaId)}
+                        </span>
+                        <span className="movimiento__meta-separador">·</span>
+                        <span>{formatearFechaCorta(t.fecha)}</span>
+                        <span className="movimiento__meta-separador">·</span>
+                        <span>Sem. {t.semanaDelMes}</span>
                       </span>
                     </div>
                     <span className={`movimiento__monto movimiento__monto--${t.tipo}`}>
