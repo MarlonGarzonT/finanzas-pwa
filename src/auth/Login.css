@@ -21,7 +21,7 @@
   width: 64px;
   height: 64px;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--color-green), var(--color-blue));
+  background: linear-gradient(135deg, var(--color-green), var(--color-accent));
   color: #fff;
   font-size: 32px;
   font-weight: 700;
@@ -65,7 +65,7 @@
 
 .login__form button {
   border: none;
-  background: var(--color-blue);
+  background: var(--color-accent);
   color: #fff;
   padding: 15px 0;
   border-radius: var(--radius-md);

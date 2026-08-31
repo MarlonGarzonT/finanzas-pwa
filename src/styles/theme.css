@@ -4,16 +4,18 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI',
     Roboto, system-ui, sans-serif;
 
-  /* iOS system colors */
-  --color-blue: #0a84ff;
+  /* Vichy palette (figma.com/resource-library/website-color-schemes, scheme 9): soft gray +
+     crisp white base, vibrant teal accent */
+  --color-accent: #05ad98;
   --color-green: #34c759;
   --color-red: #ff3b30;
   --color-orange: #ff9500;
-  --color-gray: #8e8e93;
-  --color-gray-light: #f2f2f7;
-  --color-gray-fill: #e5e5ea;
+  --color-gray: #878787;
+  --color-gray-light: #f0f0f0;
+  --color-gray-fill: #e2e2e2;
 
-  /* extra hues for category identity (kept apart from green/red, reserved for ingreso/egreso) */
+  /* extra hues for category identity (kept apart from green/red/accent, which are reserved) */
+  --color-sky: #0a84ff;
   --color-purple: #af52de;
   --color-indigo: #5e5ce6;
   --color-teal: #30b0c7;
@@ -21,11 +23,11 @@
   --color-yellow: #ffcc00;
   --color-brown: #a2845e;
 
-  --bg-primary: #f2f2f7;
+  --bg-primary: #f0f0f0;
   --bg-elevated: rgba(255, 255, 255, 0.86);
   --bg-card: #ffffff;
   --text-primary: #000000;
-  --text-secondary: #6e6e73;
+  --text-secondary: #6b6b6b;
   --separator: rgba(60, 60, 67, 0.12);
 
   --radius-lg: 20px;
@@ -55,6 +57,7 @@
     --separator: rgba(84, 84, 88, 0.55);
     --color-gray-light: #1c1c1e;
     --color-gray-fill: #2c2c2e;
+    --color-accent: #1dcbae;
 
     --chart-blue: #3987e5;
     --chart-green: #008300;

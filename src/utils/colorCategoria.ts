@@ -1,5 +1,5 @@
 const PALETA = [
-  'var(--color-blue)',
+  'var(--color-sky)',
   'var(--color-orange)',
   'var(--color-purple)',
   'var(--color-teal)',

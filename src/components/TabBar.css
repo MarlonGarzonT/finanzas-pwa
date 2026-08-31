@@ -24,5 +24,5 @@
 }
 
 .tab-bar__item--activo {
-  color: var(--color-blue);
+  color: var(--color-accent);
 }

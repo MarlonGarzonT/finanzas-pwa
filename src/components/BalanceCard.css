@@ -5,9 +5,9 @@
   gap: 6px;
   padding: 28px 20px 32px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, var(--color-green), var(--color-blue));
+  background: linear-gradient(135deg, var(--color-green), var(--color-accent));
   color: #ffffff;
-  box-shadow: 0 8px 24px rgba(10, 132, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(5, 173, 152, 0.28);
 }
 
 .balance-card__label {

@@ -54,7 +54,7 @@
   height: 58px;
   border-radius: 50%;
   border: none;
-  background: var(--color-blue);
+  background: var(--color-accent);
   color: #fff;
   font-size: 30px;
   font-weight: 400;
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 16px rgba(10, 132, 255, 0.4);
+  box-shadow: 0 6px 16px rgba(5, 173, 152, 0.4);
   cursor: pointer;
   z-index: 15;
 }
