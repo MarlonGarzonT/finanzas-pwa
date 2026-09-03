@@ -12,9 +12,9 @@ interface Props {
 export function UltimoMovimiento({ transaccion, categoriaPorId, onSeleccionar }: Props) {
   if (!transaccion) {
     return (
-      <div className="grafico-card">
+      <div className="ultimo-movimiento">
         <h3 className="grafico-card__titulo">Último movimiento</h3>
-        <p className="grafico-card__vacio">Aún no registras movimientos.</p>
+        <p className="ultimo-movimiento__vacio">Aún no registras movimientos.</p>
       </div>
     );
   }
