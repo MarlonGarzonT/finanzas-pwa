@@ -82,12 +82,6 @@
   cursor: pointer;
 }
 
-.nueva-categoria-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .nueva-categoria {
   display: flex;
   gap: 8px;

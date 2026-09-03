@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Categoria, Tipo, Transaccion } from '../types';
-import { SelectorEmoji } from './SelectorEmoji';
 import './NuevoMovimientoSheet.css';
 
 interface Props {
@@ -11,7 +10,7 @@ interface Props {
   onCerrar: () => void;
   onGuardar: (datos: { item: string; categoriaId: string; tipo: Tipo; monto: number }) => Promise<void>;
   onEliminar?: () => Promise<void>;
-  onCrearCategoria: (nombre: string, emoji: string) => Promise<Categoria>;
+  onCrearCategoria: (nombre: string) => Promise<Categoria>;
 }
 
 export function NuevoMovimientoSheet({
@@ -30,7 +29,6 @@ export function NuevoMovimientoSheet({
   const [categoriaId, setCategoriaId] = useState('');
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [nombreNuevaCategoria, setNombreNuevaCategoria] = useState('');
-  const [emojiNuevaCategoria, setEmojiNuevaCategoria] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [espacioTeclado, setEspacioTeclado] = useState(0);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -80,7 +78,6 @@ export function NuevoMovimientoSheet({
     }
     setCreandoCategoria(false);
     setNombreNuevaCategoria('');
-    setEmojiNuevaCategoria(null);
     setError(null);
   }, [abierto, transaccion, categorias]);
 
@@ -88,12 +85,11 @@ export function NuevoMovimientoSheet({
 
   async function manejarCrearCategoria() {
     const nombre = nombreNuevaCategoria.trim();
-    if (!nombre || !emojiNuevaCategoria) return;
-    const nueva = await onCrearCategoria(nombre, emojiNuevaCategoria);
+    if (!nombre) return;
+    const nueva = await onCrearCategoria(nombre);
     setCategoriaId(nueva.id);
     setCreandoCategoria(false);
     setNombreNuevaCategoria('');
-    setEmojiNuevaCategoria(null);
   }
 
   async function manejarGuardar() {
@@ -176,19 +172,16 @@ export function NuevoMovimientoSheet({
         </div>
 
         {creandoCategoria && (
-          <div className="nueva-categoria-form">
-            <div className="nueva-categoria">
-              <input
-                placeholder="Nombre de la categoría"
-                value={nombreNuevaCategoria}
-                onChange={(e) => setNombreNuevaCategoria(e.target.value)}
-                autoFocus
-              />
-              <button type="button" onClick={manejarCrearCategoria} disabled={!nombreNuevaCategoria.trim() || !emojiNuevaCategoria}>
-                Agregar
-              </button>
-            </div>
-            <SelectorEmoji seleccionado={emojiNuevaCategoria} onSeleccionar={setEmojiNuevaCategoria} />
+          <div className="nueva-categoria">
+            <input
+              placeholder="Nombre de la categoría"
+              value={nombreNuevaCategoria}
+              onChange={(e) => setNombreNuevaCategoria(e.target.value)}
+              autoFocus
+            />
+            <button type="button" onClick={manejarCrearCategoria}>
+              Agregar
+            </button>
           </div>
         )}
 

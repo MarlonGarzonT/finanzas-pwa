@@ -149,8 +149,8 @@ export function Resumen() {
         abierto={categoriasAbierto}
         categorias={categorias}
         onCerrar={() => setCategoriasAbierto(false)}
-        onCrear={async (nombre, emoji) => {
-          await crearCategoria(nombre, emoji);
+        onCrear={async (nombre) => {
+          await crearCategoria(nombre);
         }}
         onEliminar={eliminarCategoria}
       />

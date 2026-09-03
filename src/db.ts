@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import type { Categoria, NuevaTransaccion, Transaccion } from './types';
 import { calcularSemanaDelMes } from './utils/fechas';
+import { emojiCategoria } from './utils/emojiCategoria';
 
 const CATEGORIAS_DEFECTO = [
   { nombre: 'Comida', emoji: '🍔' },
@@ -52,10 +53,12 @@ export async function obtenerCategorias(userId: string): Promise<Categoria[]> {
   return data;
 }
 
-export async function crearCategoria(userId: string, nombre: string, emoji: string): Promise<Categoria> {
+// El emoji es predeterminado según el nombre (el usuario no lo elige) y
+// queda guardado en la categoría, no se recalcula en cada render.
+export async function crearCategoria(userId: string, nombre: string): Promise<Categoria> {
   const { data, error } = await supabase
     .from('categorias')
-    .insert({ nombre, emoji, user_id: userId })
+    .insert({ nombre, emoji: emojiCategoria(nombre), user_id: userId })
     .select('id, nombre, emoji')
     .single();
   if (error) throw error;
