@@ -10,7 +10,7 @@ interface FinanzasContextValue {
   crearMovimiento: (datos: NuevaTransaccion) => Promise<void>;
   actualizarMovimiento: (id: string, datos: Partial<NuevaTransaccion>) => Promise<void>;
   eliminarMovimiento: (id: string) => Promise<void>;
-  crearCategoria: (nombre: string) => Promise<Categoria>;
+  crearCategoria: (nombre: string, emoji: string) => Promise<Categoria>;
   eliminarCategoria: (id: string) => Promise<void>;
 }
 
@@ -52,9 +52,9 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     setTransacciones((prev) => prev.filter((t) => t.id !== id));
   }
 
-  async function crearCategoria(nombre: string) {
+  async function crearCategoria(nombre: string, emoji: string) {
     if (!userId) throw new Error('Sin sesión');
-    const nueva = await db.crearCategoria(userId, nombre);
+    const nueva = await db.crearCategoria(userId, nombre, emoji);
     setCategorias((prev) => [...prev, nueva].sort((a, b) => a.nombre.localeCompare(b.nombre)));
     return nueva;
   }

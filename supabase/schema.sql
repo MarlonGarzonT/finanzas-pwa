@@ -4,6 +4,7 @@ create table if not exists categorias (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
   nombre text not null,
+  emoji text not null default '🏷️',
   created_at timestamptz default now()
 );
 
@@ -31,3 +32,19 @@ create policy "usuario ve/edita solo sus categorias" on categorias
 drop policy if exists "usuario ve/edita solo sus transacciones" on transacciones;
 create policy "usuario ve/edita solo sus transacciones" on transacciones
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Migración: si ya tenías el esquema anterior (sin la columna emoji), ejecuta
+-- este bloque una sola vez en el SQL Editor. Es seguro volver a correrlo.
+alter table categorias add column if not exists emoji text not null default '🏷️';
+
+update categorias set emoji = case
+  when nombre ilike '%comida%' then '🍔'
+  when nombre ilike '%transporte%' then '🚗'
+  when nombre ilike '%vivienda%' then '🏠'
+  when nombre ilike '%salud%' then '💊'
+  when nombre ilike '%entretenimiento%' then '🎮'
+  when nombre ilike '%servicio%' then '💡'
+  when nombre ilike '%salario%' then '💰'
+  else emoji
+end
+where emoji = '🏷️';

@@ -1,16 +1,15 @@
-import type { Transaccion } from '../types';
+import type { Categoria, Transaccion } from '../types';
 import { colorCategoria } from '../utils/colorCategoria';
-import { emojiCategoria } from '../utils/emojiCategoria';
 import { formatearFechaCorta, formatearMonto, formatearMontoConSigno } from '../utils/fechas';
 import './ListaMovimientos.css';
 
 interface Props {
   grupos: [string, Transaccion[]][];
-  nombrePorId: (id: string) => string;
+  categoriaPorId: (id: string) => Categoria | undefined;
   onSeleccionar: (transaccion: Transaccion) => void;
 }
 
-export function ListaMovimientos({ grupos, nombrePorId, onSeleccionar }: Props) {
+export function ListaMovimientos({ grupos, categoriaPorId, onSeleccionar }: Props) {
   if (grupos.length === 0) {
     return (
       <div className="grafico-card">
@@ -35,7 +34,7 @@ export function ListaMovimientos({ grupos, nombrePorId, onSeleccionar }: Props) 
             </div>
             <ul>
               {items.map((t) => {
-                const nombreCategoria = nombrePorId(t.categoriaId);
+                const categoria = categoriaPorId(t.categoriaId);
                 return (
                   <li key={t.id} className="lista-movimientos__item" onClick={() => onSeleccionar(t)}>
                     <span
@@ -43,10 +42,10 @@ export function ListaMovimientos({ grupos, nombrePorId, onSeleccionar }: Props) 
                       style={{ background: `color-mix(in srgb, ${colorCategoria(t.categoriaId)} 22%, var(--surface))` }}
                       aria-hidden
                     >
-                      {emojiCategoria(nombreCategoria)}
+                      {categoria?.emoji ?? '🏷️'}
                     </span>
                     <span className="lista-movimientos__detalle">
-                      <span className="lista-movimientos__categoria">{nombreCategoria}</span>
+                      <span className="lista-movimientos__categoria">{categoria?.nombre ?? 'Otros'}</span>
                       <span className="lista-movimientos__descripcion">{t.item}</span>
                     </span>
                     <span className={`lista-movimientos__monto lista-movimientos__monto--${t.tipo}`}>

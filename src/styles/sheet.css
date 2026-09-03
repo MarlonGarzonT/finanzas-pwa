@@ -82,6 +82,12 @@
   cursor: pointer;
 }
 
+.nueva-categoria-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .nueva-categoria {
   display: flex;
   gap: 8px;
@@ -106,4 +112,9 @@
   padding: 0 18px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.nueva-categoria button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

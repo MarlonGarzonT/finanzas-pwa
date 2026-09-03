@@ -1,28 +1,30 @@
 import { useState } from 'react';
 import type { Categoria } from '../types';
-import { colorCategoria } from '../utils/colorCategoria';
+import { SelectorEmoji } from './SelectorEmoji';
 import './GestionCategorias.css';
 
 interface Props {
   abierto: boolean;
   categorias: Categoria[];
   onCerrar: () => void;
-  onCrear: (nombre: string) => Promise<void>;
+  onCrear: (nombre: string, emoji: string) => Promise<void>;
   onEliminar: (id: string) => Promise<void>;
 }
 
 export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEliminar }: Props) {
   const [nombre, setNombre] = useState('');
+  const [emoji, setEmoji] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
   if (!abierto) return null;
 
   async function manejarCrear() {
     const limpio = nombre.trim();
-    if (!limpio) return;
+    if (!limpio || !emoji) return;
     setOcupado(true);
-    await onCrear(limpio);
+    await onCrear(limpio, emoji);
     setNombre('');
+    setEmoji(null);
     setOcupado(false);
   }
 
@@ -42,7 +44,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEl
           {categorias.map((c) => (
             <li key={c.id}>
               <span className="categorias-lista__nombre">
-                <span className="categorias-lista__punto" style={{ background: colorCategoria(c.id) }} />
+                <span aria-hidden>{c.emoji}</span>
                 {c.nombre}
               </span>
               <button onClick={() => manejarEliminar(c.id)} disabled={ocupado} aria-label={`Eliminar ${c.nombre}`}>
@@ -52,15 +54,14 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEl
           ))}
         </ul>
 
-        <div className="nueva-categoria">
-          <input
-            placeholder="Nueva categoría"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
-          <button onClick={manejarCrear} disabled={ocupado}>
-            Agregar
-          </button>
+        <div className="nueva-categoria-form">
+          <div className="nueva-categoria">
+            <input placeholder="Nueva categoría" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+            <button onClick={manejarCrear} disabled={ocupado || !nombre.trim() || !emoji}>
+              Agregar
+            </button>
+          </div>
+          <SelectorEmoji seleccionado={emoji} onSeleccionar={setEmoji} />
         </div>
 
         <button className="btn-cancelar" onClick={onCerrar}>

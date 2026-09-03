@@ -3,14 +3,14 @@ import type { Categoria, NuevaTransaccion, Transaccion } from './types';
 import { calcularSemanaDelMes } from './utils/fechas';
 
 const CATEGORIAS_DEFECTO = [
-  'Comida',
-  'Transporte',
-  'Vivienda',
-  'Salud',
-  'Entretenimiento',
-  'Servicios',
-  'Salario',
-  'Otros',
+  { nombre: 'Comida', emoji: '🍔' },
+  { nombre: 'Transporte', emoji: '🚗' },
+  { nombre: 'Vivienda', emoji: '🏠' },
+  { nombre: 'Salud', emoji: '💊' },
+  { nombre: 'Entretenimiento', emoji: '🎮' },
+  { nombre: 'Servicios', emoji: '💡' },
+  { nombre: 'Salario', emoji: '💰' },
+  { nombre: 'Otros', emoji: '🏷️' },
 ];
 
 function mapTransaccion(row: {
@@ -36,15 +36,15 @@ function mapTransaccion(row: {
 export async function obtenerCategorias(userId: string): Promise<Categoria[]> {
   const { data, error } = await supabase
     .from('categorias')
-    .select('id, nombre')
+    .select('id, nombre, emoji')
     .order('nombre', { ascending: true });
   if (error) throw error;
 
   if (!data || data.length === 0) {
     const { data: creadas, error: errorInsert } = await supabase
       .from('categorias')
-      .insert(CATEGORIAS_DEFECTO.map((nombre) => ({ nombre, user_id: userId })))
-      .select('id, nombre');
+      .insert(CATEGORIAS_DEFECTO.map(({ nombre, emoji }) => ({ nombre, emoji, user_id: userId })))
+      .select('id, nombre, emoji');
     if (errorInsert) throw errorInsert;
     return (creadas ?? []).sort((a, b) => a.nombre.localeCompare(b.nombre));
   }
@@ -52,11 +52,11 @@ export async function obtenerCategorias(userId: string): Promise<Categoria[]> {
   return data;
 }
 
-export async function crearCategoria(userId: string, nombre: string): Promise<Categoria> {
+export async function crearCategoria(userId: string, nombre: string, emoji: string): Promise<Categoria> {
   const { data, error } = await supabase
     .from('categorias')
-    .insert({ nombre, user_id: userId })
-    .select('id, nombre')
+    .insert({ nombre, emoji, user_id: userId })
+    .select('id, nombre, emoji')
     .single();
   if (error) throw error;
   return data;

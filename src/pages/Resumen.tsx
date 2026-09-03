@@ -26,9 +26,9 @@ export function Resumen() {
   const [categoriasAbierto, setCategoriasAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
-  const nombrePorId = useMemo(() => {
-    const mapa = new Map(categorias.map((c) => [c.id, c.nombre]));
-    return (id: string) => mapa.get(id) ?? 'Otros';
+  const categoriaPorId = useMemo(() => {
+    const mapa = new Map(categorias.map((c) => [c.id, c]));
+    return (id: string) => mapa.get(id);
   }, [categorias]);
 
   const disponible = useMemo(
@@ -56,16 +56,21 @@ export function Resumen() {
   }, [transacciones]);
 
   const datosGastos = useMemo(() => {
-    const totales = new Map<string, number>();
+    const totales = new Map<string, { categoria: string; emoji: string; monto: number }>();
     for (const t of transaccionesDelMes) {
       if (t.tipo !== 'egreso') continue;
-      const nombre = nombrePorId(t.categoriaId);
-      totales.set(nombre, (totales.get(nombre) ?? 0) + t.monto);
+      const cat = categoriaPorId(t.categoriaId);
+      const existente = totales.get(t.categoriaId);
+      if (existente) {
+        existente.monto += t.monto;
+      } else {
+        totales.set(t.categoriaId, { categoria: cat?.nombre ?? 'Otros', emoji: cat?.emoji ?? '🏷️', monto: t.monto });
+      }
     }
-    return Array.from(totales, ([categoria, monto]) => ({ categoria, monto }))
+    return Array.from(totales.values())
       .sort((a, b) => b.monto - a.monto)
       .slice(0, 6);
-  }, [transaccionesDelMes, nombrePorId]);
+  }, [transaccionesDelMes, categoriaPorId]);
 
   const gruposPorDia = useMemo(() => {
     const mapa = new Map<string, Transaccion[]>();
@@ -121,7 +126,7 @@ export function Resumen() {
         <div className="resumen__contenido">
           <BalanceCard disponible={disponible} totalIngresos={totalIngresos} totalEgresos={totalEgresos} />
           <GraficoGastos datos={datosGastos} />
-          <ListaMovimientos grupos={gruposPorDia} nombrePorId={nombrePorId} onSeleccionar={setEditando} />
+          <ListaMovimientos grupos={gruposPorDia} categoriaPorId={categoriaPorId} onSeleccionar={setEditando} />
         </div>
       )}
 
@@ -144,8 +149,8 @@ export function Resumen() {
         abierto={categoriasAbierto}
         categorias={categorias}
         onCerrar={() => setCategoriasAbierto(false)}
-        onCrear={async (nombre) => {
-          await crearCategoria(nombre);
+        onCrear={async (nombre, emoji) => {
+          await crearCategoria(nombre, emoji);
         }}
         onEliminar={eliminarCategoria}
       />

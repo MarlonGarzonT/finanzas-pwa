@@ -1,9 +1,9 @@
-import { emojiCategoria } from '../utils/emojiCategoria';
 import { formatearMontoCompacto } from '../utils/fechas';
 import './Graficos.css';
 
 interface Fila {
   categoria: string;
+  emoji: string;
   monto: number;
 }
 
@@ -29,7 +29,7 @@ export function GraficoGastos({ datos }: { datos: Fila[] }) {
               <div className="gastos-barras__barra" style={{ height: `${Math.max(6, (d.monto / max) * 100)}%` }} />
             </div>
             <span className="gastos-barras__emoji" aria-hidden>
-              {emojiCategoria(d.categoria)}
+              {d.emoji}
             </span>
             <span className="gastos-barras__monto">{formatearMontoCompacto(d.monto)}</span>
           </div>
