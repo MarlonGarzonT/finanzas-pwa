@@ -20,9 +20,9 @@ export function Historial() {
   const [editando, setEditando] = useState<Transaccion | null>(null);
   const [guardando, setGuardando] = useState(false);
 
-  const nombrePorId = useMemo(() => {
-    const mapa = new Map(categorias.map((c) => [c.id, c.nombre]));
-    return (id: string) => mapa.get(id) ?? 'Otros';
+  const categoriaPorId = useMemo(() => {
+    const mapa = new Map(categorias.map((c) => [c.id, c]));
+    return (id: string) => mapa.get(id);
   }, [categorias]);
 
   const grupos = useMemo(() => {
@@ -75,33 +75,34 @@ export function Historial() {
             <section key={mes} className="historial__grupo">
               <h2>{mes}</h2>
               <ul>
-                {items.map((t) => (
-                  <li key={t.id} className="movimiento" onClick={() => setEditando(t)}>
-                    <div className={`movimiento__icono movimiento__icono--${t.tipo}`}>
-                      {t.tipo === 'ingreso' ? '+' : '−'}
-                    </div>
-                    <div className="movimiento__detalle">
-                      <span className="movimiento__item">{t.item}</span>
-                      <span className="movimiento__meta">
-                        <span className="movimiento__categoria">
-                          <span
-                            className="movimiento__categoria-punto"
-                            style={{ background: colorCategoria(t.categoriaId) }}
-                          />
-                          {nombrePorId(t.categoriaId)}
-                        </span>
-                        <span className="movimiento__meta-separador">·</span>
-                        <span>{formatearFechaCorta(t.fecha)}</span>
-                        <span className="movimiento__meta-separador">·</span>
-                        <span>Sem. {t.semanaDelMes}</span>
+                {items.map((t) => {
+                  const categoria = categoriaPorId(t.categoriaId);
+                  return (
+                    <li key={t.id} className="movimiento" onClick={() => setEditando(t)}>
+                      <span
+                        className="movimiento__icono"
+                        style={{ background: `color-mix(in srgb, ${colorCategoria(t.categoriaId)} 22%, var(--surface))` }}
+                        aria-hidden
+                      >
+                        {categoria?.emoji ?? '🏷️'}
                       </span>
-                    </div>
-                    <span className={`movimiento__monto movimiento__monto--${t.tipo}`}>
-                      {t.tipo === 'ingreso' ? '+' : '-'}
-                      {formatearMonto(t.monto)}
-                    </span>
-                  </li>
-                ))}
+                      <div className="movimiento__detalle">
+                        <span className="movimiento__item">{t.item}</span>
+                        <span className="movimiento__meta">
+                          <span className="movimiento__categoria">{categoria?.nombre ?? 'Otros'}</span>
+                          <span className="movimiento__meta-separador">·</span>
+                          <span>{formatearFechaCorta(t.fecha)}</span>
+                          <span className="movimiento__meta-separador">·</span>
+                          <span>Sem. {t.semanaDelMes}</span>
+                        </span>
+                      </div>
+                      <span className={`movimiento__monto movimiento__monto--${t.tipo}`}>
+                        {t.tipo === 'ingreso' ? '+' : '-'}
+                        {formatearMonto(t.monto)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ))}
