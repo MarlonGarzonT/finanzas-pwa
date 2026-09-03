@@ -86,6 +86,7 @@
 html,
 body {
   height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -98,7 +99,11 @@ body {
 }
 
 #root {
-  min-height: 100dvh;
+  height: 100vh; /* respaldo para navegadores sin soporte de svh */
+  height: 100svh; /* alto del viewport "pequeño": no cambia cuando el navegador
+                      anima su barra al hacer scroll/rebote, evita que la app
+                      entera se reacomode (y la TabBar "salte") */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }

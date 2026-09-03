@@ -4,6 +4,7 @@
   flex-direction: column;
   position: relative;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 
 .resumen__header {
@@ -49,7 +50,7 @@
 .fab {
   position: fixed;
   right: 20px;
-  bottom: calc(76px + var(--safe-bottom));
+  bottom: calc(64px + var(--safe-bottom));
   width: 58px;
   height: 58px;
   border-radius: 50%;
