@@ -7,13 +7,15 @@ const EMOJI_POR_PALABRA_CLAVE: [RegExp, string][] = [
   [/servicio|luz|agua|internet|gas|tel[eé]fono|energ[ií]a/i, '💡'],
   [/salario|n[oó]mina|sueldo|pago/i, '💰'],
   [/ropa|tienda|compra/i, '🛍️'],
+  [/mascota|perro|gato|veterinar/i, '🐶'],
+  [/viaje|vuelo|hotel|vacacion/i, '✈️'],
+  [/educaci[oó]n|colegio|universidad|curso/i, '🎓'],
 ];
 
 const EMOJIS_RESPALDO = ['🏷️', '📦', '🧾', '⭐', '🔖', '🎯'];
 
-// Palabra clave primero (categorías por defecto y variantes comunes);
-// si no coincide con nada, se elige un emoji de respaldo estable por
-// nombre, para que una misma categoría personalizada luzca siempre igual.
+// Se usa una sola vez, al crear la categoría, y el resultado queda guardado
+// en base de datos: el emoji es predeterminado, el usuario no lo elige.
 export function emojiCategoria(nombre: string): string {
   for (const [patron, emoji] of EMOJI_POR_PALABRA_CLAVE) {
     if (patron.test(nombre)) return emoji;

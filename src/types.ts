@@ -3,6 +3,7 @@ export type Tipo = 'ingreso' | 'egreso';
 export interface Categoria {
   id: string;
   nombre: string;
+  emoji: string;
 }
 
 export interface Transaccion {

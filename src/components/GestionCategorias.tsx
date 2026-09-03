@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { Categoria } from '../types';
-import { colorCategoria } from '../utils/colorCategoria';
 import './GestionCategorias.css';
 
 interface Props {
@@ -42,7 +41,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEl
           {categorias.map((c) => (
             <li key={c.id}>
               <span className="categorias-lista__nombre">
-                <span className="categorias-lista__punto" style={{ background: colorCategoria(c.id) }} />
+                <span aria-hidden>{c.emoji}</span>
                 {c.nombre}
               </span>
               <button onClick={() => manejarEliminar(c.id)} disabled={ocupado} aria-label={`Eliminar ${c.nombre}`}>
@@ -53,11 +52,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEl
         </ul>
 
         <div className="nueva-categoria">
-          <input
-            placeholder="Nueva categoría"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
+          <input placeholder="Nueva categoría" value={nombre} onChange={(e) => setNombre(e.target.value)} />
           <button onClick={manejarCrear} disabled={ocupado}>
             Agregar
           </button>
