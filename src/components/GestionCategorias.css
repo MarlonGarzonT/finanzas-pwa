@@ -1,7 +1,13 @@
 @import '../styles/sheet.css';
 
 .categorias-sheet {
-  max-height: 70dvh;
+  max-height: 80dvh;
+}
+
+.categorias-ayuda {
+  margin: -4px 4px 4px;
+  font-size: 13px;
+  color: var(--label-secondary);
 }
 
 .categorias-lista {
@@ -10,16 +16,58 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .categorias-lista li {
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.categorias-lista li:last-child {
+  border-bottom: none;
+}
+
+.categorias-lista__fila {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   padding: 12px 4px;
-  border-bottom: 0.5px solid var(--separator);
   font-size: 16px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.categorias-lista__fila:active {
+  background: var(--surface-tertiary);
+}
+
+.categorias-lista__nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.categorias-lista__insignia {
+  font-size: 13px;
+  flex: none;
+}
+
+.categorias-lista__tipo {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface-tertiary);
+  flex: none;
+}
+
+.categorias-lista__tipo--ingreso {
+  color: var(--income);
+}
+
+.categorias-lista__tipo--egreso {
+  color: var(--expense);
 }
 
 .categorias-lista button {
@@ -31,8 +79,64 @@
   padding: 4px 8px;
 }
 
-.categorias-lista__nombre {
-  display: inline-flex;
+.categorias-lista__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 2px 4px 16px;
+}
+
+.interruptor-fila {
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--label);
+  cursor: pointer;
+}
+
+.interruptor {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: 44px;
+  height: 26px;
+}
+
+.interruptor input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.interruptor__riel {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-tertiary);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.interruptor__riel::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.interruptor input:checked + .interruptor__riel {
+  background: var(--brand);
+}
+
+.interruptor input:checked + .interruptor__riel::after {
+  transform: translateX(18px);
 }
