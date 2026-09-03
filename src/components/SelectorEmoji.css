@@ -5,6 +5,7 @@
   padding: 4px 2px;
   max-height: 168px;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 
 .selector-emoji__opcion {

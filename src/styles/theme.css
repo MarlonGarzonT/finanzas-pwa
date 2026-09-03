@@ -95,7 +95,7 @@ body {
   background: var(--bg);
   color: var(--label);
   -webkit-font-smoothing: antialiased;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
 }
 
 #root {
