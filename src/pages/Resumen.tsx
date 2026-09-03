@@ -2,16 +2,27 @@ import { useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { BalanceCard } from '../components/BalanceCard';
 import { GestionCategorias } from '../components/GestionCategorias';
-import { GraficoCategorias } from '../components/GraficoCategorias';
-import { GraficoMensual } from '../components/GraficoMensual';
+import { GraficoGastos } from '../components/GraficoGastos';
+import { ListaMovimientos } from '../components/ListaMovimientos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { useFinanzas } from '../data/FinanzasContext';
+import type { Transaccion } from '../types';
 import './Resumen.css';
 
 export function Resumen() {
-  const { transacciones, categorias, cargando, crearMovimiento, crearCategoria, eliminarCategoria } = useFinanzas();
+  const {
+    transacciones,
+    categorias,
+    cargando,
+    crearMovimiento,
+    actualizarMovimiento,
+    eliminarMovimiento,
+    crearCategoria,
+    eliminarCategoria,
+  } = useFinanzas();
   const { cerrarSesion } = useAuth();
   const [sheetAbierto, setSheetAbierto] = useState(false);
+  const [editando, setEditando] = useState<Transaccion | null>(null);
   const [categoriasAbierto, setCategoriasAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
@@ -21,55 +32,73 @@ export function Resumen() {
   }, [categorias]);
 
   const disponible = useMemo(
-    () =>
-      transacciones.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0),
+    () => transacciones.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0),
     [transacciones]
   );
 
-  const datosCategorias = useMemo(() => {
+  const { totalIngresos, totalEgresos } = useMemo(() => {
+    let ingresos = 0;
+    let egresos = 0;
+    for (const t of transacciones) {
+      if (t.tipo === 'ingreso') ingresos += t.monto;
+      else egresos += t.monto;
+    }
+    return { totalIngresos: ingresos, totalEgresos: egresos };
+  }, [transacciones]);
+
+  const transaccionesDelMes = useMemo(() => {
     const ahora = new Date();
     const claveMesActual = `${ahora.getFullYear()}-${ahora.getMonth()}`;
-    const netos = new Map<string, number>();
-    for (const t of transacciones) {
+    return transacciones.filter((t) => {
       const fecha = new Date(t.fecha);
-      const clave = `${fecha.getFullYear()}-${fecha.getMonth()}`;
-      if (clave !== claveMesActual) continue;
-      const nombre = nombrePorId(t.categoriaId);
-      const signo = t.tipo === 'ingreso' ? 1 : -1;
-      netos.set(nombre, (netos.get(nombre) ?? 0) + signo * t.monto);
-    }
-    return Array.from(netos, ([categoria, neto]) => ({ categoria, neto }));
-  }, [transacciones, nombrePorId]);
-
-  const datosMensuales = useMemo(() => {
-    const ahora = new Date();
-    const meses: { clave: string; mes: string; ingresos: number; egresos: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
-      meses.push({
-        clave: `${d.getFullYear()}-${d.getMonth()}`,
-        mes: d.toLocaleDateString('es-CO', { month: 'short' }),
-        ingresos: 0,
-        egresos: 0,
-      });
-    }
-    const porClave = new Map(meses.map((m) => [m.clave, m]));
-    for (const t of transacciones) {
-      const fecha = new Date(t.fecha);
-      const clave = `${fecha.getFullYear()}-${fecha.getMonth()}`;
-      const fila = porClave.get(clave);
-      if (!fila) continue;
-      if (t.tipo === 'ingreso') fila.ingresos += t.monto;
-      else fila.egresos += t.monto;
-    }
-    return meses;
+      return `${fecha.getFullYear()}-${fecha.getMonth()}` === claveMesActual;
+    });
   }, [transacciones]);
+
+  const datosGastos = useMemo(() => {
+    const totales = new Map<string, number>();
+    for (const t of transaccionesDelMes) {
+      if (t.tipo !== 'egreso') continue;
+      const nombre = nombrePorId(t.categoriaId);
+      totales.set(nombre, (totales.get(nombre) ?? 0) + t.monto);
+    }
+    return Array.from(totales, ([categoria, monto]) => ({ categoria, monto }))
+      .sort((a, b) => b.monto - a.monto)
+      .slice(0, 6);
+  }, [transaccionesDelMes, nombrePorId]);
+
+  const gruposPorDia = useMemo(() => {
+    const mapa = new Map<string, Transaccion[]>();
+    for (const t of transaccionesDelMes) {
+      const clave = t.fecha.slice(0, 10);
+      if (!mapa.has(clave)) mapa.set(clave, []);
+      mapa.get(clave)!.push(t);
+    }
+    return Array.from(mapa.entries());
+  }, [transaccionesDelMes]);
+
+  function cerrarSheet() {
+    setSheetAbierto(false);
+    setEditando(null);
+  }
 
   async function manejarGuardar(datos: { item: string; categoriaId: string; tipo: 'ingreso' | 'egreso'; monto: number }) {
     setGuardando(true);
-    await crearMovimiento(datos);
+    if (editando) {
+      await actualizarMovimiento(editando.id, datos);
+    } else {
+      await crearMovimiento(datos);
+    }
     setGuardando(false);
-    setSheetAbierto(false);
+    cerrarSheet();
+  }
+
+  async function manejarEliminar() {
+    if (!editando) return;
+    setGuardando(true);
+    await eliminarMovimiento(editando.id);
+    setGuardando(false);
+    cerrarSheet();
   }
 
   return (
@@ -90,9 +119,9 @@ export function Resumen() {
         <p className="resumen__cargando">Cargando…</p>
       ) : (
         <div className="resumen__contenido">
-          <BalanceCard disponible={disponible} />
-          <GraficoMensual datos={datosMensuales} />
-          <GraficoCategorias datos={datosCategorias} />
+          <BalanceCard disponible={disponible} totalIngresos={totalIngresos} totalEgresos={totalEgresos} />
+          <GraficoGastos datos={datosGastos} />
+          <ListaMovimientos grupos={gruposPorDia} nombrePorId={nombrePorId} onSeleccionar={setEditando} />
         </div>
       )}
 
@@ -101,11 +130,13 @@ export function Resumen() {
       </button>
 
       <NuevoMovimientoSheet
-        abierto={sheetAbierto}
+        abierto={sheetAbierto || editando !== null}
         categorias={categorias}
+        transaccion={editando}
         guardando={guardando}
-        onCerrar={() => setSheetAbierto(false)}
+        onCerrar={cerrarSheet}
         onGuardar={manejarGuardar}
+        onEliminar={editando ? manejarEliminar : undefined}
         onCrearCategoria={crearCategoria}
       />
 

@@ -51,7 +51,7 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 | Enrutamiento | React Router (`HashRouter`, compatible con GitHub Pages) |
 | Backend / base de datos | Supabase (PostgreSQL, Auth, Row Level Security) |
 | Cliente de datos | `@supabase/supabase-js` |
-| Visualización de datos | Recharts |
+| Visualización de datos | Componentes propios (CSS), sin librería de gráficos |
 | Progresive Web App | `vite-plugin-pwa` (manifest y service worker) |
 | Estilos | CSS con variables de diseño, sin framework de utilidades |
 | Hosting / CI-CD | GitHub Pages, desplegado mediante GitHub Actions |
