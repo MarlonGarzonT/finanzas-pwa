@@ -11,6 +11,7 @@ interface FinanzasContextValue {
   actualizarMovimiento: (id: string, datos: Partial<NuevaTransaccion>) => Promise<void>;
   eliminarMovimiento: (id: string) => Promise<void>;
   crearCategoria: (nombre: string) => Promise<Categoria>;
+  actualizarEmojiCategoria: (id: string, emoji: string) => Promise<void>;
   eliminarCategoria: (id: string) => Promise<void>;
 }
 
@@ -59,6 +60,11 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     return nueva;
   }
 
+  async function actualizarEmojiCategoria(id: string, emoji: string) {
+    const actualizada = await db.actualizarEmojiCategoria(id, emoji);
+    setCategorias((prev) => prev.map((c) => (c.id === id ? actualizada : c)));
+  }
+
   async function eliminarCategoria(id: string) {
     await db.eliminarCategoria(id);
     setCategorias((prev) => prev.filter((c) => c.id !== id));
@@ -74,6 +80,7 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         actualizarMovimiento,
         eliminarMovimiento,
         crearCategoria,
+        actualizarEmojiCategoria,
         eliminarCategoria,
       }}
     >

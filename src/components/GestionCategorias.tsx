@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Categoria } from '../types';
+import { SelectorEmoji } from './SelectorEmoji';
 import './GestionCategorias.css';
 
 interface Props {
@@ -7,12 +8,14 @@ interface Props {
   categorias: Categoria[];
   onCerrar: () => void;
   onCrear: (nombre: string) => Promise<void>;
+  onActualizarEmoji: (id: string, emoji: string) => Promise<void>;
   onEliminar: (id: string) => Promise<void>;
 }
 
-export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEliminar }: Props) {
+export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onActualizarEmoji, onEliminar }: Props) {
   const [nombre, setNombre] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  const [editandoEmojiId, setEditandoEmojiId] = useState<string | null>(null);
 
   if (!abierto) return null;
 
@@ -23,6 +26,13 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEl
     await onCrear(limpio);
     setNombre('');
     setOcupado(false);
+  }
+
+  async function manejarCambiarEmoji(id: string, emoji: string) {
+    setOcupado(true);
+    await onActualizarEmoji(id, emoji);
+    setOcupado(false);
+    setEditandoEmojiId(null);
   }
 
   async function manejarEliminar(id: string) {
@@ -40,13 +50,24 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onEl
         <ul className="categorias-lista">
           {categorias.map((c) => (
             <li key={c.id}>
-              <span className="categorias-lista__nombre">
-                <span aria-hidden>{c.emoji}</span>
-                {c.nombre}
-              </span>
-              <button onClick={() => manejarEliminar(c.id)} disabled={ocupado} aria-label={`Eliminar ${c.nombre}`}>
-                ✕
-              </button>
+              <div className="categorias-lista__fila">
+                <button
+                  type="button"
+                  className="categorias-lista__emoji-btn"
+                  onClick={() => setEditandoEmojiId(editandoEmojiId === c.id ? null : c.id)}
+                  disabled={ocupado}
+                  aria-label={`Cambiar emoji de ${c.nombre}`}
+                >
+                  {c.emoji}
+                </button>
+                <span className="categorias-lista__nombre">{c.nombre}</span>
+                <button onClick={() => manejarEliminar(c.id)} disabled={ocupado} aria-label={`Eliminar ${c.nombre}`}>
+                  ✕
+                </button>
+              </div>
+              {editandoEmojiId === c.id && (
+                <SelectorEmoji seleccionado={c.emoji} onSeleccionar={(emoji) => manejarCambiarEmoji(c.id, emoji)} />
+              )}
             </li>
           ))}
         </ul>

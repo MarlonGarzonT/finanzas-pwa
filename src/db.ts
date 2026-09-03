@@ -65,6 +65,17 @@ export async function crearCategoria(userId: string, nombre: string): Promise<Ca
   return data;
 }
 
+export async function actualizarEmojiCategoria(id: string, emoji: string): Promise<Categoria> {
+  const { data, error } = await supabase
+    .from('categorias')
+    .update({ emoji })
+    .eq('id', id)
+    .select('id, nombre, emoji')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function eliminarCategoria(id: string): Promise<void> {
   const { error } = await supabase.from('categorias').delete().eq('id', id);
   if (error) throw error;

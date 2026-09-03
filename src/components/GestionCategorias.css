@@ -14,12 +14,15 @@
 }
 
 .categorias-lista li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 4px;
+  padding: 8px 4px;
   border-bottom: 0.5px solid var(--separator);
   font-size: 16px;
+}
+
+.categorias-lista__fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .categorias-lista button {
@@ -31,8 +34,17 @@
   padding: 4px 8px;
 }
 
+.categorias-lista__emoji-btn {
+  color: inherit;
+  font-size: 19px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.categorias-lista__emoji-btn:active {
+  background: var(--surface-tertiary);
+}
+
 .categorias-lista__nombre {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+  flex: 1;
 }

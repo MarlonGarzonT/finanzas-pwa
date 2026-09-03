@@ -18,6 +18,7 @@ export function Resumen() {
     actualizarMovimiento,
     eliminarMovimiento,
     crearCategoria,
+    actualizarEmojiCategoria,
     eliminarCategoria,
   } = useFinanzas();
   const { cerrarSesion } = useAuth();
@@ -152,6 +153,7 @@ export function Resumen() {
         onCrear={async (nombre) => {
           await crearCategoria(nombre);
         }}
+        onActualizarEmoji={actualizarEmojiCategoria}
         onEliminar={eliminarCategoria}
       />
     </div>
