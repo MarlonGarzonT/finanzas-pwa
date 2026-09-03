@@ -1,7 +1,6 @@
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { Login } from './auth/Login';
-import { TabBar } from './components/TabBar';
 import { FinanzasProvider } from './data/FinanzasContext';
 import { Historial } from './pages/Historial';
 import { Resumen } from './pages/Resumen';
@@ -24,7 +23,6 @@ function AppShell() {
           <Route path="/" element={<Resumen />} />
           <Route path="/historial" element={<Historial />} />
         </Routes>
-        <TabBar />
       </HashRouter>
     </FinanzasProvider>
   );

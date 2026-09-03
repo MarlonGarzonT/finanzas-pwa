@@ -13,13 +13,6 @@
   padding: calc(8px + var(--safe-top)) 20px 2px;
 }
 
-.resumen__header h1 {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
-  margin: 0;
-}
-
 .resumen__acciones {
   display: flex;
   gap: 4px;
@@ -49,7 +42,7 @@
 .fab {
   position: fixed;
   right: 20px;
-  bottom: calc(64px + var(--safe-bottom));
+  bottom: calc(24px + var(--safe-bottom));
   width: 58px;
   height: 58px;
   border-radius: 50%;

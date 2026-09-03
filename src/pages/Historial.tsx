@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
+import { SelectorPagina } from '../components/SelectorPagina';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
 import { colorCategoria } from '../utils/colorCategoria';
@@ -58,7 +59,7 @@ export function Historial() {
   return (
     <div className="historial">
       <header className="historial__header">
-        <h1>Historial</h1>
+        <SelectorPagina />
       </header>
 
       {cargando ? (

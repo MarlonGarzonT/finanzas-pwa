@@ -4,6 +4,7 @@ import { BalanceCard } from '../components/BalanceCard';
 import { GestionCategorias } from '../components/GestionCategorias';
 import { GraficoGastos } from '../components/GraficoGastos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
+import { SelectorPagina } from '../components/SelectorPagina';
 import { UltimoMovimiento } from '../components/UltimoMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
@@ -101,7 +102,7 @@ export function Resumen() {
   return (
     <div className="resumen">
       <header className="resumen__header">
-        <h1>Resumen</h1>
+        <SelectorPagina />
         <div className="resumen__acciones">
           <button onClick={() => setCategoriasAbierto(true)} aria-label="Gestionar categorías">
             ⚙️

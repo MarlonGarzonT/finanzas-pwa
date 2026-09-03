@@ -1,0 +1,53 @@
+.selector-pagina {
+  position: relative;
+}
+
+.selector-pagina__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: var(--surface-tertiary);
+  color: var(--label);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  cursor: pointer;
+}
+
+.selector-pagina__fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+}
+
+.selector-pagina__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.selector-pagina__opcion {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--label);
+  text-decoration: none;
+}
+
+.selector-pagina__opcion--activa {
+  background: var(--brand-tint);
+  color: var(--brand);
+  font-weight: 600;
+}
