@@ -4,6 +4,7 @@
   flex-direction: column;
   position: relative;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 
 .resumen__header {
