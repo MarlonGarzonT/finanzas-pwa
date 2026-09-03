@@ -4,6 +4,7 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  animation: pagina-entrada 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .resumen__header {
@@ -27,9 +28,10 @@
 }
 
 .resumen__cargando {
-  padding: 40px 20px;
-  text-align: center;
-  color: var(--label-secondary);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .resumen__contenido {
@@ -58,4 +60,9 @@
   box-shadow: 0 6px 16px rgba(88, 86, 214, 0.4);
   cursor: pointer;
   z-index: 15;
+  transition: opacity 0.12s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fab:active {
+  transform: scale(0.9);
 }

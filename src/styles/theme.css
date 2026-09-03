@@ -116,6 +116,36 @@ input {
 
 button {
   -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+/* Feedback táctil universal: cualquier botón se atenúa al presionarlo,
+   como en iOS/UIKit. Los elementos que además necesitan un "pop" propio
+   (FAB, chips, emojis) agregan su propio transform encima de esto. */
+button:active:not(:disabled) {
+  opacity: 0.55;
+}
+
+@keyframes pagina-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid var(--surface-tertiary);
+  border-top-color: var(--brand);
+  animation: girar 0.75s linear infinite;
 }
 
 .app-cargando {

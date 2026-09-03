@@ -15,12 +15,24 @@
   font-weight: 700;
   letter-spacing: -0.3px;
   cursor: pointer;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.selector-pagina__boton:active {
+  transform: scale(0.96);
 }
 
 .selector-pagina__fondo {
   position: fixed;
   inset: 0;
   z-index: 29;
+}
+
+@keyframes menu-aparecer {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-4px);
+  }
 }
 
 .selector-pagina__menu {
@@ -33,8 +45,12 @@
   min-width: 160px;
   padding: 6px;
   border-radius: var(--radius-md);
-  background: var(--surface-elevated);
+  background: var(--surface-translucent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  transform-origin: top left;
+  animation: menu-aparecer 0.16s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .selector-pagina__opcion {
@@ -44,6 +60,11 @@
   font-weight: 500;
   color: var(--label);
   text-decoration: none;
+  transition: background 0.1s ease;
+}
+
+.selector-pagina__opcion:active {
+  background: var(--surface-tertiary);
 }
 
 .selector-pagina__opcion--activa {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { SelectorPagina } from '../components/SelectorPagina';
+import { Spinner } from '../components/Spinner';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
 import { colorCategoria } from '../utils/colorCategoria';
@@ -63,7 +64,9 @@ export function Historial() {
       </header>
 
       {cargando ? (
-        <p className="historial__vacio">Cargando…</p>
+        <div className="historial__cargando">
+          <Spinner />
+        </div>
       ) : transacciones.length === 0 ? (
         <p className="historial__vacio">Aún no tienes movimientos registrados.</p>
       ) : (

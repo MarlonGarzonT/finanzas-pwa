@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { formatearMontoCompacto } from '../utils/fechas';
 import './Graficos.css';
 
@@ -8,6 +9,14 @@ interface Fila {
 }
 
 export function GraficoGastos({ datos }: { datos: Fila[] }) {
+  // Las barras arrancan en 0 y crecen a su alto real tras montar, para que
+  // el gráfico "aparezca" animado en vez de dibujarse ya completo.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMontado(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   if (datos.length === 0) {
     return (
       <div className="grafico-card">
@@ -26,7 +35,10 @@ export function GraficoGastos({ datos }: { datos: Fila[] }) {
         {datos.map((d) => (
           <div key={d.categoria} className="gastos-barras__col">
             <div className="gastos-barras__pista">
-              <div className="gastos-barras__barra" style={{ height: `${Math.max(6, (d.monto / max) * 100)}%` }} />
+              <div
+                className="gastos-barras__barra"
+                style={{ height: montado ? `${Math.max(6, (d.monto / max) * 100)}%` : '0%' }}
+              />
             </div>
             <span className="gastos-barras__emoji" aria-hidden>
               {d.emoji}

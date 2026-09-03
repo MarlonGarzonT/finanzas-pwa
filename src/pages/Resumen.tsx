@@ -5,6 +5,7 @@ import { GestionCategorias } from '../components/GestionCategorias';
 import { GraficoGastos } from '../components/GraficoGastos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { SelectorPagina } from '../components/SelectorPagina';
+import { Spinner } from '../components/Spinner';
 import { UltimoMovimiento } from '../components/UltimoMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
@@ -114,7 +115,9 @@ export function Resumen() {
       </header>
 
       {cargando ? (
-        <p className="resumen__cargando">Cargando…</p>
+        <div className="resumen__cargando">
+          <Spinner />
+        </div>
       ) : (
         <div className="resumen__contenido">
           <BalanceCard disponible={disponible} totalIngresos={totalIngresos} totalEgresos={totalEgresos} />

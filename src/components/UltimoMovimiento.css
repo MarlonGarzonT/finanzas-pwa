@@ -20,6 +20,11 @@
   gap: 12px;
   padding: 12px;
   cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.ultimo-movimiento__item:active {
+  background: var(--surface-tertiary);
 }
 
 .ultimo-movimiento__avatar {

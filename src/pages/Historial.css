@@ -4,6 +4,7 @@
   flex-direction: column;
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  animation: pagina-entrada 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .historial__header {
@@ -14,6 +15,13 @@
   padding: 40px 20px;
   text-align: center;
   color: var(--label-secondary);
+}
+
+.historial__cargando {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .historial__contenido {
@@ -47,6 +55,11 @@
   padding: 12px;
   border-bottom: 0.5px solid var(--separator);
   cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.movimiento:active {
+  background: var(--surface-tertiary);
 }
 
 .movimiento:last-child {
