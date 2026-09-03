@@ -2,11 +2,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 26px 20px 30px;
+  gap: 10px;
+  padding: 24px 20px 20px;
   border-radius: var(--radius-lg);
   background: var(--surface);
-  border: 2px solid var(--balance-color, var(--label-secondary));
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
@@ -23,16 +22,77 @@
 }
 
 .balance-card__label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--label-secondary);
-  letter-spacing: -0.2px;
+  letter-spacing: -0.1px;
+}
+
+.balance-card__monto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.balance-card__signo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--balance-color) 16%, var(--surface));
+  color: var(--balance-color);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .balance-card__valor {
-  font-size: 44px;
-  font-weight: 700;
-  letter-spacing: -1px;
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
   font-variant-numeric: proportional-nums;
-  color: var(--balance-color, var(--label));
+  color: var(--label);
+}
+
+.balance-card__pills {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.balance-card__pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px 7px 7px;
+  border-radius: 999px;
+  background: var(--surface-tertiary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
+}
+
+.balance-card__pill-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.balance-card__pill--egreso .balance-card__pill-icono {
+  background: color-mix(in srgb, var(--expense) 16%, var(--surface));
+  color: var(--expense);
+}
+
+.balance-card__pill--ingreso .balance-card__pill-icono {
+  background: color-mix(in srgb, var(--income) 16%, var(--surface));
+  color: var(--income);
 }

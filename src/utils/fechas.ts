@@ -18,7 +18,16 @@ export function formatearMonto(monto: number): string {
 
 // El signo (+/-) nunca depende solo del color: siempre acompaña al monto en texto.
 export function formatearMontoConSigno(monto: number): string {
-  return monto > 0 ? `+${formatearMonto(monto)}` : formatearMonto(monto);
+  if (monto > 0) return `+${formatearMonto(monto)}`;
+  if (monto < 0) return `-${formatearMonto(Math.abs(monto))}`;
+  return formatearMonto(monto);
+}
+
+// Para etiquetas de gráfico donde el espacio es reducido (ej. "766k", "1.2M").
+export function formatearMontoCompacto(monto: number): string {
+  if (monto >= 1_000_000) return `${(monto / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (monto >= 1000) return `${Math.round(monto / 1000)}k`;
+  return `${Math.round(monto)}`;
 }
 
 export function nombreMes(fecha: Date): string {
