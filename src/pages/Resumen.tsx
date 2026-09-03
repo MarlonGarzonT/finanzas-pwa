@@ -3,8 +3,8 @@ import { useAuth } from '../auth/AuthContext';
 import { BalanceCard } from '../components/BalanceCard';
 import { GestionCategorias } from '../components/GestionCategorias';
 import { GraficoGastos } from '../components/GraficoGastos';
-import { ListaMovimientos } from '../components/ListaMovimientos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
+import { UltimoMovimiento } from '../components/UltimoMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
 import './Resumen.css';
@@ -72,15 +72,7 @@ export function Resumen() {
       .slice(0, 6);
   }, [transaccionesDelMes, categoriaPorId]);
 
-  const gruposPorDia = useMemo(() => {
-    const mapa = new Map<string, Transaccion[]>();
-    for (const t of transaccionesDelMes) {
-      const clave = t.fecha.slice(0, 10);
-      if (!mapa.has(clave)) mapa.set(clave, []);
-      mapa.get(clave)!.push(t);
-    }
-    return Array.from(mapa.entries());
-  }, [transaccionesDelMes]);
+  const ultimoMovimiento = transacciones[0] ?? null;
 
   function cerrarSheet() {
     setSheetAbierto(false);
@@ -126,7 +118,7 @@ export function Resumen() {
         <div className="resumen__contenido">
           <BalanceCard disponible={disponible} totalIngresos={totalIngresos} totalEgresos={totalEgresos} />
           <GraficoGastos datos={datosGastos} />
-          <ListaMovimientos grupos={gruposPorDia} categoriaPorId={categoriaPorId} onSeleccionar={setEditando} />
+          <UltimoMovimiento transaccion={ultimoMovimiento} categoriaPorId={categoriaPorId} onSeleccionar={setEditando} />
         </div>
       )}
 

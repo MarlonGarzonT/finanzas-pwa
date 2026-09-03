@@ -1,0 +1,71 @@
+.ultimo-movimiento {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ultimo-movimiento ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ultimo-movimiento__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.ultimo-movimiento__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex: none;
+}
+
+.ultimo-movimiento__detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ultimo-movimiento__categoria {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--label-secondary);
+}
+
+.ultimo-movimiento__descripcion {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ultimo-movimiento__monto {
+  font-size: 15px;
+  font-weight: 600;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.ultimo-movimiento__monto--ingreso {
+  color: var(--income);
+}
+
+.ultimo-movimiento__monto--egreso {
+  color: var(--expense);
+}
