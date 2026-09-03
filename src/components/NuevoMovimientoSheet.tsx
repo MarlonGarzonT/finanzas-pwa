@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Categoria, Tipo, Transaccion } from '../types';
 import { colorCategoria } from '../utils/colorCategoria';
 import './NuevoMovimientoSheet.css';
@@ -31,6 +31,38 @@ export function NuevoMovimientoSheet({
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [nombreNuevaCategoria, setNombreNuevaCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [espacioTeclado, setEspacioTeclado] = useState(0);
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  // En Android, la barra de accesorios del teclado (flechas/check) no se
+  // refleja en el alto del viewport de layout: hay que medirla con
+  // visualViewport y reservarle espacio, o tapa el campo enfocado.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!abierto || !vv) return;
+
+    function actualizarEspacio() {
+      const oculto = window.innerHeight - vv!.height - vv!.offsetTop;
+      setEspacioTeclado(Math.max(0, oculto));
+    }
+
+    actualizarEspacio();
+    vv.addEventListener('resize', actualizarEspacio);
+    vv.addEventListener('scroll', actualizarEspacio);
+    return () => {
+      vv.removeEventListener('resize', actualizarEspacio);
+      vv.removeEventListener('scroll', actualizarEspacio);
+      setEspacioTeclado(0);
+    };
+  }, [abierto]);
+
+  function manejarFocoCampo(e: React.FocusEvent<HTMLDivElement>) {
+    const campo = e.target;
+    if (!(campo instanceof HTMLInputElement)) return;
+    // Se espera a que el teclado termine de animarse antes de centrar el campo,
+    // si no el cálculo de scroll se hace contra el tamaño previo del viewport.
+    setTimeout(() => campo.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+  }
 
   useEffect(() => {
     if (!abierto) return;
@@ -72,36 +104,46 @@ export function NuevoMovimientoSheet({
 
   return (
     <div className="sheet-overlay" onClick={onCerrar}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="sheet__handle" />
-        <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
+      <div
+        ref={sheetRef}
+        className="sheet"
+        onClick={(e) => e.stopPropagation()}
+        onFocusCapture={manejarFocoCampo}
+        style={espacioTeclado ? { paddingBottom: espacioTeclado + 56 } : undefined}
+      >
+        {/* Fijo (sticky) para que el monto nunca quede oculto tras el teclado,
+            sin importar cuánto scroll haga el usuario dentro del sheet. */}
+        <div className="sheet__header">
+          <div className="sheet__handle" />
+          <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
 
-        <div className="segmented">
-          <button
-            type="button"
-            className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
-            onClick={() => setTipo('ingreso')}
-          >
-            Entrada
-          </button>
-          <button
-            type="button"
-            className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
-            onClick={() => setTipo('egreso')}
-          >
-            Salida
-          </button>
-        </div>
+          <div className="segmented">
+            <button
+              type="button"
+              className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
+              onClick={() => setTipo('ingreso')}
+            >
+              Entrada
+            </button>
+            <button
+              type="button"
+              className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
+              onClick={() => setTipo('egreso')}
+            >
+              Salida
+            </button>
+          </div>
 
-        <div className="monto-input">
-          <span>$</span>
-          <input
-            inputMode="numeric"
-            placeholder="0"
-            value={monto ? Number(monto).toLocaleString('es-CO') : ''}
-            onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
-            autoFocus
-          />
+          <div className="monto-input">
+            <span>$</span>
+            <input
+              inputMode="numeric"
+              placeholder="0"
+              value={monto ? Number(monto).toLocaleString('es-CO') : ''}
+              onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
+              autoFocus
+            />
+          </div>
         </div>
 
         <input
