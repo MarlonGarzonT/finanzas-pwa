@@ -111,35 +111,39 @@ export function NuevoMovimientoSheet({
         onFocusCapture={manejarFocoCampo}
         style={espacioTeclado ? { paddingBottom: espacioTeclado + 56 } : undefined}
       >
-        <div className="sheet__handle" />
-        <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
+        {/* Fijo (sticky) para que el monto nunca quede oculto tras el teclado,
+            sin importar cuánto scroll haga el usuario dentro del sheet. */}
+        <div className="sheet__header">
+          <div className="sheet__handle" />
+          <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
 
-        <div className="segmented">
-          <button
-            type="button"
-            className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
-            onClick={() => setTipo('ingreso')}
-          >
-            Entrada
-          </button>
-          <button
-            type="button"
-            className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
-            onClick={() => setTipo('egreso')}
-          >
-            Salida
-          </button>
-        </div>
+          <div className="segmented">
+            <button
+              type="button"
+              className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
+              onClick={() => setTipo('ingreso')}
+            >
+              Entrada
+            </button>
+            <button
+              type="button"
+              className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
+              onClick={() => setTipo('egreso')}
+            >
+              Salida
+            </button>
+          </div>
 
-        <div className="monto-input">
-          <span>$</span>
-          <input
-            inputMode="numeric"
-            placeholder="0"
-            value={monto ? Number(monto).toLocaleString('es-CO') : ''}
-            onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
-            autoFocus
-          />
+          <div className="monto-input">
+            <span>$</span>
+            <input
+              inputMode="numeric"
+              placeholder="0"
+              value={monto ? Number(monto).toLocaleString('es-CO') : ''}
+              onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
+              autoFocus
+            />
+          </div>
         </div>
 
         <input
