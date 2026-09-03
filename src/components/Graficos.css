@@ -18,12 +18,18 @@
   color: var(--label-secondary);
 }
 
+.gastos-barras__vacio {
+  margin: 0 4px;
+  font-size: 14px;
+  color: var(--label-secondary);
+}
+
 .gastos-barras {
   display: flex;
   align-items: stretch;
   gap: 10px;
   height: 170px;
-  padding: 4px 8px 0;
+  padding: 4px 4px 0;
 }
 
 .gastos-barras__col {
