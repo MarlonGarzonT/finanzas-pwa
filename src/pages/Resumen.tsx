@@ -20,6 +20,7 @@ export function Resumen() {
     actualizarMovimiento,
     eliminarMovimiento,
     crearCategoria,
+    actualizarCategoria,
     eliminarCategoria,
   } = useFinanzas();
   const { cerrarSesion } = useAuth();
@@ -145,9 +146,10 @@ export function Resumen() {
         abierto={categoriasAbierto}
         categorias={categorias}
         onCerrar={() => setCategoriasAbierto(false)}
-        onCrear={async (nombre) => {
-          await crearCategoria(nombre);
+        onCrear={async (nombre, tipo) => {
+          await crearCategoria(nombre, tipo);
         }}
+        onActualizar={actualizarCategoria}
         onEliminar={eliminarCategoria}
       />
     </div>

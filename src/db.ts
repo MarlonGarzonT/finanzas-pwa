@@ -1,18 +1,28 @@
 import { supabase } from './supabaseClient';
-import type { Categoria, NuevaTransaccion, Transaccion } from './types';
+import type { CambiosCategoria, Categoria, NuevaTransaccion, Tipo, Transaccion } from './types';
 import { calcularSemanaDelMes } from './utils/fechas';
 import { emojiCategoria } from './utils/emojiCategoria';
 
-const CATEGORIAS_DEFECTO = [
-  { nombre: 'Comida', emoji: '🍔' },
-  { nombre: 'Transporte', emoji: '🚗' },
-  { nombre: 'Vivienda', emoji: '🏠' },
-  { nombre: 'Salud', emoji: '💊' },
-  { nombre: 'Entretenimiento', emoji: '🎮' },
-  { nombre: 'Servicios', emoji: '💡' },
-  { nombre: 'Salario', emoji: '💰' },
-  { nombre: 'Otros', emoji: '🏷️' },
+const CATEGORIAS_DEFECTO: { nombre: string; emoji: string; tipo: Tipo }[] = [
+  { nombre: 'Comida', emoji: '🍔', tipo: 'egreso' },
+  { nombre: 'Transporte', emoji: '🚗', tipo: 'egreso' },
+  { nombre: 'Vivienda', emoji: '🏠', tipo: 'egreso' },
+  { nombre: 'Salud', emoji: '💊', tipo: 'egreso' },
+  { nombre: 'Entretenimiento', emoji: '🎮', tipo: 'egreso' },
+  { nombre: 'Servicios', emoji: '💡', tipo: 'egreso' },
+  { nombre: 'Salario', emoji: '💰', tipo: 'ingreso' },
+  { nombre: 'Otros', emoji: '🏷️', tipo: 'egreso' },
 ];
+
+function mapCategoria(row: { id: string; nombre: string; emoji: string; tipo: Tipo; es_fijo: boolean }): Categoria {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    emoji: row.emoji,
+    tipo: row.tipo,
+    esFijo: row.es_fijo,
+  };
+}
 
 function mapTransaccion(row: {
   id: string;
@@ -34,35 +44,53 @@ function mapTransaccion(row: {
   };
 }
 
+const COLUMNAS_CATEGORIA = 'id, nombre, emoji, tipo, es_fijo';
+
 export async function obtenerCategorias(userId: string): Promise<Categoria[]> {
   const { data, error } = await supabase
     .from('categorias')
-    .select('id, nombre, emoji')
+    .select(COLUMNAS_CATEGORIA)
     .order('nombre', { ascending: true });
   if (error) throw error;
 
   if (!data || data.length === 0) {
     const { data: creadas, error: errorInsert } = await supabase
       .from('categorias')
-      .insert(CATEGORIAS_DEFECTO.map(({ nombre, emoji }) => ({ nombre, emoji, user_id: userId })))
-      .select('id, nombre, emoji');
+      .insert(CATEGORIAS_DEFECTO.map(({ nombre, emoji, tipo }) => ({ nombre, emoji, tipo, user_id: userId })))
+      .select(COLUMNAS_CATEGORIA);
     if (errorInsert) throw errorInsert;
-    return (creadas ?? []).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return (creadas ?? []).map(mapCategoria).sort((a, b) => a.nombre.localeCompare(b.nombre));
   }
 
-  return data;
+  return data.map(mapCategoria);
 }
 
 // El emoji es predeterminado según el nombre (el usuario no lo elige) y
 // queda guardado en la categoría, no se recalcula en cada render.
-export async function crearCategoria(userId: string, nombre: string): Promise<Categoria> {
+export async function crearCategoria(userId: string, nombre: string, tipo: Tipo): Promise<Categoria> {
   const { data, error } = await supabase
     .from('categorias')
-    .insert({ nombre, emoji: emojiCategoria(nombre), user_id: userId })
-    .select('id, nombre, emoji')
+    .insert({ nombre, tipo, emoji: emojiCategoria(nombre), user_id: userId })
+    .select(COLUMNAS_CATEGORIA)
     .single();
   if (error) throw error;
-  return data;
+  return mapCategoria(data);
+}
+
+export async function actualizarCategoria(id: string, cambios: CambiosCategoria): Promise<Categoria> {
+  const payload: Record<string, unknown> = {};
+  if (cambios.emoji !== undefined) payload.emoji = cambios.emoji;
+  if (cambios.tipo !== undefined) payload.tipo = cambios.tipo;
+  if (cambios.esFijo !== undefined) payload.es_fijo = cambios.esFijo;
+
+  const { data, error } = await supabase
+    .from('categorias')
+    .update(payload)
+    .eq('id', id)
+    .select(COLUMNAS_CATEGORIA)
+    .single();
+  if (error) throw error;
+  return mapCategoria(data);
 }
 
 export async function eliminarCategoria(id: string): Promise<void> {

@@ -5,6 +5,8 @@ create table if not exists categorias (
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
   nombre text not null,
   emoji text not null default '🏷️',
+  tipo text not null default 'egreso' check (tipo in ('ingreso', 'egreso')),
+  es_fijo boolean not null default false,
   created_at timestamptz default now()
 );
 
@@ -48,3 +50,10 @@ update categorias set emoji = case
   else emoji
 end
 where emoji = '🏷️';
+
+-- Migración: agrega tipo (ingreso/egreso) y es_fijo (gasto mensual fijo,
+-- ej. cuota de moto o celular) a categorías existentes. Segura de repetir.
+alter table categorias add column if not exists tipo text not null default 'egreso' check (tipo in ('ingreso', 'egreso'));
+alter table categorias add column if not exists es_fijo boolean not null default false;
+
+update categorias set tipo = 'ingreso' where tipo = 'egreso' and nombre ilike '%salario%';

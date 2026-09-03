@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import * as db from '../db';
-import type { Categoria, NuevaTransaccion, Transaccion } from '../types';
+import type { CambiosCategoria, Categoria, NuevaTransaccion, Tipo, Transaccion } from '../types';
 
 interface FinanzasContextValue {
   transacciones: Transaccion[];
@@ -10,7 +10,8 @@ interface FinanzasContextValue {
   crearMovimiento: (datos: NuevaTransaccion) => Promise<void>;
   actualizarMovimiento: (id: string, datos: Partial<NuevaTransaccion>) => Promise<void>;
   eliminarMovimiento: (id: string) => Promise<void>;
-  crearCategoria: (nombre: string) => Promise<Categoria>;
+  crearCategoria: (nombre: string, tipo: Tipo) => Promise<Categoria>;
+  actualizarCategoria: (id: string, cambios: CambiosCategoria) => Promise<void>;
   eliminarCategoria: (id: string) => Promise<void>;
 }
 
@@ -52,11 +53,16 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     setTransacciones((prev) => prev.filter((t) => t.id !== id));
   }
 
-  async function crearCategoria(nombre: string) {
+  async function crearCategoria(nombre: string, tipo: Tipo) {
     if (!userId) throw new Error('Sin sesión');
-    const nueva = await db.crearCategoria(userId, nombre);
+    const nueva = await db.crearCategoria(userId, nombre, tipo);
     setCategorias((prev) => [...prev, nueva].sort((a, b) => a.nombre.localeCompare(b.nombre)));
     return nueva;
+  }
+
+  async function actualizarCategoria(id: string, cambios: CambiosCategoria) {
+    const actualizada = await db.actualizarCategoria(id, cambios);
+    setCategorias((prev) => prev.map((c) => (c.id === id ? actualizada : c)));
   }
 
   async function eliminarCategoria(id: string) {
@@ -74,6 +80,7 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         actualizarMovimiento,
         eliminarMovimiento,
         crearCategoria,
+        actualizarCategoria,
         eliminarCategoria,
       }}
     >

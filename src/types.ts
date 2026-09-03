@@ -4,6 +4,14 @@ export interface Categoria {
   id: string;
   nombre: string;
   emoji: string;
+  tipo: Tipo;
+  esFijo: boolean;
+}
+
+export interface CambiosCategoria {
+  emoji?: string;
+  tipo?: Tipo;
+  esFijo?: boolean;
 }
 
 export interface Transaccion {

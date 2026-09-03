@@ -10,7 +10,7 @@ interface Props {
   onCerrar: () => void;
   onGuardar: (datos: { item: string; categoriaId: string; tipo: Tipo; monto: number }) => Promise<void>;
   onEliminar?: () => Promise<void>;
-  onCrearCategoria: (nombre: string) => Promise<Categoria>;
+  onCrearCategoria: (nombre: string, tipo: Tipo) => Promise<Categoria>;
 }
 
 export function NuevoMovimientoSheet({
@@ -74,7 +74,7 @@ export function NuevoMovimientoSheet({
       setTipo('egreso');
       setMonto('');
       setItem('');
-      setCategoriaId(categorias[0]?.id ?? '');
+      setCategoriaId(categorias.find((c) => c.tipo === 'egreso')?.id ?? '');
     }
     setCreandoCategoria(false);
     setNombreNuevaCategoria('');
@@ -83,10 +83,17 @@ export function NuevoMovimientoSheet({
 
   if (!abierto) return null;
 
+  const categoriasDelTipo = categorias.filter((c) => c.tipo === tipo);
+
+  function manejarCambiarTipo(nuevoTipo: Tipo) {
+    setTipo(nuevoTipo);
+    setCategoriaId(categorias.find((c) => c.tipo === nuevoTipo)?.id ?? '');
+  }
+
   async function manejarCrearCategoria() {
     const nombre = nombreNuevaCategoria.trim();
     if (!nombre) return;
-    const nueva = await onCrearCategoria(nombre);
+    const nueva = await onCrearCategoria(nombre, tipo);
     setCategoriaId(nueva.id);
     setCreandoCategoria(false);
     setNombreNuevaCategoria('');
@@ -120,14 +127,14 @@ export function NuevoMovimientoSheet({
             <button
               type="button"
               className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
-              onClick={() => setTipo('ingreso')}
+              onClick={() => manejarCambiarTipo('ingreso')}
             >
               Entrada
             </button>
             <button
               type="button"
               className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
-              onClick={() => setTipo('egreso')}
+              onClick={() => manejarCambiarTipo('egreso')}
             >
               Salida
             </button>
@@ -153,7 +160,7 @@ export function NuevoMovimientoSheet({
         />
 
         <div className="chips">
-          {categorias.map((c) => (
+          {categoriasDelTipo.map((c) => (
             <button
               key={c.id}
               type="button"
