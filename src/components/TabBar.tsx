@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import './TabBar.css';
 
 const IconResumen = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M4 13a8 8 0 1 1 16 0" strokeLinecap="round" />
     <path d="M12 13l4-4" strokeLinecap="round" />
     <path d="M3 20h18" strokeLinecap="round" />
@@ -10,7 +10,7 @@ const IconResumen = () => (
 );
 
 const IconHistorial = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
   </svg>
 );
