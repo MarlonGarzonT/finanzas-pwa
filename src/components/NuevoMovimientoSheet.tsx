@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Categoria, Tipo, Transaccion } from '../types';
+import { NuevaCategoriaSheet } from './NuevaCategoriaSheet';
+import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
 import './NuevoMovimientoSheet.css';
 
 interface Props {
@@ -28,111 +30,10 @@ export function NuevoMovimientoSheet({
   const [item, setItem] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
   const [creandoCategoria, setCreandoCategoria] = useState(false);
-  const [nombreNuevaCategoria, setNombreNuevaCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [viewport, setViewport] = useState<{ top: number; height: number } | null>(null);
-  const [arrastreY, setArrastreY] = useState(0);
-  const [arrastrando, setArrastrando] = useState(false);
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const inicioArrastreRef = useRef(0);
-  const arrastrandoRef = useRef(false);
-  const arrastreYRef = useRef(0);
 
-  // El overlay se ancla al visualViewport (no al viewport de layout): en iOS,
-  // cuando el teclado abre, el navegador "paniza" el viewport visual en vez de
-  // achicar el layout, y un overlay con inset:0 fijo queda más alto que el
-  // area visible real. Eso sobraba espacio para hacer scroll y el gesto se
-  // terminaba "escapando" hacia la barra de Safari. Fijando top/height al
-  // visualViewport, el overlay (y el sheet dentro) siempre coincide con lo
-  // que realmente se ve, sin espacio extra que scrollear.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!abierto || !vv) return;
-
-    function actualizar() {
-      setViewport({ top: vv!.offsetTop, height: vv!.height });
-    }
-
-    actualizar();
-    vv.addEventListener('resize', actualizar);
-    vv.addEventListener('scroll', actualizar);
-    return () => {
-      vv.removeEventListener('resize', actualizar);
-      vv.removeEventListener('scroll', actualizar);
-      setViewport(null);
-    };
-  }, [abierto]);
-
-  // Mientras el sheet está abierto, se bloquea el scroll de la página de
-  // fondo. #root ya tiene overflow:hidden, pero en iOS Safari el scroll de
-  // fondo puede seguir "colándose" con el teclado abierto si no se fija
-  // también la posición del body.
-  useEffect(() => {
-    if (!abierto) return;
-    const scrollY = window.scrollY;
-    const { position, top, width } = document.body.style;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    return () => {
-      document.body.style.position = position;
-      document.body.style.top = top;
-      document.body.style.width = width;
-      window.scrollTo(0, scrollY);
-    };
-  }, [abierto]);
-
-  // Bloqueo "duro": ademas de fijar el body, se cancela cualquier gesto de
-  // scroll táctil que no venga del propio sheet (o del carrusel horizontal
-  // de categorías). El body fijo por si solo a veces no basta en iOS si el
-  // gesto arranca sobre el overlay de fondo.
-  useEffect(() => {
-    if (!abierto) return;
-    function bloquearScroll(e: TouchEvent) {
-      const objetivo = e.target as Element | null;
-      if (objetivo?.closest('.sheet')) return;
-      e.preventDefault();
-    }
-    document.addEventListener('touchmove', bloquearScroll, { passive: false });
-    return () => document.removeEventListener('touchmove', bloquearScroll);
-  }, [abierto]);
-
-  function manejarInicioArrastre(e: React.PointerEvent<HTMLDivElement>) {
-    arrastrandoRef.current = true;
-    inicioArrastreRef.current = e.clientY;
-    setArrastrando(true);
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      // Algunos navegadores/eventos sintéticos no soportan la captura; el
-      // arrastre sigue funcionando igual con los listeners normales.
-    }
-  }
-
-  function manejarMoverArrastre(e: React.PointerEvent<HTMLDivElement>) {
-    if (!arrastrandoRef.current) return;
-    const delta = Math.max(0, e.clientY - inicioArrastreRef.current);
-    arrastreYRef.current = delta;
-    setArrastreY(delta);
-  }
-
-  function manejarFinArrastre() {
-    if (!arrastrandoRef.current) return;
-    arrastrandoRef.current = false;
-    setArrastrando(false);
-    const debeCerrar = arrastreYRef.current > 90;
-    arrastreYRef.current = 0;
-    setArrastreY(0);
-    if (debeCerrar) onCerrar();
-  }
-
-  function manejarFocoCampo(e: React.FocusEvent<HTMLDivElement>) {
-    const campo = e.target;
-    if (!(campo instanceof HTMLInputElement)) return;
-    // Se espera a que el teclado termine de animarse antes de centrar el campo,
-    // si no el cálculo de scroll se hace contra el tamaño previo del viewport.
-    setTimeout(() => campo.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
-  }
+  useBloqueoDeFondo(abierto);
+  const gestos = useGestosSheet(abierto, onCerrar);
 
   useEffect(() => {
     if (!abierto) return;
@@ -148,7 +49,6 @@ export function NuevoMovimientoSheet({
       setCategoriaId(categorias.find((c) => c.tipo === 'egreso')?.id ?? '');
     }
     setCreandoCategoria(false);
-    setNombreNuevaCategoria('');
     setError(null);
   }, [abierto, transaccion, categorias]);
 
@@ -161,13 +61,10 @@ export function NuevoMovimientoSheet({
     setCategoriaId(categorias.find((c) => c.tipo === nuevoTipo)?.id ?? '');
   }
 
-  async function manejarCrearCategoria() {
-    const nombre = nombreNuevaCategoria.trim();
-    if (!nombre) return;
+  async function manejarCrearCategoria(nombre: string) {
     const nueva = await onCrearCategoria(nombre, tipo);
     setCategoriaId(nueva.id);
     setCreandoCategoria(false);
-    setNombreNuevaCategoria('');
   }
 
   async function manejarGuardar() {
@@ -180,120 +77,105 @@ export function NuevoMovimientoSheet({
   }
 
   return (
-    <div
-      className="sheet-overlay"
-      onClick={onCerrar}
-      style={viewport ? { top: viewport.top, height: viewport.height, bottom: 'auto' } : undefined}
-    >
-      <div
-        ref={sheetRef}
-        className={`sheet ${arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={manejarFocoCampo}
-        style={{
-          maxHeight: viewport ? viewport.height - 16 : undefined,
-          transform: arrastreY ? `translateY(${arrastreY}px)` : undefined,
-        }}
-      >
-        {/* Fijo (sticky) para que el monto nunca quede oculto tras el teclado,
-            sin importar cuánto scroll haga el usuario dentro del sheet. */}
-        <div className="sheet__header">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={manejarInicioArrastre}
-            onPointerMove={manejarMoverArrastre}
-            onPointerUp={manejarFinArrastre}
-            onPointerCancel={manejarFinArrastre}
-          >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
-
-          <div className="segmented">
-            <button
-              type="button"
-              className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
-              onClick={() => manejarCambiarTipo('ingreso')}
+    <>
+      <div className="sheet-overlay" onClick={onCerrar} style={gestos.overlayStyle}>
+        <div
+          className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
+          onClick={(e) => e.stopPropagation()}
+          onFocusCapture={gestos.onFocusCaptureSheet}
+          style={gestos.sheetStyle}
+        >
+          {/* Fijo (sticky) para que el monto nunca quede oculto tras el teclado,
+              sin importar cuánto scroll haga el usuario dentro del sheet. */}
+          <div className="sheet__header">
+            <div
+              className="sheet__handle-area"
+              onPointerDown={gestos.onPointerDownHandle}
+              onPointerMove={gestos.onPointerMoveHandle}
+              onPointerUp={gestos.onPointerUpHandle}
+              onPointerCancel={gestos.onPointerUpHandle}
             >
-              Entrada
-            </button>
-            <button
-              type="button"
-              className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
-              onClick={() => manejarCambiarTipo('egreso')}
-            >
-              Salida
-            </button>
+              <div className="sheet__handle" />
+            </div>
+            <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
+
+            <div className="segmented">
+              <button
+                type="button"
+                className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
+                onClick={() => manejarCambiarTipo('ingreso')}
+              >
+                Entrada
+              </button>
+              <button
+                type="button"
+                className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
+                onClick={() => manejarCambiarTipo('egreso')}
+              >
+                Salida
+              </button>
+            </div>
+
+            <div className="monto-input">
+              <span>$</span>
+              <input
+                inputMode="numeric"
+                placeholder="0"
+                value={monto ? Number(monto).toLocaleString('es-CO') : ''}
+                onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
+                autoFocus
+              />
+            </div>
           </div>
 
-          <div className="monto-input">
-            <span>$</span>
-            <input
-              inputMode="numeric"
-              placeholder="0"
-              value={monto ? Number(monto).toLocaleString('es-CO') : ''}
-              onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
-              autoFocus
-            />
-          </div>
-        </div>
+          <input
+            className="texto-input"
+            placeholder="¿Qué fue? (ej. Almuerzo, Uber, Salario)"
+            value={item}
+            onChange={(e) => setItem(e.target.value)}
+          />
 
-        <input
-          className="texto-input"
-          placeholder="¿Qué fue? (ej. Almuerzo, Uber, Salario)"
-          value={item}
-          onChange={(e) => setItem(e.target.value)}
-        />
-
-        <div className="chips">
-          {categoriasDelTipo.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`chip ${categoriaId === c.id ? 'chip--activo' : ''}`}
-              onClick={() => setCategoriaId(c.id)}
-            >
-              <span aria-hidden>{c.emoji}</span>
-              {c.nombre}
-            </button>
-          ))}
-          {!creandoCategoria && (
+          <div className="chips">
+            {categoriasDelTipo.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`chip ${categoriaId === c.id ? 'chip--activo' : ''}`}
+                onClick={() => setCategoriaId(c.id)}
+              >
+                <span aria-hidden>{c.emoji}</span>
+                {c.nombre}
+              </button>
+            ))}
             <button type="button" className="chip chip--nueva" onClick={() => setCreandoCategoria(true)}>
               + Nueva
             </button>
-          )}
-        </div>
-
-        {creandoCategoria && (
-          <div className="nueva-categoria">
-            <input
-              placeholder="Nombre de la categoría"
-              value={nombreNuevaCategoria}
-              onChange={(e) => setNombreNuevaCategoria(e.target.value)}
-              autoFocus
-            />
-            <button type="button" onClick={manejarCrearCategoria}>
-              Agregar
-            </button>
           </div>
-        )}
 
-        {error && <p className="sheet__error">{error}</p>}
+          {error && <p className="sheet__error">{error}</p>}
 
-        <button className="btn-primario" onClick={manejarGuardar} disabled={guardando}>
-          {guardando ? 'Guardando…' : 'Guardar'}
-        </button>
-
-        {transaccion && onEliminar && (
-          <button className="btn-eliminar" onClick={onEliminar} disabled={guardando}>
-            Eliminar movimiento
+          <button className="btn-primario" onClick={manejarGuardar} disabled={guardando}>
+            {guardando ? 'Guardando…' : 'Guardar'}
           </button>
-        )}
 
-        <button className="btn-cancelar" onClick={onCerrar} disabled={guardando}>
-          Cancelar
-        </button>
+          {transaccion && onEliminar && (
+            <button className="btn-eliminar" onClick={onEliminar} disabled={guardando}>
+              Eliminar movimiento
+            </button>
+          )}
+
+          <button className="btn-cancelar" onClick={onCerrar} disabled={guardando}>
+            Cancelar
+          </button>
+        </div>
       </div>
-    </div>
+
+      <NuevaCategoriaSheet
+        abierto={creandoCategoria}
+        tipo={tipo}
+        onCerrar={() => setCreandoCategoria(false)}
+        onCrear={manejarCrearCategoria}
+      />
+    </>
   );
 }

@@ -9,6 +9,13 @@
   touch-action: none;
 }
 
+/* Un bottom sheet abierto encima de otro (ej. "Nueva categoría" sobre
+   "Nuevo movimiento") necesita quedar visualmente por delante sin depender
+   del orden en el DOM. */
+.sheet-overlay--anidado {
+  z-index: 60;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
