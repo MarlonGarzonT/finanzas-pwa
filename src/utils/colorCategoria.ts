@@ -9,10 +9,11 @@ const PALETA = [
   'var(--color-brown)',
 ];
 
-export function colorCategoria(id: string): string {
+export function colorCategoria(id: string | null | undefined): string {
+  const clave = id ?? '';
   let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < clave.length; i++) {
+    hash = (hash * 31 + clave.charCodeAt(i)) >>> 0;
   }
   return PALETA[hash % PALETA.length];
 }
