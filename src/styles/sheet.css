@@ -6,6 +6,7 @@
   align-items: flex-end;
   z-index: 50;
   animation: fade-in 0.15s ease-out;
+  touch-action: none;
 }
 
 @keyframes fade-in {
@@ -26,6 +27,11 @@
   flex-direction: column;
   gap: 12px;
   animation: slide-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheet--arrastrando {
+  transition: none;
 }
 
 @keyframes slide-up {
@@ -34,13 +40,21 @@
   }
 }
 
+.sheet__handle-area {
+  width: 100%;
+  padding: 6px 0 10px;
+  margin: -6px 0 -6px;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
 .sheet__handle {
   width: 36px;
   height: 5px;
   border-radius: 3px;
   background: var(--surface-tertiary);
-  align-self: center;
-  margin-bottom: 4px;
 }
 
 .sheet__titulo {

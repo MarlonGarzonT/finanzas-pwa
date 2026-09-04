@@ -31,7 +31,12 @@ export function NuevoMovimientoSheet({
   const [nombreNuevaCategoria, setNombreNuevaCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [espacioTeclado, setEspacioTeclado] = useState(0);
+  const [arrastreY, setArrastreY] = useState(0);
+  const [arrastrando, setArrastrando] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const inicioArrastreRef = useRef(0);
+  const arrastrandoRef = useRef(false);
+  const arrastreYRef = useRef(0);
 
   // En Android, la barra de accesorios del teclado (flechas/check) no se
   // refleja en el alto del viewport de layout: hay que medirla con
@@ -54,6 +59,54 @@ export function NuevoMovimientoSheet({
       setEspacioTeclado(0);
     };
   }, [abierto]);
+
+  // Mientras el sheet está abierto, se bloquea el scroll de la página de
+  // fondo. #root ya tiene overflow:hidden, pero en iOS Safari el scroll de
+  // fondo puede seguir "colándose" con el teclado abierto si no se fija
+  // también la posición del body.
+  useEffect(() => {
+    if (!abierto) return;
+    const scrollY = window.scrollY;
+    const { position, top, width } = document.body.style;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    return () => {
+      document.body.style.position = position;
+      document.body.style.top = top;
+      document.body.style.width = width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [abierto]);
+
+  function manejarInicioArrastre(e: React.PointerEvent<HTMLDivElement>) {
+    arrastrandoRef.current = true;
+    inicioArrastreRef.current = e.clientY;
+    setArrastrando(true);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Algunos navegadores/eventos sintéticos no soportan la captura; el
+      // arrastre sigue funcionando igual con los listeners normales.
+    }
+  }
+
+  function manejarMoverArrastre(e: React.PointerEvent<HTMLDivElement>) {
+    if (!arrastrandoRef.current) return;
+    const delta = Math.max(0, e.clientY - inicioArrastreRef.current);
+    arrastreYRef.current = delta;
+    setArrastreY(delta);
+  }
+
+  function manejarFinArrastre() {
+    if (!arrastrandoRef.current) return;
+    arrastrandoRef.current = false;
+    setArrastrando(false);
+    const debeCerrar = arrastreYRef.current > 90;
+    arrastreYRef.current = 0;
+    setArrastreY(0);
+    if (debeCerrar) onCerrar();
+  }
 
   function manejarFocoCampo(e: React.FocusEvent<HTMLDivElement>) {
     const campo = e.target;
@@ -112,15 +165,26 @@ export function NuevoMovimientoSheet({
     <div className="sheet-overlay" onClick={onCerrar}>
       <div
         ref={sheetRef}
-        className="sheet"
+        className={`sheet ${arrastrando ? 'sheet--arrastrando' : ''}`}
         onClick={(e) => e.stopPropagation()}
         onFocusCapture={manejarFocoCampo}
-        style={espacioTeclado ? { paddingBottom: espacioTeclado + 56 } : undefined}
+        style={{
+          ...(espacioTeclado ? { paddingBottom: espacioTeclado + 56 } : undefined),
+          transform: arrastreY ? `translateY(${arrastreY}px)` : undefined,
+        }}
       >
         {/* Fijo (sticky) para que el monto nunca quede oculto tras el teclado,
             sin importar cuánto scroll haga el usuario dentro del sheet. */}
         <div className="sheet__header">
-          <div className="sheet__handle" />
+          <div
+            className="sheet__handle-area"
+            onPointerDown={manejarInicioArrastre}
+            onPointerMove={manejarMoverArrastre}
+            onPointerUp={manejarFinArrastre}
+            onPointerCancel={manejarFinArrastre}
+          >
+            <div className="sheet__handle" />
+          </div>
           <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
 
           <div className="segmented">
