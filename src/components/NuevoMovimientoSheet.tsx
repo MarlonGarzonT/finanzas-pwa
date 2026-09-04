@@ -30,7 +30,7 @@ export function NuevoMovimientoSheet({
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [nombreNuevaCategoria, setNombreNuevaCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [espacioTeclado, setEspacioTeclado] = useState(0);
+  const [viewport, setViewport] = useState<{ top: number; height: number } | null>(null);
   const [arrastreY, setArrastreY] = useState(0);
   const [arrastrando, setArrastrando] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -38,25 +38,28 @@ export function NuevoMovimientoSheet({
   const arrastrandoRef = useRef(false);
   const arrastreYRef = useRef(0);
 
-  // En Android, la barra de accesorios del teclado (flechas/check) no se
-  // refleja en el alto del viewport de layout: hay que medirla con
-  // visualViewport y reservarle espacio, o tapa el campo enfocado.
+  // El overlay se ancla al visualViewport (no al viewport de layout): en iOS,
+  // cuando el teclado abre, el navegador "paniza" el viewport visual en vez de
+  // achicar el layout, y un overlay con inset:0 fijo queda más alto que el
+  // area visible real. Eso sobraba espacio para hacer scroll y el gesto se
+  // terminaba "escapando" hacia la barra de Safari. Fijando top/height al
+  // visualViewport, el overlay (y el sheet dentro) siempre coincide con lo
+  // que realmente se ve, sin espacio extra que scrollear.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!abierto || !vv) return;
 
-    function actualizarEspacio() {
-      const oculto = window.innerHeight - vv!.height - vv!.offsetTop;
-      setEspacioTeclado(Math.max(0, oculto));
+    function actualizar() {
+      setViewport({ top: vv!.offsetTop, height: vv!.height });
     }
 
-    actualizarEspacio();
-    vv.addEventListener('resize', actualizarEspacio);
-    vv.addEventListener('scroll', actualizarEspacio);
+    actualizar();
+    vv.addEventListener('resize', actualizar);
+    vv.addEventListener('scroll', actualizar);
     return () => {
-      vv.removeEventListener('resize', actualizarEspacio);
-      vv.removeEventListener('scroll', actualizarEspacio);
-      setEspacioTeclado(0);
+      vv.removeEventListener('resize', actualizar);
+      vv.removeEventListener('scroll', actualizar);
+      setViewport(null);
     };
   }, [abierto]);
 
@@ -162,14 +165,18 @@ export function NuevoMovimientoSheet({
   }
 
   return (
-    <div className="sheet-overlay" onClick={onCerrar}>
+    <div
+      className="sheet-overlay"
+      onClick={onCerrar}
+      style={viewport ? { top: viewport.top, height: viewport.height, bottom: 'auto' } : undefined}
+    >
       <div
         ref={sheetRef}
         className={`sheet ${arrastrando ? 'sheet--arrastrando' : ''}`}
         onClick={(e) => e.stopPropagation()}
         onFocusCapture={manejarFocoCampo}
         style={{
-          ...(espacioTeclado ? { paddingBottom: espacioTeclado + 56 } : undefined),
+          maxHeight: viewport ? viewport.height - 16 : undefined,
           transform: arrastreY ? `translateY(${arrastreY}px)` : undefined,
         }}
       >
