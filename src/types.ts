@@ -18,7 +18,7 @@ export interface Transaccion {
   id: string;
   fecha: string; // ISO
   item: string;
-  categoriaId: string | null; // null cuando la categoría original fue eliminada
+  categoriaId: string;
   tipo: Tipo;
   monto: number;
   semanaDelMes: number;
