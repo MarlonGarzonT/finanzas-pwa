@@ -82,6 +82,21 @@ export function NuevoMovimientoSheet({
     };
   }, [abierto]);
 
+  // Bloqueo "duro": ademas de fijar el body, se cancela cualquier gesto de
+  // scroll táctil que no venga del propio sheet (o del carrusel horizontal
+  // de categorías). El body fijo por si solo a veces no basta en iOS si el
+  // gesto arranca sobre el overlay de fondo.
+  useEffect(() => {
+    if (!abierto) return;
+    function bloquearScroll(e: TouchEvent) {
+      const objetivo = e.target as Element | null;
+      if (objetivo?.closest('.sheet')) return;
+      e.preventDefault();
+    }
+    document.addEventListener('touchmove', bloquearScroll, { passive: false });
+    return () => document.removeEventListener('touchmove', bloquearScroll);
+  }, [abierto]);
+
   function manejarInicioArrastre(e: React.PointerEvent<HTMLDivElement>) {
     arrastrandoRef.current = true;
     inicioArrastreRef.current = e.clientY;
