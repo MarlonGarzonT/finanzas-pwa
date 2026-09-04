@@ -8,7 +8,7 @@ import { SelectorPagina } from '../components/SelectorPagina';
 import { Spinner } from '../components/Spinner';
 import { UltimoMovimiento } from '../components/UltimoMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
-import type { Transaccion } from '../types';
+import type { Tipo, Transaccion } from '../types';
 import './Resumen.css';
 
 export function Resumen() {
@@ -28,6 +28,7 @@ export function Resumen() {
   const [editando, setEditando] = useState<Transaccion | null>(null);
   const [categoriasAbierto, setCategoriasAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [filtroGrafico, setFiltroGrafico] = useState<Tipo>('egreso');
 
   const categoriaPorId = useMemo(() => {
     const mapa = new Map(categorias.map((c) => [c.id, c]));
@@ -61,7 +62,7 @@ export function Resumen() {
   const datosGastos = useMemo(() => {
     const totales = new Map<string, { categoria: string; emoji: string; monto: number }>();
     for (const t of transaccionesDelMes) {
-      if (t.tipo !== 'egreso') continue;
+      if (t.tipo !== filtroGrafico) continue;
       const cat = categoriaPorId(t.categoriaId);
       const existente = totales.get(t.categoriaId);
       if (existente) {
@@ -73,7 +74,7 @@ export function Resumen() {
     return Array.from(totales.values())
       .sort((a, b) => b.monto - a.monto)
       .slice(0, 6);
-  }, [transaccionesDelMes, categoriaPorId]);
+  }, [transaccionesDelMes, categoriaPorId, filtroGrafico]);
 
   const ultimoMovimiento = transacciones[0] ?? null;
 
@@ -121,8 +122,21 @@ export function Resumen() {
         </div>
       ) : (
         <div className="resumen__contenido">
-          <BalanceCard disponible={disponible} totalIngresos={totalIngresos} totalEgresos={totalEgresos} />
-          <GraficoGastos datos={datosGastos} />
+          <BalanceCard
+            disponible={disponible}
+            totalIngresos={totalIngresos}
+            totalEgresos={totalEgresos}
+            filtro={filtroGrafico}
+            onFiltroChange={setFiltroGrafico}
+          />
+          <GraficoGastos
+            datos={datosGastos}
+            mensajeVacio={
+              filtroGrafico === 'egreso'
+                ? 'Aún no registras gastos este mes.'
+                : 'Aún no registras ingresos este mes.'
+            }
+          />
           <UltimoMovimiento transaccion={ultimoMovimiento} categoriaPorId={categoriaPorId} onSeleccionar={setEditando} />
         </div>
       )}

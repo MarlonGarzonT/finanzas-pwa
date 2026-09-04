@@ -8,7 +8,12 @@ interface Fila {
   monto: number;
 }
 
-export function GraficoGastos({ datos }: { datos: Fila[] }) {
+interface Props {
+  datos: Fila[];
+  mensajeVacio?: string;
+}
+
+export function GraficoGastos({ datos, mensajeVacio = 'Aún no registras gastos este mes.' }: Props) {
   // Las barras arrancan en 0 y crecen a su alto real tras montar, para que
   // el gráfico "aparezca" animado en vez de dibujarse ya completo.
   const [montado, setMontado] = useState(false);
@@ -18,7 +23,7 @@ export function GraficoGastos({ datos }: { datos: Fila[] }) {
   }, []);
 
   if (datos.length === 0) {
-    return <p className="gastos-barras__vacio">Aún no registras gastos este mes.</p>;
+    return <p className="gastos-barras__vacio">{mensajeVacio}</p>;
   }
 
   const max = Math.max(...datos.map((d) => d.monto));

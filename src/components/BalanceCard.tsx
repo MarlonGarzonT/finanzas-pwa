@@ -1,3 +1,4 @@
+import type { Tipo } from '../types';
 import { formatearMonto } from '../utils/fechas';
 import './BalanceCard.css';
 
@@ -5,9 +6,11 @@ interface Props {
   disponible: number;
   totalIngresos: number;
   totalEgresos: number;
+  filtro: Tipo;
+  onFiltroChange: (filtro: Tipo) => void;
 }
 
-export function BalanceCard({ disponible, totalIngresos, totalEgresos }: Props) {
+export function BalanceCard({ disponible, totalIngresos, totalEgresos, filtro, onFiltroChange }: Props) {
   const estado = disponible > 0 ? 'positivo' : disponible < 0 ? 'negativo' : 'neutro';
   const signo = disponible > 0 ? '+' : disponible < 0 ? '−' : '';
 
@@ -19,14 +22,24 @@ export function BalanceCard({ disponible, totalIngresos, totalEgresos }: Props) 
         <span className="balance-card__valor">{formatearMonto(Math.abs(disponible))}</span>
       </div>
       <div className="balance-card__pills">
-        <span className="balance-card__pill balance-card__pill--egreso">
+        <button
+          type="button"
+          className={`balance-card__pill balance-card__pill--egreso ${filtro === 'egreso' ? 'balance-card__pill--activo' : ''}`}
+          onClick={() => onFiltroChange('egreso')}
+          aria-pressed={filtro === 'egreso'}
+        >
           <span className="balance-card__pill-icono">−</span>
           {formatearMonto(totalEgresos)}
-        </span>
-        <span className="balance-card__pill balance-card__pill--ingreso">
+        </button>
+        <button
+          type="button"
+          className={`balance-card__pill balance-card__pill--ingreso ${filtro === 'ingreso' ? 'balance-card__pill--activo' : ''}`}
+          onClick={() => onFiltroChange('ingreso')}
+          aria-pressed={filtro === 'ingreso'}
+        >
           <span className="balance-card__pill-icono">+</span>
           {formatearMonto(totalIngresos)}
-        </span>
+        </button>
       </div>
     </div>
   );
