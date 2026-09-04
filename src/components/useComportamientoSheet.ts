@@ -101,28 +101,18 @@ export function useGestosSheet(abierto: boolean, onCerrar: () => void): GestosSh
 }
 
 // Bloquea el scroll de la página de fondo mientras un bottom sheet está
-// abierto. Solo debe usarlo el sheet raíz (el más externo): si dos sheets
-// anidados lo llamaran a la vez, el segundo pisaría el scrollY que el
-// primero necesita restaurar al cerrarse.
+// abierto. Solo debe usarlo el sheet raíz (el más externo).
+//
+// OJO: esto NO fija document.body con position:fixed. #root ya tiene
+// overflow:hidden (ver theme.css), asi que la pagina no tiene de donde
+// scrollear en primer lugar. Fijar el body ademas de eso resultó
+// contraproducente: en iOS, cuando el teclado abre, Safari a veces sigue
+// intentando "scrollear" el documento para revelar el campo enfocado
+// (ignorando el overflow:hidden), y ese intento nativo peleaba con nuestro
+// position:fixed (calculado una sola vez al abrir), dejando un hueco visible
+// entre el sheet y la barra de Safari. Sin el body fijo, no hay dos
+// mecanismos compitiendo por la misma posición.
 export function useBloqueoDeFondo(abierto: boolean) {
-  useEffect(() => {
-    if (!abierto) return;
-    const scrollY = window.scrollY;
-    const { position, top, width } = document.body.style;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    return () => {
-      document.body.style.position = position;
-      document.body.style.top = top;
-      document.body.style.width = width;
-      window.scrollTo(0, scrollY);
-    };
-  }, [abierto]);
-
-  // Bloqueo "duro": además de fijar el body, se cancela cualquier gesto de
-  // scroll táctil que no venga de dentro de algún sheet. El body fijo por sí
-  // solo a veces no basta en iOS si el gesto arranca sobre el overlay de fondo.
   useEffect(() => {
     if (!abierto) return;
     function bloquearScroll(e: TouchEvent) {
@@ -132,5 +122,21 @@ export function useBloqueoDeFondo(abierto: boolean) {
     }
     document.addEventListener('touchmove', bloquearScroll, { passive: false });
     return () => document.removeEventListener('touchmove', bloquearScroll);
+  }, [abierto]);
+
+  // Red de seguridad: si algo (Safari intentando revelar un campo enfocado,
+  // el propio teclado, etc.) mueve el scroll del documento igual, se corrige
+  // de inmediato a 0. No debería hacer falta casi nunca ya que #root no
+  // tiene de donde scrollear, pero si Safari lo fuerza, esto lo revierte en
+  // vez de dejar que el hueco quede visible.
+  useEffect(() => {
+    if (!abierto) return;
+    function corregirScroll() {
+      if (window.scrollX !== 0 || window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    }
+    window.addEventListener('scroll', corregirScroll, { passive: true });
+    return () => window.removeEventListener('scroll', corregirScroll);
   }, [abierto]);
 }
