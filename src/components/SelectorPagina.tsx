@@ -5,12 +5,18 @@ import './SelectorPagina.css';
 const PAGINAS = [
   { to: '/', etiqueta: 'Resumen' },
   { to: '/historial', etiqueta: 'Historial' },
+  { to: '/grupos', etiqueta: 'Grupos' },
 ];
 
 export function SelectorPagina() {
   const [abierto, setAbierto] = useState(false);
   const { pathname } = useLocation();
-  const actual = PAGINAS.find((p) => p.to === pathname) ?? PAGINAS[0];
+  // Coincidencia exacta salvo para "/grupos", que también debe marcarse activo
+  // en /grupos/:id (el detalle de un grupo específico).
+  const actual =
+    PAGINAS.find((p) => p.to === pathname) ??
+    PAGINAS.find((p) => p.to !== '/' && pathname.startsWith(p.to)) ??
+    PAGINAS[0];
 
   return (
     <div className="selector-pagina">

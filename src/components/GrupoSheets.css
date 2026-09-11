@@ -1,0 +1,132 @@
+@import '../styles/sheet.css';
+
+.grupo-sheets__ayuda {
+  margin: 0;
+  font-size: 13px;
+  color: var(--label-secondary);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.grupo-sheets__codigo {
+  align-self: center;
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  background: var(--surface-tertiary);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grupo-sheets__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grupo-sheets__miembro-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: var(--surface-tertiary);
+  color: var(--label);
+  padding: 8px 14px 8px 8px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.grupo-sheets__miembro-chip--activo {
+  background: var(--brand-tint);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.grupo-sheets__miembro-chip--excluido {
+  opacity: 0.45;
+}
+
+.grupo-sheets__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex: none;
+}
+
+.grupo-sheets__modo-partes {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.grupo-sheets__modo-partes button {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.grupo-sheets__modo-partes button:disabled {
+  color: var(--label-tertiary);
+  cursor: default;
+}
+
+.grupo-sheets__partes-personalizadas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grupo-sheets__parte-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.grupo-sheets__parte-fila span {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grupo-sheets__parte-fila input {
+  width: 110px;
+  text-align: right;
+  border: none;
+  background: var(--surface-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 15px;
+  color: var(--label);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.grupo-sheets__restante {
+  text-align: center;
+  font-size: 13px;
+  color: var(--label-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.grupo-sheets__restante--error {
+  color: var(--expense);
+  font-weight: 600;
+}

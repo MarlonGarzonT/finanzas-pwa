@@ -1,0 +1,12 @@
+.avatar-miembro {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
