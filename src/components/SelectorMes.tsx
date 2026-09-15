@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { nombreMes, sumarMeses } from '../utils/fechas';
+import { SelectorMesSheet } from './SelectorMesSheet';
 import './SelectorMes.css';
 
 interface Props {
@@ -13,6 +15,8 @@ function capitalizarPrimera(texto: string): string {
 }
 
 export function SelectorMes({ mes, onCambiar }: Props) {
+  const [ruedaAbierta, setRuedaAbierta] = useState(false);
+
   return (
     <div className="selector-mes">
       <button
@@ -23,7 +27,9 @@ export function SelectorMes({ mes, onCambiar }: Props) {
       >
         ‹
       </button>
-      <span className="selector-mes__etiqueta">{capitalizarPrimera(nombreMes(mes))}</span>
+      <button type="button" className="selector-mes__etiqueta" onClick={() => setRuedaAbierta(true)}>
+        {capitalizarPrimera(nombreMes(mes))}
+      </button>
       <button
         type="button"
         className="selector-mes__flecha"
@@ -32,6 +38,13 @@ export function SelectorMes({ mes, onCambiar }: Props) {
       >
         ›
       </button>
+
+      <SelectorMesSheet
+        abierto={ruedaAbierta}
+        mes={mes}
+        onCerrar={() => setRuedaAbierta(false)}
+        onSeleccionar={onCambiar}
+      />
     </div>
   );
 }

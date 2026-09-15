@@ -1,0 +1,27 @@
+.rueda-selector {
+  flex: 1;
+  height: 200px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  position: relative;
+  z-index: 1;
+}
+
+.rueda-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.rueda-selector__item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+}

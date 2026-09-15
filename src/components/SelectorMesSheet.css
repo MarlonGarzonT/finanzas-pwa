@@ -1,0 +1,27 @@
+@import '../styles/sheet.css';
+
+.selector-mes-sheet__ruedas {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.selector-mes-sheet__banda {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  background: var(--surface-tertiary);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.selector-mes-sheet__rueda-mes {
+  flex: 1.3;
+}
+
+.selector-mes-sheet__rueda-anio {
+  flex: 1;
+}
