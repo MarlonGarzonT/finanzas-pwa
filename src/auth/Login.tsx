@@ -14,10 +14,12 @@ export function Login() {
   const [confirmarPassword, setConfirmarPassword] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
   function cambiarModo(nuevo: Modo) {
     setModo(nuevo);
     setError(null);
+    setMensajeExito(null);
     setPassword('');
     setConfirmarPassword('');
   }
@@ -25,6 +27,7 @@ export function Login() {
   async function manejarEnvio(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setMensajeExito(null);
 
     if (password.length < LONGITUD_MINIMA) {
       setError(`La contraseña debe tener al menos ${LONGITUD_MINIMA} caracteres.`);
@@ -36,11 +39,23 @@ export function Login() {
     }
 
     setEnviando(true);
-    const { error } =
-      modo === 'login' ? await iniciarSesion(email.trim(), password) : await registrar(email.trim(), password);
+    const correo = email.trim();
+    if (modo === 'login') {
+      const { error } = await iniciarSesion(correo, password);
+      if (error) setError(traducirError(error));
+    } else {
+      const { error, requiereConfirmacion } = await registrar(correo, password);
+      if (error) {
+        setError(traducirError(error));
+      } else if (requiereConfirmacion) {
+        // Sin este aviso, el formulario "no hace nada" visible: la cuenta sí
+        // se crea, pero queda pendiente de confirmar por correo.
+        setMensajeExito(`Te enviamos un correo a ${correo} para confirmar tu cuenta. Revísalo (y la carpeta de spam) antes de iniciar sesión.`);
+        setPassword('');
+        setConfirmarPassword('');
+      }
+    }
     setEnviando(false);
-
-    if (error) setError(traducirError(error));
   }
 
   return (
@@ -102,6 +117,7 @@ export function Login() {
         </form>
 
         {error && <p className="login__error">{error}</p>}
+        {mensajeExito && <p className="login__exito">{mensajeExito}</p>}
       </div>
     </div>
   );
@@ -111,5 +127,15 @@ function traducirError(mensaje: string): string {
   if (mensaje.includes('Invalid login credentials')) return 'Correo o contraseña incorrectos.';
   if (mensaje.includes('User already registered')) return 'Ya existe una cuenta con ese correo.';
   if (mensaje.includes('Password should be at least')) return `La contraseña debe tener al menos ${LONGITUD_MINIMA} caracteres.`;
+  // Rate-limit de Supabase al reintentar un registro muy seguido con el
+  // mismo correo (ej. "For security purposes, you can only request this
+  // after 57 seconds."). Se intenta extraer los segundos si vienen en el
+  // mensaje; si no, se muestra un aviso genérico igual de claro.
+  if (mensaje.includes('security purposes')) {
+    const segundos = mensaje.match(/(\d+)\s*seconds?/)?.[1];
+    return segundos
+      ? `Por seguridad, espera ${segundos} segundos antes de volver a intentarlo.`
+      : 'Por seguridad, espera unos segundos antes de volver a intentarlo.';
+  }
   return mensaje;
 }
