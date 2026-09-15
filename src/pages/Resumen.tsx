@@ -4,11 +4,13 @@ import { BalanceCard } from '../components/BalanceCard';
 import { GestionCategorias } from '../components/GestionCategorias';
 import { GraficoGastos } from '../components/GraficoGastos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
+import { SelectorMes } from '../components/SelectorMes';
 import { SelectorPagina } from '../components/SelectorPagina';
 import { Spinner } from '../components/Spinner';
 import { UltimoMovimiento } from '../components/UltimoMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Tipo, Transaccion } from '../types';
+import { claveMesDeFecha, claveMes, nombreMes } from '../utils/fechas';
 import './Resumen.css';
 
 export function Resumen() {
@@ -29,35 +31,34 @@ export function Resumen() {
   const [categoriasAbierto, setCategoriasAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [filtroGrafico, setFiltroGrafico] = useState<Tipo>('egreso');
+  // Cada mes es su propia contabilidad, independiente de los demás: el
+  // Disponible arranca en $0 al cambiar de mes, no arrastra el saldo previo.
+  const [mesSeleccionado, setMesSeleccionado] = useState(() => new Date());
 
   const categoriaPorId = useMemo(() => {
     const mapa = new Map(categorias.map((c) => [c.id, c]));
     return (id: string) => mapa.get(id);
   }, [categorias]);
 
+  const transaccionesDelMes = useMemo(() => {
+    const claveSeleccionada = claveMesDeFecha(mesSeleccionado);
+    return transacciones.filter((t) => claveMes(t.fecha) === claveSeleccionada);
+  }, [transacciones, mesSeleccionado]);
+
   const disponible = useMemo(
-    () => transacciones.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0),
-    [transacciones]
+    () => transaccionesDelMes.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0),
+    [transaccionesDelMes]
   );
 
   const { totalIngresos, totalEgresos } = useMemo(() => {
     let ingresos = 0;
     let egresos = 0;
-    for (const t of transacciones) {
+    for (const t of transaccionesDelMes) {
       if (t.tipo === 'ingreso') ingresos += t.monto;
       else egresos += t.monto;
     }
     return { totalIngresos: ingresos, totalEgresos: egresos };
-  }, [transacciones]);
-
-  const transaccionesDelMes = useMemo(() => {
-    const ahora = new Date();
-    const claveMesActual = `${ahora.getFullYear()}-${ahora.getMonth()}`;
-    return transacciones.filter((t) => {
-      const fecha = new Date(t.fecha);
-      return `${fecha.getFullYear()}-${fecha.getMonth()}` === claveMesActual;
-    });
-  }, [transacciones]);
+  }, [transaccionesDelMes]);
 
   const datosGastos = useMemo(() => {
     const totales = new Map<string, { categoria: string; emoji: string; monto: number }>();
@@ -76,7 +77,7 @@ export function Resumen() {
       .slice(0, 6);
   }, [transaccionesDelMes, categoriaPorId, filtroGrafico]);
 
-  const ultimoMovimiento = transacciones[0] ?? null;
+  const ultimoMovimiento = transaccionesDelMes[0] ?? null;
 
   function cerrarSheet() {
     setSheetAbierto(false);
@@ -122,6 +123,7 @@ export function Resumen() {
         </div>
       ) : (
         <div className="resumen__contenido">
+          <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
           <BalanceCard
             disponible={disponible}
             totalIngresos={totalIngresos}
@@ -133,11 +135,16 @@ export function Resumen() {
             datos={datosGastos}
             mensajeVacio={
               filtroGrafico === 'egreso'
-                ? 'Aún no registras gastos este mes.'
-                : 'Aún no registras ingresos este mes.'
+                ? `Aún no registras gastos en ${nombreMes(mesSeleccionado)}.`
+                : `Aún no registras ingresos en ${nombreMes(mesSeleccionado)}.`
             }
           />
-          <UltimoMovimiento transaccion={ultimoMovimiento} categoriaPorId={categoriaPorId} onSeleccionar={setEditando} />
+          <UltimoMovimiento
+            transaccion={ultimoMovimiento}
+            categoriaPorId={categoriaPorId}
+            onSeleccionar={setEditando}
+            mensajeVacio={`Aún no registras movimientos en ${nombreMes(mesSeleccionado)}.`}
+          />
         </div>
       )}
 

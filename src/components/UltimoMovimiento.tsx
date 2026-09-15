@@ -7,14 +7,20 @@ interface Props {
   transaccion: Transaccion | null;
   categoriaPorId: (id: string) => Categoria | undefined;
   onSeleccionar: (transaccion: Transaccion) => void;
+  mensajeVacio?: string;
 }
 
-export function UltimoMovimiento({ transaccion, categoriaPorId, onSeleccionar }: Props) {
+export function UltimoMovimiento({
+  transaccion,
+  categoriaPorId,
+  onSeleccionar,
+  mensajeVacio = 'Aún no registras movimientos.',
+}: Props) {
   if (!transaccion) {
     return (
       <div className="ultimo-movimiento">
         <h3 className="grafico-card__titulo">Último movimiento</h3>
-        <p className="ultimo-movimiento__vacio">Aún no registras movimientos.</p>
+        <p className="ultimo-movimiento__vacio">{mensajeVacio}</p>
       </div>
     );
   }

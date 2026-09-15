@@ -38,3 +38,11 @@ export function claveMes(iso: string): string {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
+
+export function claveMesDeFecha(fecha: Date): string {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function sumarMeses(fecha: Date, delta: number): Date {
+  return new Date(fecha.getFullYear(), fecha.getMonth() + delta, 1);
+}

@@ -1,0 +1,30 @@
+.selector-mes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 0 4px;
+}
+
+.selector-mes__flecha {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.selector-mes__etiqueta {
+  min-width: 150px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label);
+}
