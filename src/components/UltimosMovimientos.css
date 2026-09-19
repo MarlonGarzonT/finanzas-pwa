@@ -1,22 +1,22 @@
-.ultimo-movimiento {
+.ultimos-movimientos {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.ultimo-movimiento ul {
+.ultimos-movimientos ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.ultimo-movimiento__vacio {
+.ultimos-movimientos__vacio {
   margin: 0 4px;
   font-size: 14px;
   color: var(--label-secondary);
 }
 
-.ultimo-movimiento__item {
+.ultimos-movimientos__item {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -25,11 +25,11 @@
   transition: background 0.1s ease;
 }
 
-.ultimo-movimiento__item:active {
+.ultimos-movimientos__item:active {
   background: var(--surface-tertiary);
 }
 
-.ultimo-movimiento__avatar {
+.ultimos-movimientos__avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -40,7 +40,7 @@
   flex: none;
 }
 
-.ultimo-movimiento__detalle {
+.ultimos-movimientos__detalle {
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -48,13 +48,13 @@
   flex: 1;
 }
 
-.ultimo-movimiento__categoria {
+.ultimos-movimientos__categoria {
   font-size: 12px;
   font-weight: 500;
   color: var(--label-secondary);
 }
 
-.ultimo-movimiento__descripcion {
+.ultimos-movimientos__descripcion {
   font-size: 15px;
   font-weight: 600;
   overflow: hidden;
@@ -62,17 +62,17 @@
   white-space: nowrap;
 }
 
-.ultimo-movimiento__monto {
+.ultimos-movimientos__monto {
   font-size: 15px;
   font-weight: 600;
   flex: none;
   font-variant-numeric: tabular-nums;
 }
 
-.ultimo-movimiento__monto--ingreso {
+.ultimos-movimientos__monto--ingreso {
   color: var(--income);
 }
 
-.ultimo-movimiento__monto--egreso {
+.ultimos-movimientos__monto--egreso {
   color: var(--expense);
 }

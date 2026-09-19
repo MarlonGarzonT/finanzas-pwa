@@ -34,11 +34,30 @@
   justify-content: center;
 }
 
+/* El contenido de Resumen hace scroll por dentro (el header queda fijo). Los
+   movimientos que se acercan al borde inferior - donde está el botón "+" - se
+   desvanecen con una máscara, como el efecto de borde de scroll de Apple. La
+   máscara es del contenedor, no del contenido: no se mueve al hacer scroll. */
 .resumen__contenido {
+  --fade-inferior: calc(112px + var(--safe-bottom));
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 12px 16px 16px;
+  /* El padding inferior deja que el último movimiento pueda subir por encima
+     de la zona de desvanecido al llegar al final del scroll. */
+  padding: 12px 16px var(--fade-inferior);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--fade-inferior)), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--fade-inferior)), transparent 100%);
+}
+
+/* Sin esto, los hijos de un flex column con scroll se encogen en vez de
+   desbordar (el gráfico perdería su alto fijo). */
+.resumen__contenido > * {
+  flex-shrink: 0;
 }
 
 .fab {

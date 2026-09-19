@@ -7,7 +7,7 @@ import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { SelectorMes } from '../components/SelectorMes';
 import { SelectorPagina } from '../components/SelectorPagina';
 import { Spinner } from '../components/Spinner';
-import { UltimoMovimiento } from '../components/UltimoMovimiento';
+import { UltimosMovimientos } from '../components/UltimosMovimientos';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Tipo, Transaccion } from '../types';
 import { claveMesDeFecha, claveMes, nombreMes } from '../utils/fechas';
@@ -77,8 +77,6 @@ export function Resumen() {
       .slice(0, 6);
   }, [transaccionesDelMes, categoriaPorId, filtroGrafico]);
 
-  const ultimoMovimiento = transaccionesDelMes[0] ?? null;
-
   function cerrarSheet() {
     setSheetAbierto(false);
     setEditando(null);
@@ -139,8 +137,8 @@ export function Resumen() {
                 : `Aún no registras ingresos en ${nombreMes(mesSeleccionado)}.`
             }
           />
-          <UltimoMovimiento
-            transaccion={ultimoMovimiento}
+          <UltimosMovimientos
+            transacciones={transaccionesDelMes}
             categoriaPorId={categoriaPorId}
             onSeleccionar={setEditando}
             mensajeVacio={`Aún no registras movimientos en ${nombreMes(mesSeleccionado)}.`}
