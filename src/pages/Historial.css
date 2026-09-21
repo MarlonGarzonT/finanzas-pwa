@@ -1,3 +1,5 @@
+@import '../components/NuevoMovimientoSheet.css';
+
 .historial {
   flex: 1;
   display: flex;
@@ -9,6 +11,109 @@
 
 .historial__header {
   padding: calc(12px + var(--safe-top)) 20px 4px;
+}
+
+.historial__barra-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 16px 0;
+}
+
+.historial__buscador {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-tertiary);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  font-size: 15px;
+}
+
+.historial__buscador input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  color: var(--label);
+  min-width: 0;
+}
+
+.historial__buscador input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.historial__boton-filtros {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-tertiary);
+  color: var(--label);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.historial__boton-filtros--activo {
+  background: var(--brand-tint);
+  color: var(--brand);
+}
+
+.historial__insignia {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.historial__chips-activos {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 16px 0;
+  scrollbar-width: none;
+}
+
+.historial__chips-activos::-webkit-scrollbar {
+  display: none;
+}
+
+.historial__chips-activos .chip {
+  flex: none;
+}
+
+.historial__total {
+  margin: 8px 16px 0;
+  font-size: 13px;
+  color: var(--label-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.historial__total-monto--ingreso {
+  color: var(--income);
+  font-weight: 600;
+}
+
+.historial__total-monto--egreso {
+  color: var(--expense);
+  font-weight: 600;
 }
 
 .historial__vacio {
@@ -35,7 +140,6 @@
   margin: 0 4px 6px;
   font-size: 13px;
   font-weight: 600;
-  text-transform: capitalize;
   color: var(--label-secondary);
 }
 

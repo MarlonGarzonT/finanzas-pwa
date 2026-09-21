@@ -8,6 +8,10 @@ interface Props {
   mes: Date;
   onCerrar: () => void;
   onSeleccionar: (mes: Date) => void;
+  // true cuando se abre encima de otro sheet ya abierto (ej. dentro de
+  // HistorialFiltrosSheet), para que quede visualmente por delante sin
+  // depender del orden en el DOM (mismo z-index que sheet-overlay--anidado).
+  anidado?: boolean;
 }
 
 const RANGO_ANIOS_ATRAS = 10;
@@ -21,7 +25,7 @@ const NOMBRES_MESES = Array.from({ length: 12 }, (_, i) =>
   capitalizarPrimera(new Date(2000, i, 1).toLocaleDateString('es-CO', { month: 'long' }))
 );
 
-export function SelectorMesSheet({ abierto, mes, onCerrar, onSeleccionar }: Props) {
+export function SelectorMesSheet({ abierto, mes, onCerrar, onSeleccionar, anidado }: Props) {
   const anioActual = new Date().getFullYear();
   const anios = useMemo(
     () =>
@@ -55,7 +59,11 @@ export function SelectorMesSheet({ abierto, mes, onCerrar, onSeleccionar }: Prop
   }
 
   return (
-    <div className="sheet-overlay" onClick={onCerrar} style={gestos.overlayStyle}>
+    <div
+      className={`sheet-overlay ${anidado ? 'sheet-overlay--anidado' : ''}`}
+      onClick={onCerrar}
+      style={gestos.overlayStyle}
+    >
       <div
         className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
         onClick={(e) => e.stopPropagation()}

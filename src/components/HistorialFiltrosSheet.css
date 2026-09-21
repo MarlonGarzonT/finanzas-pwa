@@ -1,0 +1,46 @@
+@import '../styles/sheet.css';
+
+.filtros-sheet__seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filtros-sheet__etiqueta {
+  margin: 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-secondary);
+}
+
+.filtros-sheet__mes-boton {
+  align-self: flex-start;
+  border: none;
+  background: var(--surface-tertiary);
+  color: var(--label);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.filtros-sheet__mes-limpiar {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.filtros-sheet__rango {
+  display: flex;
+  gap: 8px;
+}
+
+.filtros-sheet__rango .texto-input {
+  text-align: left;
+}
