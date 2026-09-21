@@ -1,5 +1,6 @@
 .selector-pagina {
   position: relative;
+  flex: none;
 }
 
 .selector-pagina__boton {

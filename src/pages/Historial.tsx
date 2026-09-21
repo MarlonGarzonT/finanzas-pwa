@@ -98,10 +98,8 @@ export function Historial() {
     <div className="historial">
       <header className="historial__header">
         <SelectorPagina />
-      </header>
 
-      {!cargando && transacciones.length > 0 && (
-        <div className="historial__barra-busqueda">
+        {!cargando && transacciones.length > 0 && (
           <div className="historial__buscador">
             <span aria-hidden>🔎</span>
             <input
@@ -111,6 +109,9 @@ export function Historial() {
               onChange={(e) => setFiltros((prev) => ({ ...prev, texto: e.target.value }))}
             />
           </div>
+        )}
+
+        {!cargando && transacciones.length > 0 && (
           <button
             type="button"
             className={`historial__boton-filtros ${filtrosActivos > 0 ? 'historial__boton-filtros--activo' : ''}`}
@@ -122,8 +123,8 @@ export function Historial() {
             </svg>
             {filtrosActivos > 0 && <span className="historial__insignia">{filtrosActivos}</span>}
           </button>
-        </div>
-      )}
+        )}
+      </header>
 
       {hayFiltrosDeChip && (
         <div className="historial__chips-activos">
