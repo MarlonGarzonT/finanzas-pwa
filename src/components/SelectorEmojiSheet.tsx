@@ -9,12 +9,15 @@ interface Props {
   seleccionado: string;
   onCerrar: () => void;
   onSeleccionar: (emoji: string) => void;
-  // true cuando se abre encima de otro sheet ya abierto (ej. dentro de
-  // GestionCategorias), para quedar visualmente por delante.
-  anidado?: boolean;
+  // A qué profundidad se abre este sheet respecto al de más afuera: 1 si
+  // está un nivel adentro (ej. dentro de "Nueva categoría"), 2 si está dos
+  // niveles adentro (ej. dentro de "Editar categoría", que a su vez está
+  // dentro de "Categorías"). Controla el z-index para quedar siempre por
+  // delante sin depender del orden en el DOM.
+  nivel?: 1 | 2;
 }
 
-export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccionar, anidado }: Props) {
+export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccionar, nivel = 1 }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const gruposRef = useRef<Record<string, HTMLElement | null>>({});
 
@@ -36,7 +39,7 @@ export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccio
 
   return (
     <div
-      className={`sheet-overlay ${anidado ? 'sheet-overlay--anidado' : ''}`}
+      className={`sheet-overlay ${nivel === 2 ? 'sheet-overlay--anidado-2' : 'sheet-overlay--anidado'}`}
       onClick={onCerrar}
       style={gestos.overlayStyle}
     >

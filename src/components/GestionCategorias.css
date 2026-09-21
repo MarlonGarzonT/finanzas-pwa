@@ -70,7 +70,7 @@
   color: var(--expense);
 }
 
-.categorias-lista button {
+.categorias-lista__eliminar {
   border: none;
   background: transparent;
   color: var(--expense);
@@ -82,25 +82,24 @@
 .categorias-lista__editor {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 2px 4px 16px;
+  padding: 2px 4px 4px;
 }
 
-.categorias-lista__emoji-boton {
-  align-self: flex-start;
+.categorias-lista__editar-boton {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  width: 100%;
   border: none;
-  background: var(--surface-tertiary);
-  color: var(--label);
-  padding: 8px 14px 8px 10px;
-  border-radius: 999px;
-  font-size: 14px;
+  background: transparent;
+  color: var(--brand);
+  font-size: 15px;
   font-weight: 500;
+  padding: 8px 4px;
   cursor: pointer;
 }
 
-.categorias-lista__emoji-boton span {
+.categorias-lista__editar-boton span {
   font-size: 18px;
+  color: var(--label-tertiary);
 }

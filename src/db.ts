@@ -79,6 +79,7 @@ export async function crearCategoria(userId: string, nombre: string, tipo: Tipo)
 
 export async function actualizarCategoria(id: string, cambios: CambiosCategoria): Promise<Categoria> {
   const payload: Record<string, unknown> = {};
+  if (cambios.nombre !== undefined) payload.nombre = cambios.nombre;
   if (cambios.emoji !== undefined) payload.emoji = cambios.emoji;
   if (cambios.tipo !== undefined) payload.tipo = cambios.tipo;
   if (cambios.esFijo !== undefined) payload.es_fijo = cambios.esFijo;

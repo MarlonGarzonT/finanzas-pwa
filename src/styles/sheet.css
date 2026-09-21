@@ -16,6 +16,12 @@
   z-index: 60;
 }
 
+/* Tercer nivel (ej. el selector de emoji abierto encima de "Editar
+   categoría", que a su vez está encima de "Categorías"). */
+.sheet-overlay--anidado-2 {
+  z-index: 70;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

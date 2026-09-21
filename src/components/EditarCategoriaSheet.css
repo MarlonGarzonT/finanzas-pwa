@@ -1,0 +1,20 @@
+@import '../styles/sheet.css';
+
+.editar-categoria__emoji-boton {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: var(--surface-tertiary);
+  color: var(--label);
+  padding: 10px 18px 10px 12px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editar-categoria__emoji-boton span {
+  font-size: 22px;
+}

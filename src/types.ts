@@ -9,6 +9,7 @@ export interface Categoria {
 }
 
 export interface CambiosCategoria {
+  nombre?: string;
   emoji?: string;
   tipo?: Tipo;
   esFijo?: boolean;

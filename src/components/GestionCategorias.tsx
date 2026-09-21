@@ -1,13 +1,7 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import type { CambiosCategoria, Categoria, Tipo } from '../types';
+import { EditarCategoriaSheet } from './EditarCategoriaSheet';
 import './GestionCategorias.css';
-
-// La lista completa de emojis pesa ~280KB (datos de unicode.org): se carga
-// bajo demanda, solo cuando de verdad se abre el selector, para no sumarla
-// al paquete principal que se descarga en cada visita a la app.
-const SelectorEmojiSheet = lazy(() =>
-  import('./SelectorEmojiSheet').then((m) => ({ default: m.SelectorEmojiSheet }))
-);
 
 interface Props {
   abierto: boolean;
@@ -23,7 +17,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
   const [tipoNueva, setTipoNueva] = useState<Tipo>('egreso');
   const [ocupado, setOcupado] = useState(false);
   const [expandidaId, setExpandidaId] = useState<string | null>(null);
-  const [emojiAbiertoId, setEmojiAbiertoId] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   if (!abierto) return null;
 
@@ -48,9 +42,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
       <div className="sheet categorias-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet__handle" />
         <h2 className="sheet__titulo">Categorías</h2>
-        <p className="categorias-ayuda">
-          Toca una categoría para cambiar su emoji, si es ingreso o gasto, y si es un gasto fijo mensual.
-        </p>
+        <p className="categorias-ayuda">Toca una categoría para editarla: nombre, emoji, tipo y gasto fijo.</p>
 
         <ul className="categorias-lista">
           {categorias.map((c) => (
@@ -70,6 +62,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
                   {c.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}
                 </span>
                 <button
+                  className="categorias-lista__eliminar"
                   onClick={(e) => {
                     e.stopPropagation();
                     manejarEliminar(c.id);
@@ -85,41 +78,12 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
                 <div className="categorias-lista__editor">
                   <button
                     type="button"
-                    className="categorias-lista__emoji-boton"
-                    onClick={() => setEmojiAbiertoId(c.id)}
+                    className="categorias-lista__editar-boton"
+                    onClick={() => setEditandoId(c.id)}
                   >
-                    <span aria-hidden>{c.emoji}</span>
-                    Cambiar emoji
+                    Editar categoría
+                    <span aria-hidden>›</span>
                   </button>
-
-                  <div className="segmented">
-                    <button
-                      type="button"
-                      className={`segmented__btn segmented__btn--entrada ${c.tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
-                      onClick={() => onActualizar(c.id, { tipo: 'ingreso' })}
-                    >
-                      Ingreso
-                    </button>
-                    <button
-                      type="button"
-                      className={`segmented__btn segmented__btn--salida ${c.tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
-                      onClick={() => onActualizar(c.id, { tipo: 'egreso' })}
-                    >
-                      Gasto
-                    </button>
-                  </div>
-
-                  <label className="interruptor-fila">
-                    <span>Gasto fijo mensual (arriendo, cuotas...)</span>
-                    <span className="interruptor">
-                      <input
-                        type="checkbox"
-                        checked={c.esFijo}
-                        onChange={(e) => onActualizar(c.id, { esFijo: e.target.checked })}
-                      />
-                      <span className="interruptor__riel" />
-                    </span>
-                  </label>
                 </div>
               )}
             </li>
@@ -156,19 +120,16 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
         </button>
       </div>
 
-      {emojiAbiertoId !== null && (
-        <Suspense fallback={null}>
-          <SelectorEmojiSheet
-            abierto
-            seleccionado={categorias.find((c) => c.id === emojiAbiertoId)?.emoji ?? '🏷️'}
-            onCerrar={() => setEmojiAbiertoId(null)}
-            onSeleccionar={(emoji) => {
-              if (emojiAbiertoId) onActualizar(emojiAbiertoId, { emoji });
-            }}
-            anidado
-          />
-        </Suspense>
-      )}
+      <EditarCategoriaSheet
+        abierto={editandoId !== null}
+        categoria={categorias.find((c) => c.id === editandoId) ?? null}
+        onCerrar={() => setEditandoId(null)}
+        onGuardar={onActualizar}
+        onEliminar={async (id) => {
+          await onEliminar(id);
+          setExpandidaId(null);
+        }}
+      />
     </div>
   );
 }
