@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type { CambiosCategoria, Categoria, Tipo } from '../types';
-import { SelectorEmoji } from './SelectorEmoji';
 import './GestionCategorias.css';
+
+// La lista completa de emojis pesa ~280KB (datos de unicode.org): se carga
+// bajo demanda, solo cuando de verdad se abre el selector, para no sumarla
+// al paquete principal que se descarga en cada visita a la app.
+const SelectorEmojiSheet = lazy(() =>
+  import('./SelectorEmojiSheet').then((m) => ({ default: m.SelectorEmojiSheet }))
+);
 
 interface Props {
   abierto: boolean;
@@ -17,6 +23,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
   const [tipoNueva, setTipoNueva] = useState<Tipo>('egreso');
   const [ocupado, setOcupado] = useState(false);
   const [expandidaId, setExpandidaId] = useState<string | null>(null);
+  const [emojiAbiertoId, setEmojiAbiertoId] = useState<string | null>(null);
 
   if (!abierto) return null;
 
@@ -76,7 +83,14 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
 
               {expandidaId === c.id && (
                 <div className="categorias-lista__editor">
-                  <SelectorEmoji seleccionado={c.emoji} onSeleccionar={(emoji) => onActualizar(c.id, { emoji })} />
+                  <button
+                    type="button"
+                    className="categorias-lista__emoji-boton"
+                    onClick={() => setEmojiAbiertoId(c.id)}
+                  >
+                    <span aria-hidden>{c.emoji}</span>
+                    Cambiar emoji
+                  </button>
 
                   <div className="segmented">
                     <button
@@ -141,6 +155,20 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
           Cerrar
         </button>
       </div>
+
+      {emojiAbiertoId !== null && (
+        <Suspense fallback={null}>
+          <SelectorEmojiSheet
+            abierto
+            seleccionado={categorias.find((c) => c.id === emojiAbiertoId)?.emoji ?? '🏷️'}
+            onCerrar={() => setEmojiAbiertoId(null)}
+            onSeleccionar={(emoji) => {
+              if (emojiAbiertoId) onActualizar(emojiAbiertoId, { emoji });
+            }}
+            anidado
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
