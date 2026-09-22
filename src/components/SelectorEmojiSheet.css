@@ -31,9 +31,11 @@
   flex: none;
   width: 36px;
   height: 36px;
-  border: none;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
   border-radius: 50%;
-  background: var(--surface-tertiary);
   font-size: 18px;
   display: flex;
   align-items: center;
@@ -75,9 +77,12 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
-  border: none;
   border-radius: var(--radius-sm);
-  background: var(--surface-tertiary);
+  /* Sin backdrop-filter aquí a propósito: son hasta ~1900 celdas en el DOM y
+     desenfocar cada una sería carísimo para el navegador. Se usa el mismo
+     tono de vidrio, pero como color plano (sin blur). */
+  background: var(--glass-bg);
+  border: 0.5px solid var(--glass-borde);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;

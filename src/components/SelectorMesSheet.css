@@ -12,7 +12,10 @@
   position: absolute;
   left: 8px;
   right: 8px;
-  background: var(--surface-tertiary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
   border-radius: var(--radius-sm);
   pointer-events: none;
   z-index: 0;

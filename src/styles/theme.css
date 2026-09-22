@@ -47,6 +47,18 @@
   /* chart-only axis/grid tones (not part of the money/brand system) */
   --chart-muted: #898781;
   --chart-grid: #e1e0d9;
+
+  /* Liquid Glass (estilo iOS 26): material translúcido para botones, chips,
+     buscadores y demás controles - distinto de --surface-translucent (que es
+     casi opaco, pensado para menús donde el texto de abajo no debe verse).
+     Aquí sí debe notarse lo que hay detrás. */
+  --glass-blur: 20px;
+  --glass-saturate: 180%;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-activo: rgba(255, 255, 255, 0.75);
+  --glass-borde: rgba(255, 255, 255, 0.7);
+  --glass-brillo: rgba(255, 255, 255, 0.85);
+  --glass-sombra: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -76,7 +88,39 @@
 
     --chart-muted: #898781;
     --chart-grid: #2c2c2a;
+
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-bg-activo: rgba(255, 255, 255, 0.16);
+    --glass-borde: rgba(255, 255, 255, 0.16);
+    --glass-brillo: rgba(255, 255, 255, 0.3);
+    --glass-sombra: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
+}
+
+/* Utilidad reutilizable: material de vidrio (Liquid Glass). Se compone con
+   la clase del elemento (ej. class="chip glass") para no duplicar reglas de
+   layout; solo aporta fondo, borde y desenfoque. */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
+  box-shadow: inset 0 1px 0 var(--glass-brillo), var(--glass-sombra);
+}
+
+.glass--activo {
+  background: var(--glass-bg-activo);
+}
+
+/* Version "con color": el mismo vidrio pero tintado con el color de marca u
+   otro, para botones primarios (Guardar, +, etc.) que necesitan seguir
+   leyéndose como acción principal sin volver a un relleno sólido plano. */
+.glass-tintado {
+  background: color-mix(in srgb, var(--brand) 82%, transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid color-mix(in srgb, #fff 30%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px color-mix(in srgb, var(--brand) 35%, transparent);
 }
 
 * {

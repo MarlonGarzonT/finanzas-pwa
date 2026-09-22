@@ -7,10 +7,14 @@
 }
 
 .selector-mes__flecha {
-  border: none;
-  background: transparent;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
+  box-shadow: inset 0 1px 0 var(--glass-brillo);
+  border-radius: 50%;
   color: var(--brand);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
   width: 32px;
@@ -27,8 +31,12 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--label);
-  border: none;
-  background: transparent;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
+  box-shadow: inset 0 1px 0 var(--glass-brillo);
+  border-radius: 999px;
   padding: 6px 14px;
   cursor: pointer;
 }

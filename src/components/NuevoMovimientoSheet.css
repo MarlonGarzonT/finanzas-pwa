@@ -19,9 +19,11 @@
 .segmented__btn {
   flex: 1;
   padding: 14px 0;
-  border: none;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
   border-radius: var(--radius-md);
-  background: var(--surface-tertiary);
   color: var(--label-secondary);
   font-size: 16px;
   font-weight: 600;
@@ -30,12 +32,14 @@
 }
 
 .segmented__btn--activo.segmented__btn--entrada {
-  background: var(--income);
+  background: color-mix(in srgb, var(--income) 85%, transparent);
+  border-color: color-mix(in srgb, #fff 30%, transparent);
   color: #fff;
 }
 
 .segmented__btn--activo.segmented__btn--salida {
-  background: var(--expense);
+  background: color-mix(in srgb, var(--expense) 85%, transparent);
+  border-color: color-mix(in srgb, #fff 30%, transparent);
   color: #fff;
 }
 
@@ -66,8 +70,10 @@
 }
 
 .texto-input {
-  border: none;
-  background: var(--surface-tertiary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
   border-radius: var(--radius-md);
   padding: 14px 16px;
   font-size: 16px;
@@ -94,8 +100,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: none;
-  background: var(--surface-tertiary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
   color: var(--label);
   padding: 10px 16px;
   border-radius: 999px;
@@ -111,7 +119,8 @@
 }
 
 .chip--activo {
-  background: var(--brand-tint);
+  background: color-mix(in srgb, var(--brand) 24%, var(--glass-bg));
+  border-color: color-mix(in srgb, var(--brand) 45%, transparent);
   color: var(--brand);
   font-weight: 600;
 }
