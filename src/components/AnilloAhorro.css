@@ -1,0 +1,35 @@
+.anillo-ahorro {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+
+.anillo-ahorro__trazo {
+  transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.anillo-ahorro__centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.anillo-ahorro__numero {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
+}
+
+.anillo-ahorro__etiqueta {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--label-secondary);
+}

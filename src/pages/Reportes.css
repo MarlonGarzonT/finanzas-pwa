@@ -1,0 +1,100 @@
+@import '../components/Graficos.css';
+
+.reportes {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pagina-entrada 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reportes__header {
+  padding: calc(12px + var(--safe-top)) 20px 4px;
+}
+
+.reportes__vacio {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--label-secondary);
+}
+
+.reportes__cargando {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reportes__contenido {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 16px calc(24px + var(--safe-bottom));
+}
+
+.reportes__grid-superior {
+  display: flex;
+  gap: 12px;
+}
+
+.reportes__tarjeta-anillo,
+.reportes__tarjeta-comparacion {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reportes__tarjeta-comparacion {
+  flex-direction: column;
+}
+
+.reportes__tarjeta-comparacion .comparacion-mes {
+  flex-direction: column;
+  width: 100%;
+}
+
+.reportes__titulo-con-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reportes__titulo-con-toggle .grafico-card__titulo {
+  margin: 0;
+}
+
+.reportes__toggle {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid var(--glass-borde);
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.reportes__toggle-btn {
+  border: none;
+  background: transparent;
+  color: var(--label-secondary);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.reportes__toggle-btn--activo {
+  background: var(--brand);
+  color: #fff;
+}

@@ -5,6 +5,7 @@ import './SelectorPagina.css';
 const PAGINAS = [
   { to: '/', etiqueta: 'Resumen' },
   { to: '/historial', etiqueta: 'Historial' },
+  { to: '/reportes', etiqueta: 'Reportes' },
   { to: '/grupos', etiqueta: 'Grupos' },
 ];
 

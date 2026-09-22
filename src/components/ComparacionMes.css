@@ -1,0 +1,65 @@
+.comparacion-mes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 4px;
+}
+
+.comparacion-mes__tarjeta {
+  flex: 1;
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: comparacion-aparecer 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes comparacion-aparecer {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.comparacion-mes__tarjeta--sube {
+  background: var(--expense-tint);
+}
+
+.comparacion-mes__tarjeta--baja {
+  background: var(--income-tint);
+}
+
+.comparacion-mes__tarjeta--proyeccion {
+  background: var(--brand-tint);
+  animation-delay: 0.1s;
+}
+
+.comparacion-mes__flecha {
+  font-size: 16px;
+}
+
+.comparacion-mes__tarjeta--sube .comparacion-mes__flecha {
+  color: var(--expense);
+}
+
+.comparacion-mes__tarjeta--baja .comparacion-mes__flecha {
+  color: var(--income);
+}
+
+.comparacion-mes__numero {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
+}
+
+.comparacion-mes__detalle {
+  font-size: 12px;
+  color: var(--label-secondary);
+}

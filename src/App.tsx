@@ -7,6 +7,7 @@ import { GruposProvider } from './data/GruposContext';
 import { GrupoDetalle } from './pages/GrupoDetalle';
 import { Grupos } from './pages/Grupos';
 import { Historial } from './pages/Historial';
+import { Reportes } from './pages/Reportes';
 import { Resumen } from './pages/Resumen';
 
 function AppShell() {
@@ -31,6 +32,7 @@ function AppShell() {
           <Routes>
             <Route path="/" element={<Resumen />} />
             <Route path="/historial" element={<Historial />} />
+            <Route path="/reportes" element={<Reportes />} />
             <Route path="/grupos" element={<Grupos />} />
             <Route path="/grupos/:id" element={<GrupoDetalle />} />
           </Routes>
