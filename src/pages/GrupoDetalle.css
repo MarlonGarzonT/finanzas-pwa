@@ -128,8 +128,10 @@
 .saldo-fila__accion {
   flex: none;
   width: 100%;
-  border: none;
-  background: var(--brand-tint);
+  background: color-mix(in srgb, var(--brand) 20%, var(--glass-bg));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 0.5px solid color-mix(in srgb, var(--brand) 45%, transparent);
   color: var(--brand);
   padding: 8px 0;
   border-radius: var(--radius-sm);
