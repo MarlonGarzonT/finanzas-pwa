@@ -117,9 +117,8 @@
 }
 
 .login__social {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .login__social-boton {

@@ -20,7 +20,7 @@ const TEXTOS: Record<Modo, { titulo: string; subtitulo: string; cta: string }> =
 };
 
 export function Login() {
-  const { registrar, iniciarSesion, iniciarSesionConProveedor, restablecerPassword } = useAuth();
+  const { registrar, iniciarSesion, iniciarSesionConGoogle, restablecerPassword } = useAuth();
   const [modo, setModo] = useState<Modo>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +28,7 @@ export function Login() {
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const [proveedorEnCurso, setProveedorEnCurso] = useState<'google' | 'apple' | null>(null);
+  const [enviandoGoogle, setEnviandoGoogle] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
@@ -81,16 +81,16 @@ export function Login() {
     setEnviando(false);
   }
 
-  async function manejarProveedor(proveedor: 'google' | 'apple') {
+  async function manejarGoogle() {
     setError(null);
     setMensajeExito(null);
-    setProveedorEnCurso(proveedor);
-    const { error } = await iniciarSesionConProveedor(proveedor);
+    setEnviandoGoogle(true);
+    const { error } = await iniciarSesionConGoogle();
     if (error) {
       setError(traducirError(error));
-      setProveedorEnCurso(null);
+      setEnviandoGoogle(false);
     }
-    // Si no hay error, el navegador ya está siendo redirigido a Google/Apple.
+    // Si no hay error, el navegador ya está siendo redirigido a Google.
   }
 
   async function manejarOlvidoPassword() {
@@ -130,20 +130,11 @@ export function Login() {
             <button
               type="button"
               className="login__social-boton"
-              onClick={() => manejarProveedor('google')}
-              disabled={proveedorEnCurso !== null || enviando}
+              onClick={manejarGoogle}
+              disabled={enviandoGoogle || enviando}
             >
               <IconoGoogle />
-              Google
-            </button>
-            <button
-              type="button"
-              className="login__social-boton"
-              onClick={() => manejarProveedor('apple')}
-              disabled={proveedorEnCurso !== null || enviando}
-            >
-              <IconoApple />
-              Apple
+              Continuar con Google
             </button>
           </div>
 
@@ -274,14 +265,6 @@ function IconoGoogle() {
         fill="#1976D2"
         d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.2 5.2C39.9 37 45 32.1 45 24c0-1.4-.1-2.8-.4-4.5z"
       />
-    </svg>
-  );
-}
-
-function IconoApple() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-3.014 1.57-.12 0-.23-.02-.3-.03-.014-.1-.04-.33-.04-.57 0-1.13.55-2.27 1.19-3.03.75-.85 2.04-1.5 3.02-1.53.015.15.03.32.03.51zm4.735 15.65c-.09.21-.5.94-1.23 2.02-.63.94-1.28 1.87-2.31 1.89-1 .02-1.32-.6-2.46-.6-1.14 0-1.5.58-2.44.62-.98.04-1.73-1.01-2.36-1.95C8.99 16.83 7.91 13.53 9.28 11.3c.68-1.12 1.9-1.83 3.23-1.85 1.07-.02 2.02.72 2.66.72.64 0 1.79-.89 3.02-.76.51.02 1.94.21 2.86 1.56-.07.05-1.71 1-1.69 2.98.02 2.37 2.08 3.16 2.1 3.17z" />
     </svg>
   );
 }

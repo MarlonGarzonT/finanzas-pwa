@@ -27,10 +27,13 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   const cargarTodo = useCallback(async () => {
     if (!userId) return;
     setCargando(true);
-    const [cats, trans] = await Promise.all([db.obtenerCategorias(userId), db.obtenerTransacciones()]);
-    setCategorias(cats);
-    setTransacciones(trans);
-    setCargando(false);
+    try {
+      const [cats, trans] = await Promise.all([db.obtenerCategorias(userId), db.obtenerTransacciones()]);
+      setCategorias(cats);
+      setTransacciones(trans);
+    } finally {
+      setCargando(false);
+    }
   }, [userId]);
 
   useEffect(() => {

@@ -7,7 +7,7 @@ interface AuthContextValue {
   cargando: boolean;
   registrar: (email: string, password: string) => Promise<{ error: string | null; requiereConfirmacion: boolean }>;
   iniciarSesion: (email: string, password: string) => Promise<{ error: string | null }>;
-  iniciarSesionConProveedor: (proveedor: 'google' | 'apple') => Promise<{ error: string | null }>;
+  iniciarSesionConGoogle: () => Promise<{ error: string | null }>;
   restablecerPassword: (email: string) => Promise<{ error: string | null }>;
   cerrarSesion: () => Promise<void>;
 }
@@ -19,10 +19,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setCargando(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .finally(() => setCargando(false));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nuevaSession) => {
       setSession(nuevaSession);
@@ -56,12 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }
 
-  // Redirige a Google/Apple; si no hay error inmediato el navegador ya está
+  // Redirige a Google; si no hay error inmediato el navegador ya está
   // navegando fuera de la app, así que no hay sesión que devolver aquí - la
   // recoge el listener de onAuthStateChange cuando el usuario vuelve.
-  async function iniciarSesionConProveedor(proveedor: 'google' | 'apple') {
+  async function iniciarSesionConGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: proveedor,
+      provider: 'google',
       options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
     });
     return { error: error?.message ?? null };
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, cargando, registrar, iniciarSesion, iniciarSesionConProveedor, restablecerPassword, cerrarSesion }}
+      value={{ session, cargando, registrar, iniciarSesion, iniciarSesionConGoogle, restablecerPassword, cerrarSesion }}
     >
       {children}
     </AuthContext.Provider>
