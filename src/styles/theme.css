@@ -4,11 +4,13 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI',
     Roboto, system-ui, sans-serif;
 
-  /* Saldo palette (prompt-desarrollador-paleta.md): Apple HIG-style system. Green/red are
-     reserved exclusively for money (regla de oro) - never reused for brand/nav/buttons. */
-  --brand: #5856d6;
-  --brand-tint: #ededfc;
-  --info: #007aff;
+  /* Paleta reskineada según DESIGN.md (guía de estilo apple.com: Obsidian /
+     Carbon / Porcelain / Apple Blue). Green/red se mantienen intactos y
+     reservados exclusivamente para dinero (regla de oro) - DESIGN.md no
+     define esos colores, son propios de esta app. */
+  --brand: #0066cc; /* Cobalt Link - acento en superficies claras */
+  --brand-tint: #e3effb;
+  --info: #0066cc;
 
   --income: #34c759;
   --income-tint: rgba(52, 199, 89, 0.12);
@@ -17,16 +19,18 @@
   --warning: #ff9500;
   --warning-tint: rgba(255, 149, 0, 0.12);
 
-  --bg: #f2f2f7;
-  --surface: #ffffff;
+  --bg: #f5f5f7; /* Porcelain */
+  --surface: #ffffff; /* White Comparison */
   --surface-elevated: #ffffff;
-  --surface-tertiary: #e5e5ea;
+  --surface-tertiary: #ececee;
   --surface-translucent: rgba(255, 255, 255, 0.86);
-  --separator: rgba(60, 60, 67, 0.29);
+  --separator: rgba(29, 29, 31, 0.12);
 
-  --label: #1c1c1e;
-  --label-secondary: #6e6e73;
-  --label-tertiary: #aeaeb2;
+  --label: #1d1d1f; /* Carbon, como texto sobre superficies blancas */
+  --label-secondary: #6e6e73; /* Slate */
+  --label-tertiary: #86868b; /* Ash */
+
+  --shadow-subtle: 0 0 0 1px rgba(29, 29, 31, 0.08);
 
   /* extra hues for category identity only - never money, never brand */
   --color-sky: #0a84ff;
@@ -37,9 +41,9 @@
   --color-yellow: #ffcc00;
   --color-brown: #a2845e;
 
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
+  --radius-lg: 28px; /* "cards"/"images" en DESIGN.md */
+  --radius-md: 20px; /* "navigation" en DESIGN.md */
+  --radius-sm: 14px;
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -64,9 +68,9 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --brand: #7d7aff;
-    --brand-tint: rgba(125, 122, 255, 0.16);
-    --info: #0a84ff;
+    --brand: #0071e3; /* Apple Blue - "Fill with Apple Blue" en Blue Purchase Pill */
+    --brand-tint: rgba(0, 113, 227, 0.18);
+    --info: #2997ff; /* Electric Link - links sobre superficies oscuras */
 
     --income: #30d158;
     --income-tint: rgba(48, 209, 88, 0.16);
@@ -75,16 +79,18 @@
     --warning: #ff9f0a;
     --warning-tint: rgba(255, 159, 10, 0.16);
 
-    --bg: #000000;
-    --surface: #1c1c1e;
-    --surface-elevated: #2c2c2e;
-    --surface-tertiary: #2c2c2e;
-    --surface-translucent: rgba(28, 28, 30, 0.86);
-    --separator: rgba(84, 84, 88, 0.65);
+    --bg: #000000; /* Obsidian */
+    --surface: #1d1d1f; /* Carbon */
+    --surface-elevated: #0e0e0e; /* Graphite */
+    --surface-tertiary: #333336; /* Steel */
+    --surface-translucent: rgba(29, 29, 31, 0.86);
+    --separator: #333336; /* Steel, como keyline de 1px */
 
-    --label: #ffffff;
-    --label-secondary: #98989d;
-    --label-tertiary: #636366;
+    --label: #f5f5f7; /* Porcelain - nunca blanco puro sobre fondo oscuro */
+    --label-secondary: #86868b; /* Ash */
+    --label-tertiary: #6e6e73; /* Slate */
+
+    --shadow-subtle: 0 0 0 1px rgb(40, 40, 40);
 
     --chart-muted: #898781;
     --chart-grid: #2c2c2a;
