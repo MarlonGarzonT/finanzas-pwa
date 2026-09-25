@@ -7,6 +7,8 @@ interface AuthContextValue {
   cargando: boolean;
   registrar: (email: string, password: string) => Promise<{ error: string | null; requiereConfirmacion: boolean }>;
   iniciarSesion: (email: string, password: string) => Promise<{ error: string | null }>;
+  iniciarSesionConProveedor: (proveedor: 'google' | 'apple') => Promise<{ error: string | null }>;
+  restablecerPassword: (email: string) => Promise<{ error: string | null }>;
   cerrarSesion: () => Promise<void>;
 }
 
@@ -54,12 +56,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }
 
+  // Redirige a Google/Apple; si no hay error inmediato el navegador ya está
+  // navegando fuera de la app, así que no hay sesión que devolver aquí - la
+  // recoge el listener de onAuthStateChange cuando el usuario vuelve.
+  async function iniciarSesionConProveedor(proveedor: 'google' | 'apple') {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: proveedor,
+      options: { redirectTo: window.location.origin + import.meta.env.BASE_URL },
+    });
+    return { error: error?.message ?? null };
+  }
+
+  async function restablecerPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + import.meta.env.BASE_URL,
+    });
+    return { error: error?.message ?? null };
+  }
+
   async function cerrarSesion() {
     await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ session, cargando, registrar, iniciarSesion, cerrarSesion }}>
+    <AuthContext.Provider
+      value={{ session, cargando, registrar, iniciarSesion, iniciarSesionConProveedor, restablecerPassword, cerrarSesion }}
+    >
       {children}
     </AuthContext.Provider>
   );
