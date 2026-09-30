@@ -6,7 +6,7 @@ import { Spinner } from '../components/Spinner';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
 import { colorCategoria } from '../utils/colorCategoria';
-import { exportarTransaccionesCSV } from '../utils/exportar';
+import { exportarTransaccionesExcel } from '../utils/exportarExcel';
 import {
   fechaEnMesSeleccionado,
   formatearFechaCorta,
@@ -39,6 +39,7 @@ export function Historial() {
   const [guardando, setGuardando] = useState(false);
   const [filtros, setFiltros] = useState<FiltrosHistorial>(FILTROS_INICIALES);
   const [filtrosAbierto, setFiltrosAbierto] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const categoriaPorId = useMemo(() => {
     const mapa = new Map(categorias.map((c) => [c.id, c]));
@@ -104,6 +105,15 @@ export function Historial() {
     setEditando(null);
   }
 
+  async function manejarExportar() {
+    setExportando(true);
+    try {
+      await exportarTransaccionesExcel(transacciones, categoriaPorId);
+    } finally {
+      setExportando(false);
+    }
+  }
+
   return (
     <div className="historial">
       <header className="historial__header">
@@ -125,12 +135,18 @@ export function Historial() {
           <button
             type="button"
             className="historial__boton-filtros"
-            onClick={() => exportarTransaccionesCSV(transacciones, categoriaPorId)}
-            aria-label="Exportar movimientos"
+            onClick={manejarExportar}
+            disabled={exportando}
+            aria-label="Exportar a Excel"
+            title="Exportar a Excel"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            {exportando ? (
+              <Spinner />
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
           </button>
         )}
 

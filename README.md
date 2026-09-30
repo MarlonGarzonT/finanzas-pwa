@@ -36,7 +36,7 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
   - Gráfico comparativo de ingresos y egresos de los últimos seis meses.
   - Gráfico de gastos del mes seleccionado, desglosado por categoría.
 - Historial completo de movimientos, agrupado por mes, con edición (incluyendo el mes al que pertenece) y eliminación de cualquier registro.
-- Exportación de todos los movimientos a un archivo CSV (descarga directa desde el Historial), para respaldo o análisis en una hoja de cálculo.
+- Exportación a un archivo Excel (.xlsx) con formato profesional, descarga directa desde el Historial: hoja "Resumen" con tarjetas de totales, tabla mensual con barras de datos nativas y gráficos (ingresos vs. egresos por mes, gastos por categoría), hoja "Movimientos" con el detalle completo (filtro automático, encabezado fijo, colores por tipo) y hoja "Categorías" con el total por categoría.
 - Registro e inicio de sesión con correo y contraseña, cuentas privadas por usuario (Supabase Auth), con recuperación de contraseña por correo ("¿Olvidaste tu contraseña?").
 - Aislamiento de datos por usuario mediante Row Level Security a nivel de base de datos.
 - Instalable como PWA (ícono propio, pantalla completa, funciona con la app cerrada en segundo plano).
@@ -53,6 +53,7 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 | Backend / base de datos | Supabase (PostgreSQL, Auth, Row Level Security) |
 | Cliente de datos | `@supabase/supabase-js` |
 | Visualización de datos | Componentes propios (CSS), sin librería de gráficos |
+| Exportación a Excel | `exceljs`, cargado en un chunk separado solo al exportar (no afecta la carga inicial) |
 | Progresive Web App | `vite-plugin-pwa` (manifest y service worker) |
 | Estilos | CSS con variables de diseño, sin framework de utilidades |
 | Hosting / CI-CD | GitHub Pages, desplegado mediante GitHub Actions |
@@ -191,4 +192,4 @@ En Android, Chrome ofrece un mecanismo equivalente (**Instalar aplicación** o *
 ## Limitaciones conocidas
 
 - La aplicación requiere conexión a internet para leer y escribir datos; el service worker únicamente cachea el shell de la interfaz, no el contenido dinámico.
-- La exportación a CSV cubre solo transacciones (no categorías ni datos de grupos compartidos).
+- La exportación a Excel cubre solo transacciones y sus categorías (no incluye datos de grupos compartidos).

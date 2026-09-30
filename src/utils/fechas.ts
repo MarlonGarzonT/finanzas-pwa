@@ -34,6 +34,11 @@ export function nombreMes(fecha: Date): string {
   return fecha.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
 }
 
+// Versión compacta para ejes de gráfico y espacios reducidos (ej. "oct 2026").
+export function nombreMesCorto(fecha: Date): string {
+  return fecha.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+}
+
 export function claveMes(iso: string): string {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
