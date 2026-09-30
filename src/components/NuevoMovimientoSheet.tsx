@@ -55,6 +55,8 @@ export function NuevoMovimientoSheet({
   if (!abierto) return null;
 
   const categoriasDelTipo = categorias.filter((c) => c.tipo === tipo);
+  const montoTexto = monto ? Number(monto).toLocaleString('es-CO') : '';
+  const tamFuenteMonto = montoTexto.length > 12 ? 24 : montoTexto.length > 9 ? 30 : montoTexto.length > 6 ? 36 : 40;
 
   function manejarCambiarTipo(nuevoTipo: Tipo) {
     setTipo(nuevoTipo);
@@ -121,8 +123,9 @@ export function NuevoMovimientoSheet({
               <input
                 inputMode="numeric"
                 placeholder="0"
-                value={monto ? Number(monto).toLocaleString('es-CO') : ''}
+                value={montoTexto}
                 onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
+                style={{ fontSize: tamFuenteMonto }}
                 autoFocus
               />
             </div>

@@ -30,11 +30,11 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 
 - Registro de movimientos en dos pasos: tipo (entrada o salida), monto, descripción y categoría.
 - Categorías completamente personalizables (crear y eliminar) desde la propia interfaz.
-- Fecha de registro y semana del mes calculadas automáticamente, sin intervención del usuario.
+- Selector de mes en la pantalla de resumen: cada movimiento nuevo se guarda en el mes que esté seleccionado en ese momento (no necesariamente el mes calendario real), lo que permite registrar hoy un ingreso o gasto que en realidad pertenece a otro mes. La semana del mes se calcula automáticamente a partir de esa misma fecha.
 - Pantalla de resumen con:
-  - Balance disponible (suma de ingresos menos egresos).
+  - Balance disponible (suma de ingresos menos egresos) del mes seleccionado.
   - Gráfico comparativo de ingresos y egresos de los últimos seis meses.
-  - Gráfico de gastos del mes en curso, desglosado por categoría.
+  - Gráfico de gastos del mes seleccionado, desglosado por categoría.
 - Historial completo de movimientos, agrupado por mes, con edición y eliminación de cualquier registro.
 - Registro e inicio de sesión con correo y contraseña, cuentas privadas por usuario (Supabase Auth).
 - Aislamiento de datos por usuario mediante Row Level Security a nivel de base de datos.
@@ -81,7 +81,7 @@ La base de datos define dos tablas principales, documentadas junto con sus polí
 |---|---|---|
 | `id` | `uuid` | Identificador único, generado automáticamente. |
 | `user_id` | `uuid` | Propietario del registro. |
-| `fecha` | `timestamptz` | Momento del registro, asignado automáticamente al guardar. |
+| `fecha` | `timestamptz` | Fecha del movimiento: el día/hora actual, pero con el mes y año que el usuario tenga seleccionado en el selector de mes de la pantalla de resumen (no siempre coincide con la fecha real de registro). Es el campo que determina a qué mes pertenece el movimiento. |
 | `item` | `text` | Descripción del movimiento, ingresada manualmente. |
 | `categoria_id` | `uuid` | Referencia a `categorias`. |
 | `tipo` | `text` | `ingreso` o `egreso`. |

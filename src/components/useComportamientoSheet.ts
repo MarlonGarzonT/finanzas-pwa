@@ -81,9 +81,13 @@ export function useGestosSheet(abierto: boolean, onCerrar: () => void): GestosSh
   function onFocusCaptureSheet(e: FocusEvent<HTMLDivElement>) {
     const campo = e.target;
     if (!(campo instanceof HTMLInputElement)) return;
-    // Se espera a que el teclado termine de animarse antes de centrar el campo,
+    // Se espera a que el teclado termine de animarse antes de mover el campo,
     // si no el cálculo de scroll se hace contra el tamaño previo del viewport.
-    setTimeout(() => campo.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+    // "nearest" (no "center") porque centrar campos que ya están cerca del
+    // borde superior del sheet (ej. el campo de texto, justo antes de los
+    // chips de categoría) desplazaba de más y tapaba los chips debajo del
+    // header sticky o los sacaba de la vista.
+    setTimeout(() => campo.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300);
   }
 
   return {
