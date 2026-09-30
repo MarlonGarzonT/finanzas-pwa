@@ -46,3 +46,20 @@ export function claveMesDeFecha(fecha: Date): string {
 export function sumarMeses(fecha: Date, delta: number): Date {
   return new Date(fecha.getFullYear(), fecha.getMonth() + delta, 1);
 }
+
+// Un movimiento nuevo debe quedar en el mes que el usuario tiene seleccionado
+// (no en el mes real de hoy). Se conserva el día/hora actual, ajustando el
+// día si el mes seleccionado tiene menos días (ej. 31 en un mes de 30).
+export function fechaEnMesSeleccionado(mesSeleccionado: Date, ahora: Date = new Date()): Date {
+  const diasEnMes = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth() + 1, 0).getDate();
+  const dia = Math.min(ahora.getDate(), diasEnMes);
+  return new Date(
+    mesSeleccionado.getFullYear(),
+    mesSeleccionado.getMonth(),
+    dia,
+    ahora.getHours(),
+    ahora.getMinutes(),
+    ahora.getSeconds(),
+    ahora.getMilliseconds()
+  );
+}

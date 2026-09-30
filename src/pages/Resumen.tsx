@@ -87,7 +87,7 @@ export function Resumen() {
     if (editando) {
       await actualizarMovimiento(editando.id, datos);
     } else {
-      await crearMovimiento(datos);
+      await crearMovimiento(datos, mesSeleccionado);
     }
     setGuardando(false);
     cerrarSheet();

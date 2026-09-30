@@ -108,18 +108,21 @@ export async function obtenerTransacciones(): Promise<Transaccion[]> {
   return (data ?? []).map(mapTransaccion);
 }
 
-export async function crearTransaccion(userId: string, nueva: NuevaTransaccion): Promise<Transaccion> {
-  const ahora = new Date();
+export async function crearTransaccion(
+  userId: string,
+  nueva: NuevaTransaccion,
+  fecha: Date = new Date()
+): Promise<Transaccion> {
   const { data, error } = await supabase
     .from('transacciones')
     .insert({
       user_id: userId,
-      fecha: ahora.toISOString(),
+      fecha: fecha.toISOString(),
       item: nueva.item,
       categoria_id: nueva.categoriaId,
       tipo: nueva.tipo,
       monto: nueva.monto,
-      semana_del_mes: calcularSemanaDelMes(ahora),
+      semana_del_mes: calcularSemanaDelMes(fecha),
     })
     .select('id, fecha, item, categoria_id, tipo, monto, semana_del_mes')
     .single();
