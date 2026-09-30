@@ -6,7 +6,14 @@ import { Spinner } from '../components/Spinner';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Transaccion } from '../types';
 import { colorCategoria } from '../utils/colorCategoria';
-import { formatearFechaCorta, formatearMonto, formatearMontoConSigno, nombreMes } from '../utils/fechas';
+import { exportarTransaccionesCSV } from '../utils/exportar';
+import {
+  fechaEnMesSeleccionado,
+  formatearFechaCorta,
+  formatearMonto,
+  formatearMontoConSigno,
+  nombreMes,
+} from '../utils/fechas';
 import {
   aplicarFiltros,
   contarFiltrosActivos,
@@ -78,10 +85,13 @@ export function Historial() {
     categoriaId: string;
     tipo: 'ingreso' | 'egreso';
     monto: number;
+    mes: Date;
   }) {
     if (!editando) return;
+    const { mes, ...resto } = datos;
+    const fecha = fechaEnMesSeleccionado(mes, new Date(editando.fecha));
     setGuardando(true);
-    await actualizarMovimiento(editando.id, datos);
+    await actualizarMovimiento(editando.id, resto, fecha);
     setGuardando(false);
     setEditando(null);
   }
@@ -109,6 +119,19 @@ export function Historial() {
               onChange={(e) => setFiltros((prev) => ({ ...prev, texto: e.target.value }))}
             />
           </div>
+        )}
+
+        {!cargando && transacciones.length > 0 && (
+          <button
+            type="button"
+            className="historial__boton-filtros"
+            onClick={() => exportarTransaccionesCSV(transacciones, categoriaPorId)}
+            aria-label="Exportar movimientos"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         )}
 
         {!cargando && transacciones.length > 0 && (
@@ -252,6 +275,7 @@ export function Historial() {
         abierto={editando !== null}
         categorias={categorias}
         transaccion={editando}
+        mesSeleccionado={editando ? new Date(editando.fecha) : new Date()}
         guardando={guardando}
         onCerrar={() => setEditando(null)}
         onGuardar={manejarGuardar}

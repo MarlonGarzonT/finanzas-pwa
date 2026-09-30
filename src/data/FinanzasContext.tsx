@@ -2,14 +2,13 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { useAuth } from '../auth/AuthContext';
 import * as db from '../db';
 import type { CambiosCategoria, Categoria, NuevaTransaccion, Tipo, Transaccion } from '../types';
-import { fechaEnMesSeleccionado } from '../utils/fechas';
 
 interface FinanzasContextValue {
   transacciones: Transaccion[];
   categorias: Categoria[];
   cargando: boolean;
-  crearMovimiento: (datos: NuevaTransaccion, mesSeleccionado: Date) => Promise<void>;
-  actualizarMovimiento: (id: string, datos: Partial<NuevaTransaccion>) => Promise<void>;
+  crearMovimiento: (datos: NuevaTransaccion, fecha: Date) => Promise<void>;
+  actualizarMovimiento: (id: string, datos: Partial<NuevaTransaccion>, fecha: Date) => Promise<void>;
   eliminarMovimiento: (id: string) => Promise<void>;
   crearCategoria: (nombre: string, tipo: Tipo) => Promise<Categoria>;
   actualizarCategoria: (id: string, cambios: CambiosCategoria) => Promise<void>;
@@ -41,14 +40,14 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     if (userId) cargarTodo();
   }, [userId, cargarTodo]);
 
-  async function crearMovimiento(datos: NuevaTransaccion, mesSeleccionado: Date) {
+  async function crearMovimiento(datos: NuevaTransaccion, fecha: Date) {
     if (!userId) return;
-    const nueva = await db.crearTransaccion(userId, datos, fechaEnMesSeleccionado(mesSeleccionado));
+    const nueva = await db.crearTransaccion(userId, datos, fecha);
     setTransacciones((prev) => [nueva, ...prev]);
   }
 
-  async function actualizarMovimiento(id: string, datos: Partial<NuevaTransaccion>) {
-    const actualizada = await db.actualizarTransaccion(id, datos);
+  async function actualizarMovimiento(id: string, datos: Partial<NuevaTransaccion>, fecha: Date) {
+    const actualizada = await db.actualizarTransaccion(id, datos, fecha);
     setTransacciones((prev) => prev.map((t) => (t.id === id ? actualizada : t)));
   }
 

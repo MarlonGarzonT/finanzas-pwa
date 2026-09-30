@@ -132,9 +132,13 @@ export async function crearTransaccion(
 
 export async function actualizarTransaccion(
   id: string,
-  cambios: Partial<NuevaTransaccion>
+  cambios: Partial<NuevaTransaccion>,
+  fecha: Date
 ): Promise<Transaccion> {
-  const payload: Record<string, unknown> = {};
+  const payload: Record<string, unknown> = {
+    fecha: fecha.toISOString(),
+    semana_del_mes: calcularSemanaDelMes(fecha),
+  };
   if (cambios.item !== undefined) payload.item = cambios.item;
   if (cambios.categoriaId !== undefined) payload.categoria_id = cambios.categoriaId;
   if (cambios.tipo !== undefined) payload.tipo = cambios.tipo;

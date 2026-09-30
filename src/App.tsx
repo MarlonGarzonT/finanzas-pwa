@@ -1,6 +1,7 @@
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { Login } from './auth/Login';
+import { RestablecerPassword } from './auth/RestablecerPassword';
 import { Spinner } from './components/Spinner';
 import { FinanzasProvider } from './data/FinanzasContext';
 import { GruposProvider } from './data/GruposContext';
@@ -11,7 +12,7 @@ import { Reportes } from './pages/Reportes';
 import { Resumen } from './pages/Resumen';
 
 function AppShell() {
-  const { session, cargando } = useAuth();
+  const { session, cargando, modoRecuperacion } = useAuth();
 
   if (cargando) {
     return (
@@ -19,6 +20,13 @@ function AppShell() {
         <Spinner />
       </div>
     );
+  }
+
+  // Se revisa antes que la sesión: el enlace de "restablecer contraseña" ya
+  // deja una sesión activa, pero el usuario debe fijar la contraseña nueva
+  // antes de entrar a la app.
+  if (modoRecuperacion) {
+    return <RestablecerPassword />;
   }
 
   if (!session) {

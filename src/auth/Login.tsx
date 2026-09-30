@@ -287,10 +287,16 @@ function IconoOjoTachado() {
   );
 }
 
-function traducirError(mensaje: string): string {
+export function traducirError(mensaje: string): string {
   if (mensaje.includes('Invalid login credentials')) return 'Correo o contraseña incorrectos.';
   if (mensaje.includes('User already registered')) return 'Ya existe una cuenta con ese correo.';
   if (mensaje.includes('Password should be at least')) return `La contraseña debe tener al menos ${LONGITUD_MINIMA} caracteres.`;
+  if (mensaje.includes('should be different from the old password')) {
+    return 'La contraseña nueva debe ser distinta a la actual.';
+  }
+  if (mensaje.includes('Auth session missing')) {
+    return 'El enlace ya expiró o ya se usó. Solicita uno nuevo desde "¿Olvidaste tu contraseña?".';
+  }
   if (mensaje.toLowerCase().includes('provider is not enabled') || mensaje.toLowerCase().includes('unsupported provider')) {
     return 'Este método de acceso todavía no está activado. Usa tu correo y contraseña por ahora.';
   }

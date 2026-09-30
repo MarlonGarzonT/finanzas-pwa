@@ -10,7 +10,7 @@ import { Spinner } from '../components/Spinner';
 import { UltimosMovimientos } from '../components/UltimosMovimientos';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Tipo, Transaccion } from '../types';
-import { claveMesDeFecha, claveMes, nombreMes } from '../utils/fechas';
+import { claveMesDeFecha, claveMes, fechaEnMesSeleccionado, nombreMes } from '../utils/fechas';
 import './Resumen.css';
 
 export function Resumen() {
@@ -82,12 +82,20 @@ export function Resumen() {
     setEditando(null);
   }
 
-  async function manejarGuardar(datos: { item: string; categoriaId: string; tipo: 'ingreso' | 'egreso'; monto: number }) {
+  async function manejarGuardar(datos: {
+    item: string;
+    categoriaId: string;
+    tipo: 'ingreso' | 'egreso';
+    monto: number;
+    mes: Date;
+  }) {
+    const { mes, ...resto } = datos;
+    const fecha = fechaEnMesSeleccionado(mes, editando ? new Date(editando.fecha) : new Date());
     setGuardando(true);
     if (editando) {
-      await actualizarMovimiento(editando.id, datos);
+      await actualizarMovimiento(editando.id, resto, fecha);
     } else {
-      await crearMovimiento(datos, mesSeleccionado);
+      await crearMovimiento(resto, fecha);
     }
     setGuardando(false);
     cerrarSheet();
@@ -154,6 +162,7 @@ export function Resumen() {
         abierto={sheetAbierto || editando !== null}
         categorias={categorias}
         transaccion={editando}
+        mesSeleccionado={mesSeleccionado}
         guardando={guardando}
         onCerrar={cerrarSheet}
         onGuardar={manejarGuardar}

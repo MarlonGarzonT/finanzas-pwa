@@ -30,13 +30,14 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 
 - Registro de movimientos en dos pasos: tipo (entrada o salida), monto, descripción y categoría.
 - Categorías completamente personalizables (crear y eliminar) desde la propia interfaz.
-- Selector de mes en la pantalla de resumen: cada movimiento nuevo se guarda en el mes que esté seleccionado en ese momento (no necesariamente el mes calendario real), lo que permite registrar hoy un ingreso o gasto que en realidad pertenece a otro mes. La semana del mes se calcula automáticamente a partir de esa misma fecha.
+- Selector de mes en la pantalla de resumen: cada movimiento nuevo se guarda en el mes que esté seleccionado en ese momento (no necesariamente el mes calendario real), lo que permite registrar hoy un ingreso o gasto que en realidad pertenece a otro mes. El mes de cada movimiento también puede elegirse a mano al crearlo o editarlo, y la semana del mes se recalcula automáticamente a partir de esa fecha.
 - Pantalla de resumen con:
   - Balance disponible (suma de ingresos menos egresos) del mes seleccionado.
   - Gráfico comparativo de ingresos y egresos de los últimos seis meses.
   - Gráfico de gastos del mes seleccionado, desglosado por categoría.
-- Historial completo de movimientos, agrupado por mes, con edición y eliminación de cualquier registro.
-- Registro e inicio de sesión con correo y contraseña, cuentas privadas por usuario (Supabase Auth).
+- Historial completo de movimientos, agrupado por mes, con edición (incluyendo el mes al que pertenece) y eliminación de cualquier registro.
+- Exportación de todos los movimientos a un archivo CSV (descarga directa desde el Historial), para respaldo o análisis en una hoja de cálculo.
+- Registro e inicio de sesión con correo y contraseña, cuentas privadas por usuario (Supabase Auth), con recuperación de contraseña por correo ("¿Olvidaste tu contraseña?").
 - Aislamiento de datos por usuario mediante Row Level Security a nivel de base de datos.
 - Instalable como PWA (ícono propio, pantalla completa, funciona con la app cerrada en segundo plano).
 - Interfaz construida siguiendo el lenguaje visual de iOS: tipografía del sistema, colores del sistema, tarjetas y hojas modales (sheets), barra de navegación inferior traslúcida.
@@ -190,5 +191,4 @@ En Android, Chrome ofrece un mecanismo equivalente (**Instalar aplicación** o *
 ## Limitaciones conocidas
 
 - La aplicación requiere conexión a internet para leer y escribir datos; el service worker únicamente cachea el shell de la interfaz, no el contenido dinámico.
-- No existe actualmente exportación ni respaldo manual de los datos fuera de Supabase.
-- No hay flujo de recuperación de contraseña ("olvidé mi contraseña") todavía; si se pierde el acceso, hay que restablecerla manualmente desde el panel de Supabase (Authentication → Users).
+- La exportación a CSV cubre solo transacciones (no categorías ni datos de grupos compartidos).

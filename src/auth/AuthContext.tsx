@@ -5,10 +5,16 @@ import { supabase } from '../supabaseClient';
 interface AuthContextValue {
   session: Session | null;
   cargando: boolean;
+  // true cuando la sesión activa viene del enlace de "restablecer contraseña"
+  // (evento PASSWORD_RECOVERY de Supabase): en ese caso hay que pedir la
+  // contraseña nueva antes de dejar entrar a la app, aunque ya exista sesión.
+  modoRecuperacion: boolean;
   registrar: (email: string, password: string) => Promise<{ error: string | null; requiereConfirmacion: boolean }>;
   iniciarSesion: (email: string, password: string) => Promise<{ error: string | null }>;
   iniciarSesionConGoogle: () => Promise<{ error: string | null }>;
   restablecerPassword: (email: string) => Promise<{ error: string | null }>;
+  actualizarPassword: (password: string) => Promise<{ error: string | null }>;
+  cancelarRecuperacion: () => Promise<void>;
   cerrarSesion: () => Promise<void>;
 }
 
@@ -17,6 +23,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [modoRecuperacion, setModoRecuperacion] = useState(false);
 
   useEffect(() => {
     supabase.auth
@@ -24,8 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(({ data }) => setSession(data.session))
       .finally(() => setCargando(false));
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nuevaSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nuevaSession) => {
       setSession(nuevaSession);
+      if (event === 'PASSWORD_RECOVERY') setModoRecuperacion(true);
     });
 
     return () => listener.subscription.unsubscribe();
@@ -74,13 +82,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }
 
+  async function actualizarPassword(password: string) {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (!error) setModoRecuperacion(false);
+    return { error: error?.message ?? null };
+  }
+
+  // Si el usuario abrió el enlace de recuperación y se arrepiente, no debe
+  // quedar con una sesión "a medias": se cierra por completo y vuelve al login.
+  async function cancelarRecuperacion() {
+    setModoRecuperacion(false);
+    await supabase.auth.signOut();
+  }
+
   async function cerrarSesion() {
     await supabase.auth.signOut();
   }
 
   return (
     <AuthContext.Provider
-      value={{ session, cargando, registrar, iniciarSesion, iniciarSesionConGoogle, restablecerPassword, cerrarSesion }}
+      value={{
+        session,
+        cargando,
+        modoRecuperacion,
+        registrar,
+        iniciarSesion,
+        iniciarSesionConGoogle,
+        restablecerPassword,
+        actualizarPassword,
+        cancelarRecuperacion,
+        cerrarSesion,
+      }}
     >
       {children}
     </AuthContext.Provider>
