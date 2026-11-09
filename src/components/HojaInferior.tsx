@@ -142,7 +142,7 @@ export function HojaInferior({
         <div className="flex flex-col gap-1 pb-2">{vista.children}</div>
 
         {vista.pie && (
-          <div className="sticky bottom-0 z-10 flex flex-col gap-2 bg-ios-light-surface px-4 pt-2 pb-safe-4 dark:bg-ios-dark-surface-2">
+          <div className="sticky bottom-0 z-10 flex flex-col gap-2 bg-ios-light-surface px-4 pt-2 pie-seguro dark:bg-ios-dark-surface-2">
             {vista.pie}
           </div>
         )}

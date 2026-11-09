@@ -21,7 +21,7 @@ export function Grupos() {
   }
 
   return (
-    <Page className="pb-[calc(var(--k-safe-area-bottom)+168px)]">
+    <Page className="pagina-con-fab">
       <Navbar centerTitle title="Grupos" />
 
       {cargando ? (
@@ -59,7 +59,7 @@ export function Grupos() {
 
       {grupos.length > 0 && (
         <Fab
-          className="fixed right-4 bottom-[calc(var(--k-safe-area-bottom)+104px)] z-20 size-14"
+          className="fab-sobre-pestanas fixed right-4 z-20 size-14"
           icon={<IconoMas className="size-7" />}
           onClick={() => setMenuAbierto(true)}
           aria-label="Crear o unirse a un grupo"

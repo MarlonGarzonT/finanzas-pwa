@@ -73,6 +73,45 @@ body.dark {
   background: var(--color-ios-dark-surface);
 }
 
+/* Espaciado inferior según el dispositivo. Konsta pone la barra de pestañas
+   a "área segura + 16px": en un iPhone con barra de inicio (34px) la cápsula
+   quedaba a 50px del borde, mucho más alta que en iOS. Aquí la cápsula se
+   monta sobre el área segura como en iOS 26: ~24px del borde con barra de
+   inicio y 12px sin ella (Android, iPhone SE, navegador). Todo lo que depende
+   de la barra (FAB, relleno de las pantallas) sale de estas dos variables.
+   Van en .k-app porque ahí Konsta define --k-safe-area-bottom. */
+.k-app {
+  --margen-inferior: max(0.75rem, calc(var(--k-safe-area-bottom) - 0.625rem));
+  --alto-pestanas: calc(var(--margen-inferior) + 4rem);
+}
+
+.barra-pestanas.k-toolbar {
+  padding-bottom: var(--margen-inferior);
+}
+
+/* Las dos capas de desvanecido que Konsta pone detrás de la barra. */
+.barra-pestanas.k-toolbar > div:nth-child(-n + 2) {
+  height: calc(var(--alto-pestanas) + 1rem);
+}
+
+.fab-sobre-pestanas {
+  bottom: calc(var(--alto-pestanas) + 0.75rem);
+}
+
+.pagina-con-pestanas {
+  padding-bottom: calc(var(--alto-pestanas) + 1.5rem);
+}
+
+/* Con FAB hay que dejar además su alto (56px) para que no tape la última fila. */
+.pagina-con-fab {
+  padding-bottom: calc(var(--alto-pestanas) + 5.5rem);
+}
+
+/* Pie de las hojas inferiores: el área segura justa, sin los 16px extra. */
+.pie-seguro {
+  padding-bottom: max(1rem, var(--k-safe-area-bottom));
+}
+
 ::selection {
   background: color-mix(in srgb, var(--color-primary) 28%, transparent);
 }

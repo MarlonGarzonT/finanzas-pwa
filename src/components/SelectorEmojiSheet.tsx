@@ -59,7 +59,7 @@ export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccio
         </div>
       }
     >
-      <div className="px-3 pb-safe-4">
+      <div className="pie-seguro px-3">
         {resultados ? (
           resultados.length === 0 ? (
             <p className="py-10 text-center text-[15px] text-secundario">Ningún emoji coincide con “{busqueda}”.</p>

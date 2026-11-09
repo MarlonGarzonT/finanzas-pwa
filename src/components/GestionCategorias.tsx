@@ -102,7 +102,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
             {ocupado ? 'Agregando…' : 'Agregar categoría'}
           </Button>
         </div>
-        <div className="pb-safe-4" />
+        <div className="pie-seguro" />
       </HojaInferior>
 
       <EditarCategoriaSheet

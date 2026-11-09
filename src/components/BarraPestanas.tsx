@@ -28,7 +28,7 @@ export function BarraPestanas() {
   }
 
   return (
-    <Tabbar labels icons className="fixed bottom-0 left-0 z-30">
+    <Tabbar labels icons className="barra-pestanas fixed bottom-0 left-0 z-30">
       <ToolbarPane>
         {PESTANAS.map((p) => (
           <TabbarLink

@@ -60,7 +60,7 @@ export function Reportes() {
   const proyeccion = esMesActual(mesSeleccionado) && totalEgresos > 0 ? proyeccionFinDeMes(totalEgresos, mesSeleccionado) : null;
 
   return (
-    <Page className="pb-[calc(var(--k-safe-area-bottom)+112px)]">
+    <Page className="pagina-con-pestanas">
       <Navbar centerTitle title="Reportes" />
 
       {cargando ? (

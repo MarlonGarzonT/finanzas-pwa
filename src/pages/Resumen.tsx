@@ -100,7 +100,7 @@ export function Resumen() {
   const mes = nombreMes(mesSeleccionado);
 
   return (
-    <Page className="pb-[calc(var(--k-safe-area-bottom)+168px)]">
+    <Page className="pagina-con-fab">
       <Navbar
         centerTitle
         title="Resumen"
@@ -145,7 +145,7 @@ export function Resumen() {
       )}
 
       <Fab
-        className="fixed right-4 bottom-[calc(var(--k-safe-area-bottom)+104px)] z-20 size-14"
+        className="fab-sobre-pestanas fixed right-4 z-20 size-14"
         icon={<IconoMas className="size-7" />}
         onClick={() => setSheetAbierto(true)}
         aria-label="Nuevo movimiento"
