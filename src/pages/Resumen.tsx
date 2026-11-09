@@ -7,13 +7,15 @@ import { IconoMas } from '../components/Iconos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { SelectorMes } from '../components/SelectorMes';
 import { UltimosMovimientos } from '../components/UltimosMovimientos';
+import { useAbrirMovimiento } from '../components/useAbrirMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
+import { useResumenMes } from '../data/useResumenMes';
 import type { NuevaTransaccion, Tipo, Transaccion } from '../types';
-import { claveMes, claveMesDeFecha, fechaEnMesSeleccionado, nombreMes } from '../utils/fechas';
+import { desglosePorCategoria } from '../utils/estadisticasMes';
+import { fechaEnMesSeleccionado, nombreMes } from '../utils/fechas';
 
 export function Resumen() {
   const {
-    transacciones,
     categorias,
     cargando,
     crearMovimiento,
@@ -23,52 +25,23 @@ export function Resumen() {
   } = useFinanzas();
   const [sheetAbierto, setSheetAbierto] = useState(false);
   const [editando, setEditando] = useState<Transaccion | null>(null);
+  const abrirMovimiento = useAbrirMovimiento(setEditando);
   const [filtroGrafico, setFiltroGrafico] = useState<Tipo>('egreso');
   // Cada mes es su propia contabilidad, independiente de los demás: el
   // Disponible arranca en $0 al cambiar de mes, no arrastra el saldo previo.
   const [mesSeleccionado, setMesSeleccionado] = useState(() => new Date());
 
-  const categoriaPorId = useMemo(() => {
-    const mapa = new Map(categorias.map((c) => [c.id, c]));
-    return (id: string) => mapa.get(id);
-  }, [categorias]);
+  const { transaccionesDelMes, categoriaPorId, resumen } = useResumenMes(mesSeleccionado);
 
-  const transaccionesDelMes = useMemo(() => {
-    const claveSeleccionada = claveMesDeFecha(mesSeleccionado);
-    return transacciones.filter((t) => claveMes(t.fecha) === claveSeleccionada);
-  }, [transacciones, mesSeleccionado]);
-
-  const { totalIngresos, totalEgresos } = useMemo(() => {
-    let ingresos = 0;
-    let egresos = 0;
-    for (const t of transaccionesDelMes) {
-      if (t.tipo === 'ingreso') ingresos += t.monto;
-      else egresos += t.monto;
-    }
-    return { totalIngresos: ingresos, totalEgresos: egresos };
-  }, [transaccionesDelMes]);
-
-  const datosGrafico = useMemo(() => {
-    const totales = new Map<string, { categoriaId: string; categoria: string; emoji: string; monto: number }>();
-    for (const t of transaccionesDelMes) {
-      if (t.tipo !== filtroGrafico) continue;
-      const cat = categoriaPorId(t.categoriaId);
-      const existente = totales.get(t.categoriaId);
-      if (existente) {
-        existente.monto += t.monto;
-      } else {
-        totales.set(t.categoriaId, {
-          categoriaId: t.categoriaId,
-          categoria: cat?.nombre ?? 'Otros',
-          emoji: cat?.emoji ?? '🏷️',
-          monto: t.monto,
-        });
-      }
-    }
-    return Array.from(totales.values())
-      .sort((a, b) => b.monto - a.monto)
-      .slice(0, 6);
-  }, [transaccionesDelMes, categoriaPorId, filtroGrafico]);
+  // "En qué se fue" no incluye ahorro ni pago de tarjeta, y "De dónde entró"
+  // no incluye préstamos ni devoluciones: no son gasto ni ingreso.
+  const datosGrafico = useMemo(
+    () =>
+      desglosePorCategoria(transaccionesDelMes, categoriaPorId, filtroGrafico)
+        .slice(0, 6)
+        .map(({ categoriaId, nombre, emoji, monto }) => ({ categoriaId, categoria: nombre, emoji, monto })),
+    [transaccionesDelMes, categoriaPorId, filtroGrafico]
+  );
 
   function cerrarSheet() {
     setSheetAbierto(false);
@@ -102,9 +75,12 @@ export function Resumen() {
         <div className="aparecer-suave">
           <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
           <BalanceCard
-            disponible={totalIngresos - totalEgresos}
-            totalIngresos={totalIngresos}
-            totalEgresos={totalEgresos}
+            disponible={resumen.disponible}
+            totalIngresos={resumen.ingresos}
+            totalEgresos={resumen.gastos}
+            ahorro={resumen.ahorro}
+            prestado={resumen.prestamosDados}
+            devuelto={resumen.prestamosCobrados}
             filtro={filtroGrafico}
             onFiltroChange={setFiltroGrafico}
           />
@@ -123,7 +99,7 @@ export function Resumen() {
           <UltimosMovimientos
             transacciones={transaccionesDelMes}
             categoriaPorId={categoriaPorId}
-            onSeleccionar={setEditando}
+            onSeleccionar={abrirMovimiento}
             mensajeVacio={`Aún no registras movimientos en ${mes}. Toca + para agregar el primero.`}
           />
         </div>

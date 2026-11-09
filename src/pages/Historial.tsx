@@ -6,10 +6,12 @@ import { FilaMovimiento } from '../components/FilaMovimiento';
 import { HistorialFiltrosSheet } from '../components/HistorialFiltrosSheet';
 import { IconoDescargar, IconoFiltro } from '../components/Iconos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
+import { useAbrirMovimiento } from '../components/useAbrirMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
 import { useExportarExcel } from '../data/useExportarExcel';
 import type { NuevaTransaccion, Transaccion } from '../types';
-import { resumirMovimientos } from '../utils/estadisticasMes';
+import { resumirMes } from '../utils/contabilidad';
+import { presentacionMovimiento } from '../utils/presentacionMovimiento';
 import {
   capitalizarPrimera,
   fechaEnMesSeleccionado,
@@ -28,6 +30,7 @@ import {
 export function Historial() {
   const { transacciones, categorias, cargando, actualizarMovimiento, eliminarMovimiento, crearCategoria } = useFinanzas();
   const [editando, setEditando] = useState<Transaccion | null>(null);
+  const abrirMovimiento = useAbrirMovimiento(setEditando);
   const [filtros, setFiltros] = useState<FiltrosHistorial>(FILTROS_INICIALES);
   const [filtrosAbierto, setFiltrosAbierto] = useState(false);
   const excel = useExportarExcel();
@@ -55,7 +58,7 @@ export function Historial() {
     return Array.from(mapa.entries());
   }, [transaccionesFiltradas, filtros.orden]);
 
-  const neto = useMemo(() => resumirMovimientos(transaccionesFiltradas).neto, [transaccionesFiltradas]);
+  const neto = useMemo(() => resumirMes(transaccionesFiltradas, categoriaPorId).disponible, [transaccionesFiltradas, categoriaPorId]);
 
   const filtrosActivos = contarFiltrosActivos(filtros);
   const hayMovimientos = !cargando && transacciones.length > 0;
@@ -216,7 +219,7 @@ export function Historial() {
             </span>
           </p>
           {grupos.map(([mes, items]) => {
-            const netoMes = items.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0);
+            const netoMes = resumirMes(items, categoriaPorId).disponible;
             return (
               <section key={mes} aria-label={mes}>
                 {/* Cada mes trae su balance a la derecha: al bajar se notan los meses en rojo. */}
@@ -238,8 +241,8 @@ export function Historial() {
                         key={t.id}
                         transaccion={t}
                         categoria={categoria}
-                        onSeleccionar={setEditando}
-                        detalle={`${categoria?.nombre ?? 'Otros'} · ${formatearFechaCorta(t.fecha)} · Sem. ${t.semanaDelMes}`}
+                        onSeleccionar={abrirMovimiento}
+                        detalle={`${presentacionMovimiento(t, categoria).nombre} · ${formatearFechaCorta(t.fecha)}`}
                       />
                     );
                   })}

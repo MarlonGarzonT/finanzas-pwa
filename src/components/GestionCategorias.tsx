@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 import type { CambiosCategoria, Categoria, Tipo } from '../types';
 import { colorCategoria } from '../utils/colorCategoria';
+import { etiquetaNaturaleza } from '../utils/naturalezaCategoria';
 import { AvatarEmoji } from './AvatarEmoji';
 import { CampoTexto } from './CampoTexto';
 import { EditarCategoriaSheet } from './EditarCategoriaSheet';
@@ -53,6 +54,9 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
         onClick={() => setEditandoId(c.id)}
         media={<AvatarEmoji emoji={c.emoji} color={colorCategoria(c.id)} />}
         title={c.nombre}
+        // En una segunda línea y no al lado: "Cuota de un crédito" junto a un
+        // nombre largo no cabe a 360px.
+        text={etiquetaNaturaleza(c.naturaleza)}
         after={
           c.esFijo ? (
             <span className="flex items-center gap-1 text-[15px] text-secundario">
@@ -78,7 +82,7 @@ export function GestionCategorias({ abierto, categorias, onCerrar, onCrear, onAc
         <List strong inset dividers>
           {ingresos.length ? filas(ingresos) : <ListItem title={<span className="text-secundario">Sin categorías de ingreso.</span>} />}
         </List>
-        <BlockFooter>Toca una categoría para cambiar su nombre, emoji, tipo o marcarla como gasto fijo.</BlockFooter>
+        <BlockFooter>Toca una categoría para cambiar su nombre, emoji, tipo, cómo cuenta en tu balance o marcarla como gasto fijo.</BlockFooter>
 
         <BlockTitle>Nueva categoría</BlockTitle>
         <List strong inset>

@@ -6,44 +6,32 @@ import { Cargando } from '../components/Cargando';
 import { ComparacionMes } from '../components/ComparacionMes';
 import { DonaCategorias } from '../components/DonaCategorias';
 import { GraficoMensual } from '../components/GraficoMensual';
-import { GraficoSemanal } from '../components/GraficoSemanal';
 import { SelectorMes } from '../components/SelectorMes';
 import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import { useFinanzas } from '../data/FinanzasContext';
+import { useResumenMes } from '../data/useResumenMes';
 import type { Tipo } from '../types';
 import {
   compararConMesAnterior,
   desglosePorCategoria,
-  esMesActual,
+  evaluarMes,
   fijoVsVariable,
-  gastoPorSemana,
   ingresosEgresosPorMes,
   proyeccionFinDeMes,
-  resumirMovimientos,
 } from '../utils/estadisticasMes';
-import { capitalizarPrimera, claveMes, claveMesDeFecha, nombreMes } from '../utils/fechas';
+import { capitalizarPrimera, nombreMes } from '../utils/fechas';
 
 const MESES_EN_GRAFICO = 6;
 
 const TARJETA = 'rounded-3xl';
 
 export function Reportes() {
-  const { transacciones, categorias, cargando } = useFinanzas();
+  const { transacciones, gastosAnuales, cargando } = useFinanzas();
   const [mesSeleccionado, setMesSeleccionado] = useState(() => new Date());
   const [tipoDona, setTipoDona] = useState<Tipo>('egreso');
 
-  const categoriaPorId = useMemo(() => {
-    const mapa = new Map(categorias.map((c) => [c.id, c]));
-    return (id: string) => mapa.get(id);
-  }, [categorias]);
-
-  const transaccionesDelMes = useMemo(() => {
-    const clave = claveMesDeFecha(mesSeleccionado);
-    return transacciones.filter((t) => claveMes(t.fecha) === clave);
-  }, [transacciones, mesSeleccionado]);
-
-  const resumen = useMemo(() => resumirMovimientos(transaccionesDelMes), [transaccionesDelMes]);
-  const { ingresos: totalIngresos, egresos: totalEgresos } = resumen;
+  const { transaccionesDelMes, categoriaPorId, resumen: contable } = useResumenMes(mesSeleccionado);
+  const resumen = useMemo(() => evaluarMes(contable), [contable]);
   // La ventana del gráfico termina en el mes actual y no se mueve al tocar una
   // columna (si se corriera, las columnas cambiarían bajo el dedo). Solo
   // salta si se elige un mes fuera de ella, más viejo o futuro.
@@ -52,17 +40,19 @@ export function Reportes() {
     const mesesAtras =
       (hoy.getFullYear() - mesSeleccionado.getFullYear()) * 12 + (hoy.getMonth() - mesSeleccionado.getMonth());
     const dentroDeVentana = mesesAtras >= 0 && mesesAtras < MESES_EN_GRAFICO;
-    return ingresosEgresosPorMes(transacciones, dentroDeVentana ? hoy : mesSeleccionado, MESES_EN_GRAFICO);
-  }, [transacciones, mesSeleccionado]);
+    return ingresosEgresosPorMes(transacciones, dentroDeVentana ? hoy : mesSeleccionado, MESES_EN_GRAFICO, categoriaPorId);
+  }, [transacciones, mesSeleccionado, categoriaPorId]);
   const segmentosDona = useMemo(
     () => desglosePorCategoria(transaccionesDelMes, categoriaPorId, tipoDona),
     [transaccionesDelMes, categoriaPorId, tipoDona]
   );
-  const totalDona = tipoDona === 'ingreso' ? totalIngresos : totalEgresos;
+  const totalDona = tipoDona === 'ingreso' ? contable.ingresos : contable.gastos;
   const fijoVariable = useMemo(() => fijoVsVariable(transaccionesDelMes, categoriaPorId), [transaccionesDelMes, categoriaPorId]);
-  const semanal = useMemo(() => gastoPorSemana(transaccionesDelMes), [transaccionesDelMes]);
-  const comparacion = useMemo(() => compararConMesAnterior(transacciones, mesSeleccionado), [transacciones, mesSeleccionado]);
-  const proyeccion = esMesActual(mesSeleccionado) && totalEgresos > 0 ? proyeccionFinDeMes(totalEgresos, mesSeleccionado) : null;
+  const comparacion = useMemo(
+    () => compararConMesAnterior(transacciones, mesSeleccionado, categoriaPorId, new Date(), gastosAnuales),
+    [transacciones, mesSeleccionado, categoriaPorId, gastosAnuales]
+  );
+  const proyeccion = contable.gastos > 0 ? proyeccionFinDeMes(transaccionesDelMes, categoriaPorId, mesSeleccionado) : null;
 
   return (
     <Page className="pagina-con-pestanas">
@@ -111,10 +101,6 @@ export function Reportes() {
             <BarraFijoVariable {...fijoVariable} />
           </Block>
 
-          <BlockTitle>Gasto por semana</BlockTitle>
-          <Block strong inset className={TARJETA}>
-            <GraficoSemanal datos={semanal} />
-          </Block>
         </div>
       )}
     </Page>

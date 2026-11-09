@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import { quitarPushDeEsteDispositivo } from '../data/notificacionesPush';
 import { supabase } from '../supabaseClient';
 
 interface AuthContextValue {
@@ -96,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function cerrarSesion() {
+    // Antes de salir, mientras la sesión todavía sirve para borrar la fila.
+    await quitarPushDeEsteDispositivo();
     await supabase.auth.signOut();
   }
 

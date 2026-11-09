@@ -1,5 +1,7 @@
-import type { Categoria, Transaccion } from '../types';
+import type { Categoria, GastoAnual, Transaccion } from '../types';
+import { clasificar, esGasto, esIngreso, resumirMes, type ResumenContable } from './contabilidad';
 import { claveMes, claveMesDeFecha } from './fechas';
+import { esPagoDeGastoAnual } from './provisiones';
 
 export interface SegmentoCategoria {
   categoriaId: string;
@@ -9,17 +11,20 @@ export interface SegmentoCategoria {
   porcentaje: number;
 }
 
-// Desglose por categoría de un tipo (ingreso/egreso) dentro del mes, ordenado
-// de mayor a menor. Útil tanto para la dona como para su leyenda.
+// Desglose por categoría de lo que se gastó (o de lo que entró) en el mes,
+// de mayor a menor. Útil tanto para la dona como para su leyenda. El ahorro,
+// el pago de tarjeta y los préstamos o devoluciones no son gasto ni ingreso:
+// no aparecen.
 export function desglosePorCategoria(
   transaccionesDelMes: Transaccion[],
   categoriaPorId: (id: string) => Categoria | undefined,
   tipo: 'ingreso' | 'egreso'
 ): SegmentoCategoria[] {
+  const cuenta = tipo === 'egreso' ? esGasto : esIngreso;
   const totales = new Map<string, number>();
   let total = 0;
   for (const t of transaccionesDelMes) {
-    if (t.tipo !== tipo) continue;
+    if (!cuenta(clasificar(t, categoriaPorId(t.categoriaId)))) continue;
     totales.set(t.categoriaId, (totales.get(t.categoriaId) ?? 0) + t.monto);
     total += t.monto;
   }
@@ -43,8 +48,8 @@ export interface FijoVariable {
   porcentajeFijo: number;
 }
 
-// Cuánto de lo gastado es "fijo" (arriendo, cuotas - el esFijo que ya existe
-// en categorías) contra lo que es variable/discrecional.
+// Cuánto de lo gastado es "fijo" (arriendo, cuotas: el esFijo de la
+// categoría) contra lo que es variable o discrecional.
 export function fijoVsVariable(
   transaccionesDelMes: Transaccion[],
   categoriaPorId: (id: string) => Categoria | undefined
@@ -52,75 +57,106 @@ export function fijoVsVariable(
   let fijo = 0;
   let variable = 0;
   for (const t of transaccionesDelMes) {
-    if (t.tipo !== 'egreso') continue;
-    if (categoriaPorId(t.categoriaId)?.esFijo) fijo += t.monto;
+    const categoria = categoriaPorId(t.categoriaId);
+    if (!esGasto(clasificar(t, categoria))) continue;
+    if (categoria?.esFijo) fijo += t.monto;
     else variable += t.monto;
   }
   const total = fijo + variable;
   return { fijo, variable, porcentajeFijo: total > 0 ? (fijo / total) * 100 : 0 };
 }
 
-export interface GastoSemanal {
-  semana: number;
-  monto: number;
+export function esMesActual(mesSeleccionado: Date, hoy: Date = new Date()): boolean {
+  return mesSeleccionado.getFullYear() === hoy.getFullYear() && mesSeleccionado.getMonth() === hoy.getMonth();
 }
 
-// Egresos agrupados por semana del mes (1-5), usando semanaDelMes que ya se
-// guarda en cada transacción.
-export function gastoPorSemana(transaccionesDelMes: Transaccion[]): GastoSemanal[] {
-  const totales = new Map<number, number>();
-  for (const t of transaccionesDelMes) {
-    if (t.tipo !== 'egreso') continue;
-    totales.set(t.semanaDelMes, (totales.get(t.semanaDelMes) ?? 0) + t.monto);
-  }
-  return Array.from(totales.entries())
-    .sort(([a], [b]) => a - b)
-    .map(([semana, monto]) => ({ semana, monto }));
+function diasDelMes(mes: Date): number {
+  return new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate();
 }
 
-// Compara el total de egresos del mes seleccionado contra el mes anterior.
-// null cuando no hay datos del mes anterior para comparar (evita mostrar un
-// "+100%" engañoso contra cero).
+export interface ComparacionMensual {
+  actual: number;
+  anterior: number;
+  deltaPorcentaje: number;
+  mesAnterior: Date;
+  // Día hasta el que se suman los dos meses cuando se mira el mes en curso;
+  // null cuando se comparan dos meses completos.
+  corte: number | null;
+}
+
+// Gasto variable del mes elegido frente al del mes anterior. Los fijos caen
+// en días puntuales (el arriendo el 1, la cuota el 5) y solo meten ruido; los
+// pagos de gastos del año (la matrícula en enero) tampoco cuentan. En el mes
+// en curso se compara a igual fecha: del 1 a hoy contra del 1 al mismo día
+// del mes anterior, para no comparar medio mes contra uno completo.
 export function compararConMesAnterior(
   transacciones: Transaccion[],
-  mesSeleccionado: Date
-): { actual: number; anterior: number; deltaPorcentaje: number } | null {
-  const mesAnteriorFecha = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth() - 1, 1);
+  mesSeleccionado: Date,
+  categoriaPorId: (id: string) => Categoria | undefined,
+  hoy: Date = new Date(),
+  gastosAnuales: GastoAnual[] = []
+): ComparacionMensual | null {
+  const mesAnterior = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth() - 1, 1);
+
+  // Si la persona empezó a registrar después del día 1 del mes anterior, ese
+  // mes está incompleto y cualquier porcentaje sería engañoso.
+  let primerMovimiento = Infinity;
+  for (const t of transacciones) primerMovimiento = Math.min(primerMovimiento, new Date(t.fecha).getTime());
+  const inicioDelDia2 = new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), 2).getTime();
+  if (primerMovimiento >= inicioDelDia2) return null;
+
+  const corte = esMesActual(mesSeleccionado, hoy) ? hoy.getDate() : null;
+  const limiteActual = corte ?? Infinity;
+  const limiteAnterior = corte === null ? Infinity : Math.min(corte, diasDelMes(mesAnterior));
   const claveActual = claveMesDeFecha(mesSeleccionado);
-  const claveAnterior = claveMesDeFecha(mesAnteriorFecha);
+  const claveAnterior = claveMesDeFecha(mesAnterior);
 
   let actual = 0;
   let anterior = 0;
   for (const t of transacciones) {
-    if (t.tipo !== 'egreso') continue;
-    const clave = t.fecha.slice(0, 7);
-    if (clave === claveActual) actual += t.monto;
-    else if (clave === claveAnterior) anterior += t.monto;
+    const categoria = categoriaPorId(t.categoriaId);
+    if (!esGasto(clasificar(t, categoria)) || categoria?.esFijo) continue;
+    if (esPagoDeGastoAnual(t, gastosAnuales)) continue;
+    const fecha = new Date(t.fecha);
+    const clave = claveMesDeFecha(fecha);
+    if (clave === claveActual && fecha.getDate() <= limiteActual) actual += t.monto;
+    else if (clave === claveAnterior && fecha.getDate() <= limiteAnterior) anterior += t.monto;
   }
   if (anterior <= 0) return null;
-  return { actual, anterior, deltaPorcentaje: ((actual - anterior) / anterior) * 100 };
+  return { actual, anterior, deltaPorcentaje: ((actual - anterior) / anterior) * 100, mesAnterior, corte };
 }
 
-// Proyección lineal de gasto a fin de mes, a partir de lo gastado hasta hoy.
-// Solo tiene sentido para el mes en curso (se valida afuera, no aquí).
-export function proyeccionFinDeMes(totalEgresosDelMes: number, mesSeleccionado: Date): number {
-  const hoy = new Date();
-  const diasTranscurridos = hoy.getDate();
-  const diasDelMes = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth() + 1, 0).getDate();
-  if (diasTranscurridos <= 0) return totalEgresosDelMes;
-  return (totalEgresosDelMes / diasTranscurridos) * diasDelMes;
-}
+// Antes de una semana el ritmo diario es puro ruido (un mercado grande el
+// día 2 proyecta un mes imposible).
+const DIAS_MINIMOS_PROYECCION = 7;
 
-export function esMesActual(mesSeleccionado: Date): boolean {
-  const hoy = new Date();
-  return mesSeleccionado.getFullYear() === hoy.getFullYear() && mesSeleccionado.getMonth() === hoy.getMonth();
+// Gasto estimado al cierre del mes en curso. Los fijos se suman tal cual (el
+// arriendo no se paga otra vez por llevar más días); solo el gasto variable
+// se extrapola al ritmo de lo que va del mes.
+// En la Fase 2 (B3, recurrentes) aquí se sumarán además los egresos
+// recurrentes que aún no se confirman este mes.
+export function proyeccionFinDeMes(
+  transaccionesDelMes: Transaccion[],
+  categoriaPorId: (id: string) => Categoria | undefined,
+  mesSeleccionado: Date,
+  hoy: Date = new Date()
+): number | null {
+  if (!esMesActual(mesSeleccionado, hoy) || hoy.getDate() < DIAS_MINIMOS_PROYECCION) return null;
+  const { fijo, variable } = fijoVsVariable(transaccionesDelMes, categoriaPorId);
+  return fijo + (variable / hoy.getDate()) * diasDelMes(mesSeleccionado);
 }
 
 export type EstadoGasto = 'bien' | 'atento' | 'excedido' | 'sin-ingresos' | 'sin-movimientos';
 
 export interface ResumenMovimientos {
   ingresos: number;
+  // Solo gastos: el ahorro y el pago de tarjeta van aparte.
   egresos: number;
+  ahorro: number;
+  // Préstamos que hiciste y abonos que te hicieron (sección Préstamos).
+  prestado: number;
+  devuelto: number;
+  // Lo que queda libre: ingresos − gastos − ahorro − prestado + devuelto.
   neto: number;
   // Qué fracción de lo que entró ya se gastó (0.45 = 45%). null si no entró nada.
   proporcionGastada: number | null;
@@ -130,21 +166,32 @@ export interface ResumenMovimientos {
 // Umbral desde el que se avisa "Ojo": ya se fue la mayor parte de lo que entró.
 const UMBRAL_ATENCION = 0.8;
 
-export function resumirMovimientos(transacciones: Transaccion[]): ResumenMovimientos {
-  let ingresos = 0;
-  let egresos = 0;
-  for (const t of transacciones) {
-    if (t.tipo === 'ingreso') ingresos += t.monto;
-    else egresos += t.monto;
-  }
-  const proporcionGastada = ingresos > 0 ? egresos / ingresos : null;
+export function evaluarMes(resumen: ResumenContable): ResumenMovimientos {
+  const { ingresos, gastos, ahorro, disponible, prestamosDados, prestamosCobrados } = resumen;
+  const proporcionGastada = ingresos > 0 ? gastos / ingresos : null;
   let estado: EstadoGasto;
-  if (ingresos === 0 && egresos === 0) estado = 'sin-movimientos';
+  if (ingresos === 0 && gastos === 0 && ahorro === 0 && prestamosDados === 0) estado = 'sin-movimientos';
   else if (proporcionGastada === null) estado = 'sin-ingresos';
   else if (proporcionGastada > 1) estado = 'excedido';
   else if (proporcionGastada >= UMBRAL_ATENCION) estado = 'atento';
   else estado = 'bien';
-  return { ingresos, egresos, neto: ingresos - egresos, proporcionGastada, estado };
+  return {
+    ingresos,
+    egresos: gastos,
+    ahorro,
+    prestado: prestamosDados,
+    devuelto: prestamosCobrados,
+    neto: disponible,
+    proporcionGastada,
+    estado,
+  };
+}
+
+export function resumirMovimientos(
+  transacciones: Transaccion[],
+  categoriaPorId: (id: string) => Categoria | undefined
+): ResumenMovimientos {
+  return evaluarMes(resumirMes(transacciones, categoriaPorId));
 }
 
 export interface MesIngresosEgresos {
@@ -153,7 +200,7 @@ export interface MesIngresosEgresos {
   egresos: number;
 }
 
-// Entradas y salidas de los últimos `cantidad` meses, terminando en `mesFinal`
+// Entradas y gastos de los últimos `cantidad` meses, terminando en `mesFinal`
 // (incluido), del más viejo al más reciente. Los meses sin movimientos van en
 // cero para que el gráfico no salte huecos. claveMes (hora local) y no
 // fecha.slice(0, 7) (UTC): un gasto del último día a las 9 p. m. en Colombia
@@ -161,7 +208,8 @@ export interface MesIngresosEgresos {
 export function ingresosEgresosPorMes(
   transacciones: Transaccion[],
   mesFinal: Date,
-  cantidad: number
+  cantidad: number,
+  categoriaPorId: (id: string) => Categoria | undefined
 ): MesIngresosEgresos[] {
   const meses = Array.from({ length: cantidad }, (_, i) => {
     const mes = new Date(mesFinal.getFullYear(), mesFinal.getMonth() - (cantidad - 1 - i), 1);
@@ -171,8 +219,9 @@ export function ingresosEgresosPorMes(
   for (const t of transacciones) {
     const fila = porClave.get(claveMes(t.fecha));
     if (!fila) continue;
-    if (t.tipo === 'ingreso') fila.ingresos += t.monto;
-    else fila.egresos += t.monto;
+    const clase = clasificar(t, categoriaPorId(t.categoriaId));
+    if (esIngreso(clase)) fila.ingresos += t.monto;
+    else if (esGasto(clase)) fila.egresos += t.monto;
   }
   return meses.map(({ mes, ingresos, egresos }) => ({ mes, ingresos, egresos }));
 }

@@ -221,6 +221,37 @@ export function IconoPapelera(props: PropsIcono) {
   );
 }
 
+export function IconoPrestamos(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <path d="M4 8.5h14.5" />
+      <path d="M15 5l3.5 3.5L15 12" />
+      <path d="M20 15.5H5.5" />
+      <path d="M9 12l-3.5 3.5L9 19" />
+    </Trazo>
+  );
+}
+
+export function IconoCalendario(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <rect x="3.5" y="5" width="17" height="15" rx="3.5" />
+      <path d="M3.5 10h17" />
+      <path d="M8 3v4M16 3v4" />
+      <path d="M8 14h2M14 14h2M8 17h2" />
+    </Trazo>
+  );
+}
+
+export function IconoCampana(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+      <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </Trazo>
+  );
+}
+
 export function IconoFijo(props: PropsIcono) {
   return (
     <Trazo {...props}>

@@ -1,5 +1,6 @@
 import type { ConditionalFormattingRule } from 'exceljs';
 import type { Categoria, Transaccion } from '../types';
+import { clasificar, esGasto, esIngreso, naturalezaEfectiva, resumirMes } from './contabilidad';
 import {
   capitalizarPrimera,
   claveMes,
@@ -8,6 +9,8 @@ import {
   formatearMontoConSigno,
   nombreMesCorto,
 } from './fechas';
+import { etiquetaNaturaleza } from './naturalezaCategoria';
+import { presentacionMovimiento } from './presentacionMovimiento';
 import { dibujarComparativoMensual, dibujarGastosPorCategoria, type PuntoCategoria, type PuntoMensual } from './graficosExcel';
 
 // Misma paleta e igual algoritmo de asignación que utils/colorCategoria.ts,
@@ -62,12 +65,19 @@ export async function exportarTransaccionesExcel(
     (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
   );
 
-  const totalIngresos = transacciones.filter((t) => t.tipo === 'ingreso').reduce((acc, t) => acc + t.monto, 0);
-  const totalEgresos = transacciones.filter((t) => t.tipo === 'egreso').reduce((acc, t) => acc + t.monto, 0);
-  const balance = totalIngresos - totalEgresos;
+  // Mismas reglas que la app: el ahorro y el pago de tarjeta no son gasto, y
+  // un préstamo recibido no es ingreso.
+  const totales = resumirMes(transacciones, categoriaPorId);
+  const totalIngresos = totales.ingresos;
+  const totalEgresos = totales.gastos;
+  const balance = totales.disponible;
 
   // ---- Agregado por mes (para la tabla y el gráfico comparativo) ----
-  const porMes = new Map<string, { etiqueta: string; ingreso: number; egreso: number; orden: number }>();
+  // prestamos: lo prestado menos lo que te devolvieron en el mes (puede ser negativo).
+  const porMes = new Map<
+    string,
+    { etiqueta: string; ingreso: number; egreso: number; ahorro: number; prestamos: number; orden: number }
+  >();
   for (const t of ordenadas) {
     const clave = claveMes(t.fecha);
     if (!porMes.has(clave)) {
@@ -76,28 +86,47 @@ export async function exportarTransaccionesExcel(
         etiqueta: capitalizarPrimera(nombreMesCorto(fecha)),
         ingreso: 0,
         egreso: 0,
+        ahorro: 0,
+        prestamos: 0,
         orden: fecha.getFullYear() * 12 + fecha.getMonth(),
       });
     }
     const fila = porMes.get(clave)!;
-    if (t.tipo === 'ingreso') fila.ingreso += t.monto;
-    else fila.egreso += t.monto;
+    const clase = clasificar(t, categoriaPorId(t.categoriaId));
+    if (esIngreso(clase)) fila.ingreso += t.monto;
+    else if (esGasto(clase)) fila.egreso += t.monto;
+    else if (clase === 'ahorro') fila.ahorro += t.monto;
+    else if (clase === 'prestamo_dado') fila.prestamos += t.monto;
+    else if (clase === 'prestamo_cobrado') fila.prestamos -= t.monto;
   }
   const mesesOrdenados = Array.from(porMes.values()).sort((a, b) => a.orden - b.orden);
 
   // ---- Agregado por categoría (para la tabla y el gráfico de gastos) ----
-  const porCategoria = new Map<string, { nombre: string; tipo: 'ingreso' | 'egreso'; total: number; conteo: number }>();
+  const porCategoria = new Map<
+    string,
+    { nombre: string; tipo: 'ingreso' | 'egreso'; naturaleza: string; esGasto: boolean; total: number; conteo: number }
+  >();
   for (const t of ordenadas) {
-    if (!porCategoria.has(t.categoriaId)) {
+    // Los movimientos de préstamos no tienen categoría: van en su propia fila
+    // y no se mezclan con los de categorías borradas.
+    const clave = t.prestamoId ? `prestamo-${t.tipo}` : t.categoriaId;
+    if (!porCategoria.has(clave)) {
       const cat = categoriaPorId(t.categoriaId);
-      porCategoria.set(t.categoriaId, { nombre: cat?.nombre ?? 'Otros', tipo: t.tipo, total: 0, conteo: 0 });
+      porCategoria.set(clave, {
+        nombre: presentacionMovimiento(t, cat).nombre,
+        tipo: t.tipo,
+        naturaleza: t.prestamoId ? 'Préstamo' : etiquetaNaturaleza(naturalezaEfectiva(t, cat)),
+        esGasto: esGasto(clasificar(t, cat)),
+        total: 0,
+        conteo: 0,
+      });
     }
-    const fila = porCategoria.get(t.categoriaId)!;
+    const fila = porCategoria.get(clave)!;
     fila.total += t.monto;
     fila.conteo += 1;
   }
   const gastosOrdenados = Array.from(porCategoria.entries())
-    .filter(([, c]) => c.tipo === 'egreso')
+    .filter(([, c]) => c.esGasto)
     .sort((a, b) => b[1].total - a[1].total);
 
   const TOP_CATEGORIAS = 8;
@@ -171,24 +200,43 @@ export async function exportarTransaccionesExcel(
   }
 
   tarjetaKpi(1, 2, 'Ingresos totales', formatearMontoConSigno(totalIngresos), ARGB_INGRESO_TINTE, ARGB_INGRESO);
-  tarjetaKpi(3, 4, 'Egresos totales', `-${formatearMonto(totalEgresos)}`, ARGB_EGRESO_TINTE, ARGB_EGRESO);
+  tarjetaKpi(3, 4, 'Gastos totales', `-${formatearMonto(totalEgresos)}`, ARGB_EGRESO_TINTE, ARGB_EGRESO);
   tarjetaKpi(
     5,
     6,
-    'Balance',
+    'Disponible',
     formatearMontoConSigno(balance),
     ARGB_MARCA_TINTE,
     balance >= 0 ? ARGB_INGRESO : ARGB_EGRESO
   );
 
-  let fila = 7;
+  // Lo que salió de la cuenta sin ser gasto: se muestra para que el balance
+  // cuadre con lo que la persona ve en su banco.
+  const filasAparte: [string, number][] = [
+    ['Ahorro', totales.ahorro],
+    ['Pagos de tarjeta', totales.pagosTarjeta],
+    ['Préstamos que hiciste', totales.prestamosDados],
+    ['Abonos que te hicieron', totales.prestamosCobrados],
+  ];
+  filasAparte.forEach(([etiqueta, valor], i) => {
+    const celdaEtiqueta = resumen.getCell(7 + i, 1);
+    celdaEtiqueta.value = etiqueta;
+    celdaEtiqueta.font = { name: FUENTE, size: 11, color: { argb: ARGB_TEXTO_SECUNDARIO } };
+    const celdaValor = resumen.getCell(7 + i, 2);
+    celdaValor.value = valor;
+    celdaValor.numFmt = '"$"#,##0';
+    celdaValor.font = { name: FUENTE, size: 11, bold: true, color: { argb: ARGB_TEXTO } };
+    celdaValor.alignment = { horizontal: 'right' };
+  });
+
+  let fila = 7 + filasAparte.length + 1;
 
   // --- Sección: resumen mensual ---
   resumen.getCell(`A${fila}`).value = 'Resumen mensual';
   resumen.getCell(`A${fila}`).font = { name: FUENTE, size: 13, bold: true, color: { argb: ARGB_TEXTO } };
   fila += 1;
 
-  const encabezadosMes = ['Mes', 'Ingresos', 'Egresos', 'Balance'];
+  const encabezadosMes = ['Mes', 'Ingresos', 'Gastos', 'Ahorro', 'Préstamos (neto)', 'Disponible'];
   encabezadosMes.forEach((texto, i) => {
     const celda = resumen.getCell(fila, i + 1);
     celda.value = texto;
@@ -200,18 +248,20 @@ export async function exportarTransaccionesExcel(
 
   const filaInicioMeses = fila;
   for (const m of mesesOrdenados) {
-    const balanceMes = m.ingreso - m.egreso;
+    const disponibleMes = m.ingreso - m.egreso - m.ahorro - m.prestamos;
     resumen.getCell(fila, 1).value = m.etiqueta;
     resumen.getCell(fila, 2).value = m.ingreso;
     resumen.getCell(fila, 3).value = m.egreso;
-    resumen.getCell(fila, 4).value = balanceMes;
-    for (let col = 2; col <= 4; col++) {
+    resumen.getCell(fila, 4).value = m.ahorro;
+    resumen.getCell(fila, 5).value = m.prestamos;
+    resumen.getCell(fila, 6).value = disponibleMes;
+    for (let col = 2; col <= 6; col++) {
       const celda = resumen.getCell(fila, col);
       celda.numFmt = '"$"#,##0';
       celda.alignment = { horizontal: 'right' };
     }
     if (fila % 2 === filaInicioMeses % 2) {
-      for (let col = 1; col <= 4; col++) {
+      for (let col = 1; col <= 6; col++) {
         resumen.getCell(fila, col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ARGB_ZEBRA } };
       }
     }
@@ -223,7 +273,7 @@ export async function exportarTransaccionesExcel(
     // Barra de datos nativa de Excel sobre el balance mensual: la misma idea
     // que el color de una barra de progreso, pero editable/filtrable en Excel.
     resumen.addConditionalFormatting({
-      ref: `D${filaInicioMeses}:D${filaFinMeses}`,
+      ref: `F${filaInicioMeses}:F${filaFinMeses}`,
       rules: [
         {
           type: 'dataBar',
@@ -283,7 +333,6 @@ export async function exportarTransaccionesExcel(
     { header: 'Categoría', key: 'categoria', width: 20 },
     { header: 'Descripción', key: 'descripcion', width: 34 },
     { header: 'Monto', key: 'monto', width: 16 },
-    { header: 'Semana del mes', key: 'semana', width: 16 },
   ];
 
   const filaEncabezadoMov = hojaMovimientos.getRow(1);
@@ -299,10 +348,9 @@ export async function exportarTransaccionesExcel(
     const filaExcel = hojaMovimientos.addRow({
       fecha: new Date(t.fecha),
       tipo: t.tipo === 'ingreso' ? 'Ingreso' : 'Gasto',
-      categoria: cat?.nombre ?? 'Otros',
+      categoria: presentacionMovimiento(t, cat).nombre,
       descripcion: t.item,
       monto: t.tipo === 'ingreso' ? t.monto : -t.monto,
-      semana: t.semanaDelMes,
     });
     filaExcel.getCell('fecha').numFmt = 'dd/mm/yyyy';
     filaExcel.getCell('monto').numFmt = '"$"#,##0;-"$"#,##0';
@@ -323,7 +371,7 @@ export async function exportarTransaccionesExcel(
   });
 
   if (ordenadas.length > 0) {
-    hojaMovimientos.autoFilter = { from: 'A1', to: `F${ordenadas.length + 1}` };
+    hojaMovimientos.autoFilter = { from: 'A1', to: `E${ordenadas.length + 1}` };
   }
 
   // ---------------- Hoja "Categorías" ----------------
@@ -333,6 +381,7 @@ export async function exportarTransaccionesExcel(
   hojaCategorias.columns = [
     { header: 'Categoría', key: 'categoria', width: 22 },
     { header: 'Tipo', key: 'tipo', width: 12 },
+    { header: 'Naturaleza', key: 'naturaleza', width: 22 },
     { header: 'Total', key: 'total', width: 16 },
     { header: 'Movimientos', key: 'conteo', width: 14 },
   ];
@@ -352,6 +401,7 @@ export async function exportarTransaccionesExcel(
     const filaExcel = hojaCategorias.addRow({
       categoria: c.nombre,
       tipo: c.tipo === 'ingreso' ? 'Ingreso' : 'Gasto',
+      naturaleza: c.naturaleza,
       total: c.total,
       conteo: c.conteo,
     });
@@ -366,7 +416,7 @@ export async function exportarTransaccionesExcel(
   const filaFinCategorias = filaInicioCategorias + categoriasOrdenadas.length - 1;
   if (filaFinCategorias >= filaInicioCategorias) {
     hojaCategorias.addConditionalFormatting({
-      ref: `C${filaInicioCategorias}:C${filaFinCategorias}`,
+      ref: `D${filaInicioCategorias}:D${filaFinCategorias}`,
       rules: [
         {
           type: 'dataBar',

@@ -6,13 +6,15 @@ interface Props {
   valor: string;
   onCambiar: (valor: string) => void;
   placeholder?: string;
-  type?: 'text' | 'email' | 'password' | 'search';
+  type?: 'text' | 'email' | 'password' | 'search' | 'date';
   inputMode?: 'text' | 'numeric' | 'email' | 'search';
   autoComplete?: HTMLInputAutoCompleteAttribute;
   autoCapitalize?: 'off' | 'sentences' | 'words' | 'characters';
   enterKeyHint?: 'done' | 'next' | 'go' | 'search' | 'send';
   autoFocus?: boolean;
   required?: boolean;
+  // Solo para type="date": día mínimo, 'AAAA-MM-DD'.
+  min?: string;
   // Botón al final del campo (ej. mostrar/ocultar contraseña).
   accion?: ReactNode;
 }
@@ -32,6 +34,7 @@ export function CampoTexto({
   enterKeyHint = 'done',
   autoFocus,
   required,
+  min,
   accion,
 }: Props) {
   const id = useId();
@@ -52,6 +55,7 @@ export function CampoTexto({
             enterKeyHint={enterKeyHint}
             autoFocus={autoFocus}
             required={required}
+            min={min}
             className="block h-11 w-full appearance-none bg-transparent text-[17px] placeholder-black/55 focus:outline-none dark:placeholder-white/50"
           />
           {accion}

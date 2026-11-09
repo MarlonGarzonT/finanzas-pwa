@@ -15,6 +15,7 @@ import { Resumen } from './pages/Resumen';
 // carga al abrir su pestaña.
 const Historial = lazy(() => import('./pages/Historial').then((m) => ({ default: m.Historial })));
 const Reportes = lazy(() => import('./pages/Reportes').then((m) => ({ default: m.Reportes })));
+const Prestamos = lazy(() => import('./pages/Prestamos').then((m) => ({ default: m.Prestamos })));
 const Perfil = lazy(() => import('./pages/Perfil').then((m) => ({ default: m.Perfil })));
 
 function AppShell() {
@@ -48,6 +49,7 @@ function AppShell() {
               <Route path="/" element={<Resumen />} />
               <Route path="/historial" element={<Historial />} />
               <Route path="/reportes" element={<Reportes />} />
+              <Route path="/prestamos" element={<Prestamos />} />
               <Route path="/perfil" element={<Perfil />} />
             </Routes>
           </Suspense>

@@ -2,6 +2,7 @@ import { Block } from 'konsta/react';
 import { useEffect, useState } from 'react';
 import type { EstadoGasto, ResumenMovimientos } from '../utils/estadisticasMes';
 import { formatearMonto } from '../utils/fechas';
+import { LineaApartes } from './LineaApartes';
 import { useContarHasta } from './useContarHasta';
 
 interface Props {
@@ -36,7 +37,7 @@ function frase({ estado, proporcionGastada, neto }: ResumenMovimientos): string 
     case 'sin-ingresos':
       return 'Hay gastos pero ningún ingreso este mes.';
     case 'sin-movimientos':
-      return 'No hay movimientos este mes.';
+      return 'No hay gastos ni ingresos este mes.';
   }
 }
 
@@ -96,6 +97,9 @@ export function BalanceMes({ resumen, periodo, cantidad }: Props) {
         {formatearMonto(Math.abs(Math.round(netoAnimado)))}
       </p>
       <p className="m-0 mt-0.5 text-[15px] leading-snug text-secundario">{frase(resumen)}</p>
+      {/* El ahorro y los préstamos no son gasto ni ingreso, pero sí mueven el
+          balance: sin esta línea no cuadraría con las dos barras de abajo. */}
+      <LineaApartes ahorro={resumen.ahorro} prestado={resumen.prestado} devuelto={resumen.devuelto} className="mt-0.5" />
 
       <div className="mt-4 flex flex-col gap-3" role="img" aria-label={`Entró ${formatearMonto(resumen.ingresos)}, salió ${formatearMonto(resumen.egresos)}`}>
         {barras.map((b, i) => (

@@ -23,9 +23,10 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['apple-touch-icon.png'],
-      // Puente para ventanas con la versión vieja (sin aviso): ver el archivo.
+      // sw-transicion.js: puente para ventanas con la versión vieja (sin
+      // aviso). sw-push.js: muestra los avisos de préstamos vencidos.
       workbox: {
-        importScripts: ['sw-transicion.js'],
+        importScripts: ['sw-transicion.js', 'sw-push.js'],
       },
       manifest: {
         name: 'Mis Finanzas',

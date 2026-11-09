@@ -1,4 +1,11 @@
+// Las de dinero que no es gasto van primero: "Pago tarjeta" no debe caer en
+// la regla de "pago" del salario.
 const EMOJI_POR_PALABRA_CLAVE: [RegExp, string][] = [
+  [/ahorro|bolsillo|cdt/i, '🐷'],
+  [/tarjeta/i, '💳'],
+  [/pr[eé]stamo|devoluci|reembolso/i, '🤝'],
+  [/prima|extra|bono|bonifica/i, '🎁'],
+  [/banco|bancari/i, '🏦'],
   [/comida|almuerzo|restaurante|mercado|super|desayuno|cena/i, '🍔'],
   [/transporte|uber|taxi|gasolina|parqueadero|bus|metro/i, '🚗'],
   [/vivienda|arriendo|hipoteca|renta|casa/i, '🏠'],

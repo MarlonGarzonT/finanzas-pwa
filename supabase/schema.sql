@@ -291,3 +291,221 @@ end;
 $$;
 
 grant execute on function crear_gasto_grupo(uuid, text, numeric, uuid, jsonb) to authenticated;
+
+-- ============================================================================
+-- Mejoras financieras (docs/plan-mejoras-financieras.md). Correr estos bloques
+-- en este orden ANTES de publicar la versión de la app que los usa: la app
+-- nueva lee categorias.naturaleza y la tabla gastos_anuales.
+-- ============================================================================
+
+-- Migración (C3): semana_del_mes deja de usarse. Opcional para versiones viejas.
+alter table transacciones alter column semana_del_mes drop not null;
+
+-- Migración (B1): naturaleza de la categoría (cómo cuenta cada movimiento en las
+-- métricas). Segura de repetir. Las reglas por nombre son las mismas de
+-- src/utils/naturalezaCategoria.ts (sugerirNaturaleza).
+alter table categorias add column if not exists naturaleza text;
+
+-- Esencial por defecto: si no sabemos, es más prudente sobrestimar el gasto
+-- necesario (el colchón se calcula sobre él) que subestimarlo.
+update categorias set naturaleza = case
+  when tipo = 'ingreso' and (nombre ilike '%prima%' or nombre ilike '%bono%'
+    or nombre ilike '%bonifica%' or nombre ilike '%cesant%') then 'extraordinario'
+  when tipo = 'ingreso' and (nombre ilike '%prestamo%' or nombre ilike '%préstamo%'
+    or nombre ilike '%reembolso%' or nombre ilike '%devoluci%') then 'prestamo_reembolso'
+  when tipo = 'ingreso' then 'ordinario'
+  when nombre ilike '%ahorro%' then 'ahorro'
+  when nombre ilike '%tarjeta%' then 'pago_tarjeta'
+  when nombre ilike '%cuota%' or nombre ilike '%credito%' or nombre ilike '%crédito%'
+    or nombre ilike '%deuda%' then 'deuda'
+  when nombre ilike '%entreten%' or nombre ilike '%salida%' or nombre ilike '%domicilio%' then 'discrecional'
+  else 'esencial'
+end
+where naturaleza is null;
+
+-- Los clientes con la versión anterior crean y editan categorías sin
+-- naturaleza: el trigger la completa o la corrige si cambian el tipo.
+create or replace function categorias_naturaleza_defecto()
+returns trigger language plpgsql as $$
+begin
+  if new.naturaleza is null
+    or (new.tipo = 'ingreso' and new.naturaleza not in ('ordinario','extraordinario','prestamo_reembolso'))
+    or (new.tipo = 'egreso' and new.naturaleza not in ('esencial','discrecional','deuda','ahorro','pago_tarjeta')) then
+    new.naturaleza := case when new.tipo = 'ingreso' then 'ordinario' else 'esencial' end;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists categorias_naturaleza_defecto on categorias;
+create trigger categorias_naturaleza_defecto
+  before insert or update on categorias
+  for each row execute function categorias_naturaleza_defecto();
+
+alter table categorias alter column naturaleza set not null;
+alter table categorias drop constraint if exists categorias_naturaleza_check;
+alter table categorias add constraint categorias_naturaleza_check check (
+  (tipo = 'egreso' and naturaleza in ('esencial','discrecional','deuda','ahorro','pago_tarjeta'))
+  or (tipo = 'ingreso' and naturaleza in ('ordinario','extraordinario','prestamo_reembolso'))
+);
+
+-- Migración (B2): categorías de fábrica nuevas para usuarios que no tengan una
+-- de esa naturaleza. Segura de repetir. Va después de B1.
+insert into categorias (user_id, nombre, emoji, tipo, naturaleza)
+select u.user_id, d.nombre, d.emoji, d.tipo, d.naturaleza
+from (select distinct user_id from categorias) u
+cross join (values
+  ('Ahorro', '🐷', 'egreso', 'ahorro'),
+  ('Pago tarjeta', '💳', 'egreso', 'pago_tarjeta'),
+  ('Préstamo o devolución', '🤝', 'ingreso', 'prestamo_reembolso'),
+  ('Prima y extras', '🎁', 'ingreso', 'extraordinario')
+) as d(nombre, emoji, tipo, naturaleza)
+where not exists (
+  select 1 from categorias c where c.user_id = u.user_id and c.naturaleza = d.naturaleza
+);
+
+-- Migración (A4): gastos que llegan una vez al año (SOAT, predial, matrícula...).
+create table if not exists gastos_anuales (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  nombre text not null,
+  monto_estimado numeric not null check (monto_estimado > 0),
+  mes_vencimiento int not null check (mes_vencimiento between 1 and 12),
+  categoria_id uuid references categorias(id) on delete set null,
+  activo boolean not null default true,
+  created_at timestamptz default now()
+);
+alter table gastos_anuales enable row level security;
+drop policy if exists "usuario ve/edita solo sus gastos anuales" on gastos_anuales;
+create policy "usuario ve/edita solo sus gastos anuales" on gastos_anuales
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================================
+-- Préstamos (plata que le prestas a alguien) y avisos push cuando se vencen.
+-- Correr ANTES de publicar la versión de la app que los usa.
+-- ============================================================================
+
+-- Migración: préstamos. Lo que falta por cobrar no se guarda: es el monto menos
+-- los abonos (transacciones de ingreso con su prestamo_id).
+create table if not exists prestamos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  persona text not null check (length(trim(persona)) > 0),
+  monto numeric not null check (monto > 0),
+  -- Día en que quedó de pagar, en hora de Colombia.
+  fecha_devolucion date not null,
+  nota text,
+  -- Último aviso push enviado por estar vencido (lo escribe la Edge Function).
+  ultimo_aviso timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists prestamos_user_idx on prestamos (user_id);
+alter table prestamos enable row level security;
+drop policy if exists "usuario ve/edita solo sus prestamos" on prestamos;
+create policy "usuario ve/edita solo sus prestamos" on prestamos
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- La salida del préstamo y cada abono son transacciones enlazadas. Borrar el
+-- préstamo borra sus movimientos: deshace todo lo que registró.
+alter table transacciones add column if not exists prestamo_id uuid references prestamos(id) on delete cascade;
+create index if not exists transacciones_prestamo_idx on transacciones (prestamo_id) where prestamo_id is not null;
+
+-- Crea el préstamo y su salida en una sola transacción: nunca queda un
+-- préstamo sin su salida (o al revés) si la conexión se cae a la mitad.
+-- security invoker: corre con los permisos de quien llama, así que el RLS aplica.
+create or replace function crear_prestamo(
+  p_persona text,
+  p_monto numeric,
+  p_fecha_devolucion date,
+  p_nota text,
+  p_fecha timestamptz
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_prestamo prestamos;
+  v_transaccion transacciones;
+begin
+  insert into prestamos (persona, monto, fecha_devolucion, nota)
+  values (trim(p_persona), p_monto, p_fecha_devolucion, nullif(trim(coalesce(p_nota, '')), ''))
+  returning * into v_prestamo;
+
+  insert into transacciones (fecha, item, categoria_id, tipo, monto, semana_del_mes, prestamo_id)
+  values (
+    p_fecha,
+    'Préstamo a ' || v_prestamo.persona,
+    null,
+    'egreso',
+    p_monto,
+    ceil(extract(day from p_fecha at time zone 'America/Bogota') / 7.0)::int,
+    v_prestamo.id
+  )
+  returning * into v_transaccion;
+
+  return jsonb_build_object('prestamo', to_jsonb(v_prestamo), 'transaccion', to_jsonb(v_transaccion));
+end;
+$$;
+revoke execute on function crear_prestamo(text, numeric, date, text, timestamptz) from public, anon;
+grant execute on function crear_prestamo(text, numeric, date, text, timestamptz) to authenticated;
+
+-- Migración: suscripciones a notificaciones push (una por dispositivo).
+create table if not exists suscripciones_push (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists suscripciones_push_user_idx on suscripciones_push (user_id);
+alter table suscripciones_push enable row level security;
+drop policy if exists "usuario ve/edita solo sus suscripciones" on suscripciones_push;
+create policy "usuario ve/edita solo sus suscripciones" on suscripciones_push
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Un dispositivo compartido puede tener la suscripción de otra cuenta: el
+-- endpoint es del navegador, no de la persona. Esta función se la pasa a quien
+-- la activa ahora (el RLS no dejaría ver ni borrar la fila ajena).
+create or replace function guardar_suscripcion_push(p_endpoint text, p_p256dh text, p_auth text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Sin sesión';
+  end if;
+  delete from suscripciones_push where endpoint = p_endpoint;
+  insert into suscripciones_push (user_id, endpoint, p256dh, auth)
+  values (auth.uid(), p_endpoint, p_p256dh, p_auth);
+end;
+$$;
+revoke execute on function guardar_suscripcion_push(text, text, text) from public, anon;
+grant execute on function guardar_suscripcion_push(text, text, text) to authenticated;
+
+-- Préstamos vencidos con saldo a los que toca avisar: nunca avisados o
+-- avisados hace una semana o más (con margen por si el cron corre unos
+-- minutos antes). Solo la usa la Edge Function, con la service role.
+create or replace function prestamos_por_avisar()
+returns table (prestamo_id uuid, user_id uuid, persona text, saldo numeric, fecha_devolucion date)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select p.id, p.user_id, p.persona,
+         p.monto - coalesce(sum(t.monto) filter (where t.tipo = 'ingreso'), 0) as saldo,
+         p.fecha_devolucion
+  from prestamos p
+  left join transacciones t on t.prestamo_id = p.id
+  where p.fecha_devolucion < (now() at time zone 'America/Bogota')::date
+    and (p.ultimo_aviso is null or p.ultimo_aviso < now() - interval '6 days 20 hours')
+  group by p.id
+  having p.monto - coalesce(sum(t.monto) filter (where t.tipo = 'ingreso'), 0) > 0;
+$$;
+revoke execute on function prestamos_por_avisar() from public, anon, authenticated;
+grant execute on function prestamos_por_avisar() to service_role;

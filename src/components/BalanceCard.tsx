@@ -1,11 +1,16 @@
 import type { Tipo } from '../types';
 import { formatearMonto } from '../utils/fechas';
+import { LineaApartes } from './LineaApartes';
 import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 
 interface Props {
   disponible: number;
   totalIngresos: number;
   totalEgresos: number;
+  // Plata que movió el Disponible sin ser gasto ni ingreso.
+  ahorro: number;
+  prestado: number;
+  devuelto: number;
   filtro: Tipo;
   onFiltroChange: (filtro: Tipo) => void;
 }
@@ -15,7 +20,16 @@ const SEGMENTOS: { tipo: Tipo; etiqueta: string }[] = [
   { tipo: 'ingreso', etiqueta: 'Ingresos' },
 ];
 
-export function BalanceCard({ disponible, totalIngresos, totalEgresos, filtro, onFiltroChange }: Props) {
+export function BalanceCard({
+  disponible,
+  totalIngresos,
+  totalEgresos,
+  ahorro,
+  prestado,
+  devuelto,
+  filtro,
+  onFiltroChange,
+}: Props) {
   const negativo = disponible < 0;
   const totales: Record<Tipo, number> = { egreso: totalEgresos, ingreso: totalIngresos };
 
@@ -32,6 +46,7 @@ export function BalanceCard({ disponible, totalIngresos, totalEgresos, filtro, o
           {negativo && <span aria-hidden="true">−</span>}
           {formatearMonto(Math.abs(disponible))}
         </p>
+        <LineaApartes ahorro={ahorro} prestado={prestado} devuelto={devuelto} className="mt-1 text-center" />
       </div>
 
       {/* Define qué muestra el gráfico de abajo. */}

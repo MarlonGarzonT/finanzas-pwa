@@ -53,6 +53,11 @@ export function sumarMeses(fecha: Date, delta: number): Date {
   return new Date(fecha.getFullYear(), fecha.getMonth() + delta, 1);
 }
 
+// Nombre de un mes sin año a partir de su número (1 = "enero").
+export function nombreMesDelAnio(mes: number): string {
+  return new Date(2000, mes - 1, 1).toLocaleDateString('es-CO', { month: 'long' });
+}
+
 // Versión compacta para ejes de gráfico y espacios reducidos (ej. "oct 2026").
 export function nombreMesCorto(fecha: Date): string {
   return fecha.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });

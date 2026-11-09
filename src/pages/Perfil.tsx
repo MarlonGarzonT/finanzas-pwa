@@ -5,9 +5,10 @@ import { CabeceraPerfil } from '../components/CabeceraPerfil';
 import { Cargando } from '../components/Cargando';
 import { ConstanciaMeses } from '../components/ConstanciaMeses';
 import { DialogoConfirmar } from '../components/DialogoConfirmar';
+import { GastosAnualesSheet } from '../components/GastosAnualesSheet';
 import { GestionCategorias } from '../components/GestionCategorias';
 import { IconoAjuste } from '../components/IconoAjuste';
-import { IconoApariencia, IconoCorreo, IconoEtiqueta, IconoLlave } from '../components/Iconos';
+import { IconoApariencia, IconoCalendario, IconoCorreo, IconoEtiqueta, IconoLlave } from '../components/Iconos';
 import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import { TarjetaAntiguedad } from '../components/TarjetaAntiguedad';
 import { TarjetaExportar } from '../components/TarjetaExportar';
@@ -27,11 +28,12 @@ const FILA = 'w-full text-left';
 
 export function Perfil() {
   const perfil = usePerfil();
-  const { cargando, categorias, crearCategoria, actualizarCategoria, eliminarCategoria } = useFinanzas();
+  const { cargando, categorias, gastosAnuales, crearCategoria, actualizarCategoria, eliminarCategoria } = useFinanzas();
   const { cerrarSesion, restablecerPassword } = useAuth();
   const [tema, setTema] = usePreferenciaTema();
   const excel = useExportarExcel();
   const [categoriasAbierto, setCategoriasAbierto] = useState(false);
+  const [gastosAnualesAbierto, setGastosAnualesAbierto] = useState(false);
   const [confirmandoSalida, setConfirmandoSalida] = useState(false);
   const [aviso, setAviso] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
   const [enviandoCorreo, setEnviandoCorreo] = useState(false);
@@ -111,6 +113,22 @@ export function Perfil() {
           </List>
 
           <BlockTitle>Tus datos</BlockTitle>
+          <List strong inset>
+            <ListItem
+              link
+              linkComponent="button"
+              linkProps={{ type: 'button' }}
+              onClick={() => setGastosAnualesAbierto(true)}
+              media={
+                <IconoAjuste color="#ff3b30">
+                  <IconoCalendario className="size-[18px]" />
+                </IconoAjuste>
+              }
+              title="Gastos del año"
+              after={gastosAnuales.length > 0 ? String(gastosAnuales.length) : undefined}
+              contentClassName={FILA}
+            />
+          </List>
           <TarjetaExportar excel={excel} movimientos={perfil.movimientos} />
           {excel.error && (
             <BlockFooter className="text-alerta" role="alert">
@@ -178,6 +196,8 @@ export function Perfil() {
         onActualizar={actualizarCategoria}
         onEliminar={eliminarCategoria}
       />
+
+      <GastosAnualesSheet abierto={gastosAnualesAbierto} onCerrar={() => setGastosAnualesAbierto(false)} />
 
       <DialogoConfirmar
         abierto={confirmandoSalida}
