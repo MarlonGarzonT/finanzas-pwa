@@ -27,6 +27,10 @@
      de texto pasa 4.5:1 sobre su propio relleno al 15%. */
   --logro: #ff9500;
   --logro-texto: #9a5200;
+  /* Verde de Excel para la tarjeta de exportar: el usuario reconoce el
+     archivo por su color. El de texto pasa 4.5:1 sobre su relleno al 12%. */
+  --verde-excel: #107c41;
+  --verde-excel-texto: #0b6534;
   /* Barra de "Salió": neutra, como el texto de los gastos (estilo Apple Card). */
   --barra-neutra: rgb(60 60 67 / 0.55);
 
@@ -49,6 +53,7 @@
   --texto-secundario: rgb(235 235 245 / 0.6);
   --pista-grafico: rgb(120 120 128 / 0.32);
   --logro-texto: #ffb340;
+  --verde-excel-texto: #4cc38a;
   --barra-neutra: rgb(235 235 245 / 0.7);
 }
 
@@ -206,6 +211,26 @@ textarea {
 
 .seleccion-pop {
   animation: seleccion-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Flecha de la tarjeta de exportar: baja como si cayera en la bandeja y
+   descansa; el ciclo de 2.8s invita a tocar sin distraer. */
+@keyframes exportar-flecha {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  72% {
+    transform: translateY(3px);
+  }
+  84% {
+    transform: translateY(-1px);
+  }
+}
+
+.exportar-flecha {
+  animation: exportar-flecha 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 /* Aviso de versión nueva (AvisoActualizacion). Todo con transform/opacity. */

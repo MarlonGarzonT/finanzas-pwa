@@ -7,9 +7,10 @@ import { ConstanciaMeses } from '../components/ConstanciaMeses';
 import { DialogoConfirmar } from '../components/DialogoConfirmar';
 import { GestionCategorias } from '../components/GestionCategorias';
 import { IconoAjuste } from '../components/IconoAjuste';
-import { IconoApariencia, IconoCorreo, IconoDescargar, IconoEtiqueta, IconoLlave } from '../components/Iconos';
+import { IconoApariencia, IconoCorreo, IconoEtiqueta, IconoLlave } from '../components/Iconos';
 import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import { TarjetaAntiguedad } from '../components/TarjetaAntiguedad';
+import { TarjetaExportar } from '../components/TarjetaExportar';
 import { useFinanzas } from '../data/FinanzasContext';
 import { useExportarExcel } from '../data/useExportarExcel';
 import { usePerfil } from '../data/usePerfil';
@@ -110,24 +111,7 @@ export function Perfil() {
           </List>
 
           <BlockTitle>Tus datos</BlockTitle>
-          <List strong inset>
-            <ListItem
-              link
-              chevron={!excel.exportando}
-              linkComponent="button"
-              linkProps={{ type: 'button', disabled: excel.exportando, 'aria-busy': excel.exportando }}
-              onClick={excel.exportar}
-              media={
-                <IconoAjuste color="#30a14e">
-                  <IconoDescargar className="size-[18px]" />
-                </IconoAjuste>
-              }
-              title="Exportar a Excel"
-              subtitle={<span className="text-secundario">Todos tus movimientos en un archivo .xlsx</span>}
-              after={excel.exportando ? <Preloader className="size-5" /> : undefined}
-              contentClassName={FILA}
-            />
-          </List>
+          <TarjetaExportar excel={excel} movimientos={perfil.movimientos} />
           {excel.error && (
             <BlockFooter className="text-alerta" role="alert">
               {excel.error}

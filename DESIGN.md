@@ -54,6 +54,15 @@ El secundario está más oscuro que el `secondaryLabel` de iOS (60%) a propósit
 
 Solo para la permanencia del usuario en el perfil: nunca dinero, alertas ni acento.
 
+### Exportar a Excel
+
+| Token | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `--verde-excel` | `#107c41` | `#107c41` | Cuadro del ícono de hoja de cálculo y brillo detrás del vidrio (no texto) |
+| `--verde-excel-texto` | `#0b6534` | `#4cc38a` | Flecha de descarga sobre `--verde-excel` al 12% |
+
+Solo en `TarjetaExportar`: el verde identifica el archivo, no es "ingreso".
+
 ### Identidad de categorías y miembros
 
 `--categoria-azul, -naranja, -morado, -cian, -rosa, -menta, -amarillo, -cafe`. Se asignan por hash del id (`colorCategoria`). Nunca para dinero ni para el acento. En avatares van como **tinte** (22–35%) detrás del emoji o la inicial, no como relleno pleno, para no romper contraste.
@@ -98,7 +107,7 @@ Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redo
 | `CampoMonto` | Monto grande centrado, solo dígitos, separador de miles, ancho que sigue a las cifras |
 | `SelectorVidrio` / `OpcionSelector` | `Segmented` de Konsta con material Liquid Glass (riel de vidrio con reflejos, resaltado tipo gota que se desliza con resorte). Se usa en **todos** los selectores de la app; no usar `Segmented` directo |
 | `AvisoActualizacion` | Cápsula Liquid Glass (`Glass` de Konsta) que baja desde arriba con rebote cuando hay versión nueva: ícono con halo y flecha que flota, botón "Actualizar" con destello, "Ahora no" para descartarla hasta volver a la app. La lógica vive en `useActualizacionApp` (SW en modo `prompt`) |
-| Perfil (`CabeceraPerfil`, `AvatarUsuario`, `IconoAjuste`) | Estilo cuenta de Apple en Ajustes: foto de Google (o iniciales sobre el acento), nombre, correo y método de inicio; debajo, la permanencia como protagonista (`TarjetaAntiguedad`: tiempo en la app en meses de calendario a 56px, Chip con la medalla del último hito y `Progressbar` de Konsta hacia el siguiente; hitos de 1 semana a 5 años en `utils/antiguedad.ts`) y "Tu constancia" (`ConstanciaMeses`: racha de meses seguidos, una barra por mes de los últimos 6 y total/promedio); ajustes en listas agrupadas con cuadro de color + ícono blanco a la izquierda (gris apariencia/contraseña, naranja categorías, verde exportar, azul correo). Cerrar sesión centrado en coral y con confirmación. La lógica vive en `usePerfil`, `usePreferenciaTema` y `useExportarExcel` |
+| Perfil (`CabeceraPerfil`, `AvatarUsuario`, `IconoAjuste`) | Estilo cuenta de Apple en Ajustes: foto de Google (o iniciales sobre el acento), nombre, correo y método de inicio; debajo, la permanencia como protagonista (`TarjetaAntiguedad`: tiempo en la app en meses de calendario a 56px, Chip con la medalla del último hito y `Progressbar` de Konsta hacia el siguiente; hitos de 1 semana a 5 años en `utils/antiguedad.ts`) y "Tu constancia" (`ConstanciaMeses`: racha de meses seguidos, una barra por mes de los últimos 6 y total/promedio); "Exportar a Excel" como tarjeta de vidrio (`TarjetaExportar`: `Glass` de Konsta sobre un brillo verde Excel recortado a la tarjeta; en reposo la flecha baja cada 2.8 s y un destello la cruza; Preloader al generar y ✓ "Excel descargado" por 3 s); resto de ajustes en listas agrupadas con cuadro de color + ícono blanco a la izquierda (gris apariencia/contraseña, naranja categorías, verde exportar, azul correo). Cerrar sesión centrado en coral y con confirmación. La lógica vive en `usePerfil`, `usePreferenciaTema` y `useExportarExcel` |
 | `BalanceMes` | Tarjeta al inicio de Reportes con el balance del mes elegido: balance grande con signo, etiqueta de estado ("Vas bien" <80% de lo que entró, "Ojo" 80–100%, "Te pasaste" >100%, "Sin ingresos") y frase, más dos barras en la misma escala (Entró esmeralda / Salió neutra, coral si superó lo que entró). El estado siempre va en texto |
 | `GraficoMensual` | Últimos 6 meses en columnas pareadas Entró / Salió (coral si ese mes se gastó más de lo que entró). Cada columna es un botón que abre ese mes; la ventana termina en el mes actual y no se mueve al tocar |
 | `SelectorCategoria` | Cuadrícula de 4 columnas para elegir la categoría de un movimiento: emoji sobre el color de la categoría, nombre debajo, anillo + ✓ con rebote en la elegida y "Nueva" punteada al final. Ordena por uso real (`useCategoriasPorUso`) y preselecciona la más usada. Es un `radiogroup`. Va justo debajo del monto |

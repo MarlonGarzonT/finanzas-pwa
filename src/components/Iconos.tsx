@@ -75,6 +75,15 @@ export function IconoMedalla(props: PropsIcono) {
   );
 }
 
+export function IconoHojaCalculo(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M4 9.5h16M4 14.5h16M10 9.5V20" />
+    </Trazo>
+  );
+}
+
 export function IconoApariencia(props: PropsIcono) {
   return (
     <Trazo {...props}>
