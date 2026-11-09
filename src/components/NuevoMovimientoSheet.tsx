@@ -1,26 +1,26 @@
-import { BlockTitle, Button, List, ListItem } from 'konsta/react';
+import { BlockTitle, Button, List } from 'konsta/react';
 import { useEffect, useState } from 'react';
 import { useCategoriasPorUso } from '../data/useCategoriasPorUso';
 import type { Categoria, NuevaTransaccion, Tipo, Transaccion } from '../types';
-import { capitalizarPrimera, nombreMes } from '../utils/fechas';
+import { fechaEnMesSeleccionado, fechaLocalISO } from '../utils/fechas';
 import { CampoMonto } from './CampoMonto';
 import { CampoTexto } from './CampoTexto';
 import { DialogoConfirmar } from './DialogoConfirmar';
 import { HojaInferior } from './HojaInferior';
 import { NuevaCategoriaSheet } from './NuevaCategoriaSheet';
 import { SelectorCategoria } from './SelectorCategoria';
-import { SelectorMesSheet } from './SelectorMesSheet';
 import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 
 interface Props {
   abierto: boolean;
   categorias: Categoria[];
   transaccion?: Transaccion | null;
-  // Mes que queda preseleccionado al crear un movimiento nuevo (el que la
-  // persona tiene elegido en la pantalla desde la que abrió la hoja).
+  // Mes en el que arranca la fecha de un movimiento nuevo (el que la persona
+  // tiene elegido en la pantalla desde la que abrió la hoja).
   mesSeleccionado: Date;
   onCerrar: () => void;
-  onGuardar: (datos: NuevaTransaccion & { mes: Date }) => Promise<void>;
+  // `dia`: 'AAAA-MM-DD' elegido en el formulario; la hora la pone quien guarda.
+  onGuardar: (datos: NuevaTransaccion & { dia: string }) => Promise<void>;
   onEliminar?: () => Promise<void>;
   onCrearCategoria: (nombre: string, tipo: Tipo) => Promise<Categoria>;
 }
@@ -39,8 +39,7 @@ export function NuevoMovimientoSheet({
   const [monto, setMonto] = useState('');
   const [item, setItem] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
-  const [mes, setMes] = useState(mesSeleccionado);
-  const [mesAbierto, setMesAbierto] = useState(false);
+  const [dia, setDia] = useState('');
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -57,13 +56,15 @@ export function NuevoMovimientoSheet({
       setMonto(String(Math.round(transaccion.monto)));
       setItem(transaccion.item);
       setCategoriaId(transaccion.categoriaId);
-      setMes(new Date(transaccion.fecha));
+      setDia(fechaLocalISO(new Date(transaccion.fecha)));
     } else {
       setTipo('egreso');
       setMonto('');
       setItem('');
       setCategoriaId(masUsada('egreso'));
-      setMes(mesSeleccionado);
+      // Hoy si se está viendo el mes actual; en otro mes, el mismo número de
+      // día (o el último, si no existe). Queda a la vista para cambiarlo.
+      setDia(fechaLocalISO(fechaEnMesSeleccionado(mesSeleccionado)));
     }
     setCreandoCategoria(false);
     setGuardando(false);
@@ -89,10 +90,11 @@ export function NuevoMovimientoSheet({
     if (!montoNum || montoNum <= 0) return setError('Ingresa un monto mayor a cero.');
     if (!item.trim()) return setError('Escribe qué fue el movimiento.');
     if (!categoriaId) return setError('Elige una categoría.');
+    if (!dia) return setError('Elige la fecha del movimiento.');
     setError(null);
     setGuardando(true);
     try {
-      await onGuardar({ item: item.trim(), categoriaId, tipo, monto: montoNum, mes });
+      await onGuardar({ item: item.trim(), categoriaId, tipo, monto: montoNum, dia });
     } catch {
       setError('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
     } finally {
@@ -167,17 +169,9 @@ export function NuevoMovimientoSheet({
 
         <List strong inset className="mt-5 mb-2">
           <CampoTexto etiqueta="Descripción" valor={item} onCambiar={setItem} placeholder="Almuerzo, Uber, Salario…" />
-          {/* El mes decide en qué contabilidad mensual cae el movimiento: se
-              puede registrar hoy algo que pertenece a otro mes. */}
-          <ListItem
-            link
-            linkComponent="button"
-            linkProps={{ type: 'button', 'aria-label': `Mes: ${capitalizarPrimera(nombreMes(mes))}. Cambiar` }}
-            onClick={() => setMesAbierto(true)}
-            title="Mes"
-            after={capitalizarPrimera(nombreMes(mes))}
-            contentClassName="w-full text-left"
-          />
+          {/* La fecha decide en qué mes cuenta el movimiento: se puede registrar
+              hoy algo que pasó otro día (el gasto del 31 de octubre anotado el 9). */}
+          <CampoTexto etiqueta="Fecha" type="date" valor={dia} onCambiar={setDia} />
         </List>
       </HojaInferior>
 
@@ -186,13 +180,6 @@ export function NuevoMovimientoSheet({
         tipo={tipo}
         onCerrar={() => setCreandoCategoria(false)}
         onCrear={manejarCrearCategoria}
-      />
-
-      <SelectorMesSheet
-        abierto={mesAbierto}
-        mes={mes}
-        onCerrar={() => setMesAbierto(false)}
-        onSeleccionar={setMes}
       />
 
       <DialogoConfirmar

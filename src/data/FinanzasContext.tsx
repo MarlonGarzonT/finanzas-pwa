@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import * as db from '../db';
+import { conMovimientos } from '../utils/ordenMovimientos';
 import type {
   CambiosCategoria,
   Categoria,
@@ -71,12 +72,12 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   async function crearMovimiento(datos: NuevaTransaccion, fecha: Date) {
     if (!userId) return;
     const nueva = await db.crearTransaccion(userId, datos, fecha);
-    setTransacciones((prev) => [nueva, ...prev]);
+    setTransacciones((prev) => conMovimientos(prev, [nueva]));
   }
 
   async function actualizarMovimiento(id: string, datos: Partial<NuevaTransaccion>, fecha: Date) {
     const actualizada = await db.actualizarTransaccion(id, datos, fecha);
-    setTransacciones((prev) => prev.map((t) => (t.id === id ? actualizada : t)));
+    setTransacciones((prev) => conMovimientos(prev, [actualizada]));
   }
 
   async function eliminarMovimiento(id: string) {
@@ -121,7 +122,7 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   async function crearPrestamo(nuevo: NuevoPrestamo) {
     const { prestamo, salida } = await db.crearPrestamo(nuevo);
     setPrestamos((prev) => [...prev, prestamo]);
-    setTransacciones((prev) => [salida, ...prev]);
+    setTransacciones((prev) => conMovimientos(prev, [salida]));
   }
 
   async function actualizarPrestamo(id: string, cambios: Pick<NuevoPrestamo, 'persona' | 'fechaDevolucion' | 'nota'>) {
@@ -141,7 +142,7 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
 
   async function registrarAbono(prestamo: Prestamo, monto: number) {
     const abono = await db.registrarAbono(prestamo, monto);
-    setTransacciones((prev) => [abono, ...prev]);
+    setTransacciones((prev) => conMovimientos(prev, [abono]));
   }
 
   return (

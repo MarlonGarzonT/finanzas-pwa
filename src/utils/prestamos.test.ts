@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Prestamo } from '../types';
 import { resumirMes } from './contabilidad';
-import { estadosPrestamos, fechaDesdeISO, fechaLocalISO, resumirPrestamos } from './prestamos';
+import { fechaConHora, fechaDesdeISO, fechaLocalISO } from './fechas';
+import { estadosPrestamos, resumirPrestamos } from './prestamos';
 import { buscador, categoria, movimiento } from './pruebasDatos';
 
 const NUEVE_NOV = new Date(2026, 10, 9, 21);
@@ -15,6 +16,13 @@ describe('fechas locales', () => {
 
   it("'2026-11-05' es el 5 a medianoche local, no el 4", () => {
     expect(fechaDesdeISO('2026-11-05').getDate()).toBe(5);
+  });
+
+  it('el día elegido conserva la hora del registro (31-oct, no 9-oct)', () => {
+    const registro = new Date(2026, 10, 9, 15, 37, 5);
+    const fecha = fechaConHora('2026-10-31', registro);
+    expect(fechaLocalISO(fecha)).toBe('2026-10-31');
+    expect([fecha.getHours(), fecha.getMinutes(), fecha.getSeconds()]).toEqual([15, 37, 5]);
   });
 });
 

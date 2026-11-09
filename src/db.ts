@@ -137,13 +137,28 @@ export async function eliminarCategoria(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// Supabase devuelve como máximo 1.000 filas por consulta (o menos, según el
+// proyecto) y lo hace sin avisar: sin paginar, los movimientos más viejos no
+// llegaban y los totales de esos meses quedaban incompletos. Se avanza según
+// lo que de verdad llegó y se para con una página vacía, así funciona con
+// cualquier límite. El id desempata para que ninguna fila se repita ni se
+// salte entre páginas.
+const FILAS_POR_PAGINA = 1000;
+
 export async function obtenerTransacciones(): Promise<Transaccion[]> {
-  const { data, error } = await supabase
-    .from('transacciones')
-    .select(COLUMNAS_TRANSACCION)
-    .order('fecha', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(mapTransaccion);
+  const filas: FilaTransaccion[] = [];
+  for (;;) {
+    const { data, error } = await supabase
+      .from('transacciones')
+      .select(COLUMNAS_TRANSACCION)
+      .order('fecha', { ascending: false })
+      .order('id', { ascending: false })
+      .range(filas.length, filas.length + FILAS_POR_PAGINA - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    filas.push(...data);
+  }
+  return filas.map(mapTransaccion);
 }
 
 export async function crearTransaccion(

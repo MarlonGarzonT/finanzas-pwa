@@ -1,5 +1,6 @@
 import type { Categoria, Tipo, Transaccion } from '../types';
-import { claveMes, claveMesDeFecha } from './fechas';
+import { capitalizarPrimera, claveMes, claveMesDeFecha, nombreMes } from './fechas';
+import { compararPorFechaDesc } from './ordenMovimientos';
 
 export type OrdenHistorial = 'fecha' | 'monto';
 
@@ -36,6 +37,37 @@ export function contarFiltrosActivos(f: FiltrosHistorial): number {
   if (f.montoMin !== null || f.montoMax !== null) n += 1;
   if (f.mes !== null) n += 1;
   return n;
+}
+
+export interface GrupoMes {
+  // 'AAAA-MM' en hora local.
+  clave: string;
+  // "Noviembre de 2026".
+  titulo: string;
+  movimientos: Transaccion[];
+}
+
+// Agrupa por mes (en hora local), del mes más reciente al más viejo. Ordena
+// por su cuenta en vez de confiar en el orden en que llegaron: el primer
+// movimiento del primer grupo es siempre el más reciente. Con orden 'monto'
+// los meses siguen de nuevo a viejo y dentro de cada mes va el más grande
+// primero.
+export function agruparPorMes(transacciones: Transaccion[], orden: OrdenHistorial): GrupoMes[] {
+  const grupos = new Map<string, GrupoMes>();
+  for (const t of [...transacciones].sort(compararPorFechaDesc)) {
+    const clave = claveMes(t.fecha);
+    let grupo = grupos.get(clave);
+    if (!grupo) {
+      grupo = { clave, titulo: capitalizarPrimera(nombreMes(new Date(t.fecha))), movimientos: [] };
+      grupos.set(clave, grupo);
+    }
+    grupo.movimientos.push(t);
+  }
+  const lista = Array.from(grupos.values());
+  if (orden === 'monto') {
+    for (const g of lista) g.movimientos.sort((a, b) => b.monto - a.monto || compararPorFechaDesc(a, b));
+  }
+  return lista;
 }
 
 export function aplicarFiltros(

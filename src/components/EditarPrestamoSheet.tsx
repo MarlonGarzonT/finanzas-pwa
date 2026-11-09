@@ -1,8 +1,7 @@
 import { BlockFooter, Button, List } from 'konsta/react';
 import { useEffect, useState } from 'react';
 import type { NuevoPrestamo, Prestamo } from '../types';
-import { formatearMonto } from '../utils/fechas';
-import { fechaLocalISO } from '../utils/prestamos';
+import { fechaLocalISO, formatearMonto } from '../utils/fechas';
 import { CampoMonto } from './CampoMonto';
 import { CampoTexto } from './CampoTexto';
 import { HojaInferior } from './HojaInferior';

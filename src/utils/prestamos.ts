@@ -1,21 +1,7 @@
 import type { Prestamo, Transaccion } from '../types';
+import { fechaDesdeISO, fechaLocalISO } from './fechas';
 
 const MS_POR_DIA = 86_400_000;
-
-// 'AAAA-MM-DD' del día local (no UTC): el 9 de noviembre a las 9 p. m. en
-// Colombia sigue siendo el 9, aunque en UTC ya sea el 10.
-export function fechaLocalISO(fecha: Date): string {
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  return `${fecha.getFullYear()}-${mes}-${dia}`;
-}
-
-// Medianoche local de un 'AAAA-MM-DD'. new Date('2026-11-05') la tomaría en
-// UTC y en Colombia daría el 4 a las 7 p. m.
-export function fechaDesdeISO(iso: string): Date {
-  const [anio, mes, dia] = iso.split('-').map(Number);
-  return new Date(anio, mes - 1, dia);
-}
 
 // '2026-11-05' → "5 nov" (mismo formato corto de las listas de la app).
 export function formatearDia(iso: string): string {

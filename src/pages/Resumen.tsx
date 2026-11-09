@@ -12,7 +12,7 @@ import { useFinanzas } from '../data/FinanzasContext';
 import { useResumenMes } from '../data/useResumenMes';
 import type { NuevaTransaccion, Tipo, Transaccion } from '../types';
 import { desglosePorCategoria } from '../utils/estadisticasMes';
-import { fechaEnMesSeleccionado, nombreMes } from '../utils/fechas';
+import { fechaConHora, nombreMes } from '../utils/fechas';
 
 export function Resumen() {
   const {
@@ -48,10 +48,10 @@ export function Resumen() {
     setEditando(null);
   }
 
-  async function manejarGuardar({ mes, ...datos }: NuevaTransaccion & { mes: Date }) {
-    // Cada movimiento queda en el mes elegido en la hoja (por defecto, el mes
-    // que se está viendo), no necesariamente en el mes real de hoy.
-    const fecha = fechaEnMesSeleccionado(mes, editando ? new Date(editando.fecha) : new Date());
+  async function manejarGuardar({ dia, ...datos }: NuevaTransaccion & { dia: string }) {
+    // Cada movimiento queda en el día elegido en la hoja (por defecto, uno del
+    // mes que se está viendo), con la hora en que se registró.
+    const fecha = fechaConHora(dia, editando ? new Date(editando.fecha) : new Date());
     if (editando) await actualizarMovimiento(editando.id, datos, fecha);
     else await crearMovimiento(datos, fecha);
     cerrarSheet();

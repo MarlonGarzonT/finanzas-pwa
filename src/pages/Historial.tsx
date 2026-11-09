@@ -14,13 +14,14 @@ import { resumirMes } from '../utils/contabilidad';
 import { presentacionMovimiento } from '../utils/presentacionMovimiento';
 import {
   capitalizarPrimera,
-  fechaEnMesSeleccionado,
+  fechaConHora,
   formatearFechaCorta,
   formatearMonto,
   formatearMontoConSigno,
   nombreMes,
 } from '../utils/fechas';
 import {
+  agruparPorMes,
   aplicarFiltros,
   contarFiltrosActivos,
   FILTROS_INICIALES,
@@ -45,18 +46,7 @@ export function Historial() {
     [transacciones, categoriaPorId, filtros]
   );
 
-  const grupos = useMemo(() => {
-    const mapa = new Map<string, Transaccion[]>();
-    for (const t of transaccionesFiltradas) {
-      const clave = capitalizarPrimera(nombreMes(new Date(t.fecha)));
-      if (!mapa.has(clave)) mapa.set(clave, []);
-      mapa.get(clave)!.push(t);
-    }
-    if (filtros.orden === 'monto') {
-      for (const items of mapa.values()) items.sort((a, b) => b.monto - a.monto);
-    }
-    return Array.from(mapa.entries());
-  }, [transaccionesFiltradas, filtros.orden]);
+  const grupos = useMemo(() => agruparPorMes(transaccionesFiltradas, filtros.orden), [transaccionesFiltradas, filtros.orden]);
 
   const neto = useMemo(() => resumirMes(transaccionesFiltradas, categoriaPorId).disponible, [transaccionesFiltradas, categoriaPorId]);
 
@@ -71,9 +61,9 @@ export function Historial() {
     });
   }
 
-  async function manejarGuardar({ mes, ...datos }: NuevaTransaccion & { mes: Date }) {
+  async function manejarGuardar({ dia, ...datos }: NuevaTransaccion & { dia: string }) {
     if (!editando) return;
-    await actualizarMovimiento(editando.id, datos, fechaEnMesSeleccionado(mes, new Date(editando.fecha)));
+    await actualizarMovimiento(editando.id, datos, fechaConHora(dia, new Date(editando.fecha)));
     setEditando(null);
   }
 
@@ -218,10 +208,10 @@ export function Historial() {
               {formatearMontoConSigno(neto)}
             </span>
           </p>
-          {grupos.map(([mes, items]) => {
+          {grupos.map(({ clave, titulo: mes, movimientos: items }) => {
             const netoMes = resumirMes(items, categoriaPorId).disponible;
             return (
-              <section key={mes} aria-label={mes}>
+              <section key={clave} aria-label={mes}>
                 {/* Cada mes trae su balance a la derecha: al bajar se notan los meses en rojo. */}
                 <BlockTitle>
                   <span>{mes}</span>

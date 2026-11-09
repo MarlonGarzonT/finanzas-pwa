@@ -63,12 +63,48 @@ export function nombreMesCorto(fecha: Date): string {
   return fecha.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
 }
 
-// Un movimiento nuevo debe quedar en el mes que el usuario tiene seleccionado
-// (no en el mes real de hoy). Se conserva el día/hora actual, ajustando el
-// día si el mes seleccionado tiene menos días (ej. 31 en un mes de 30).
+// 'AAAA-MM-DD' del día local (no UTC): el 9 de noviembre a las 9 p. m. en
+// Colombia sigue siendo el 9, aunque en UTC ya sea el 10.
+export function fechaLocalISO(fecha: Date): string {
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
+
+// Medianoche local de un 'AAAA-MM-DD'. new Date('2026-11-05') la tomaría en
+// UTC y en Colombia daría el 4 a las 7 p. m.
+export function fechaDesdeISO(iso: string): Date {
+  const [anio, mes, dia] = iso.split('-').map(Number);
+  return new Date(anio, mes - 1, dia);
+}
+
+// El día que eligió la persona ('AAAA-MM-DD') con la hora de `hora`. Al crear
+// se usa la hora actual y al editar la original: así, entre movimientos del
+// mismo día, el último que se registró queda primero.
+export function fechaConHora(dia: string, hora: Date): Date {
+  const base = fechaDesdeISO(dia);
+  return new Date(
+    base.getFullYear(),
+    base.getMonth(),
+    base.getDate(),
+    hora.getHours(),
+    hora.getMinutes(),
+    hora.getSeconds(),
+    hora.getMilliseconds()
+  );
+}
+
+// Fecha con la que arranca el formulario de un movimiento nuevo, en el mes que
+// la persona tiene elegido (no necesariamente el de hoy). Se conserva el día y
+// la hora actuales, ajustando el día si el mes tiene menos días (31 → 30).
+// En un mes futuro arranca el día 1: copiar el día de hoy dejaba fechas como
+// el 30 de noviembre para algo anotado el 31 de octubre, y esos movimientos
+// salían como los más recientes. La fecha queda a la vista para cambiarla.
 export function fechaEnMesSeleccionado(mesSeleccionado: Date, ahora: Date = new Date()): Date {
   const diasEnMes = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth() + 1, 0).getDate();
-  const dia = Math.min(ahora.getDate(), diasEnMes);
+  const esFuturo =
+    mesSeleccionado.getFullYear() * 12 + mesSeleccionado.getMonth() > ahora.getFullYear() * 12 + ahora.getMonth();
+  const dia = esFuturo ? 1 : Math.min(ahora.getDate(), diasEnMes);
   return new Date(
     mesSeleccionado.getFullYear(),
     mesSeleccionado.getMonth(),
