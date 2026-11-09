@@ -4,27 +4,42 @@ import { IconoCheck, IconoMas } from './Iconos';
 
 interface Props {
   categorias: Categoria[];
-  seleccionadaId: string;
-  onSeleccionar: (id: string) => void;
-  onNueva: () => void;
+  estaElegida: (id: string) => boolean;
+  onElegir: (id: string) => void;
+  // true en los filtros: se pueden marcar varias (checkbox en vez de radio).
+  multiple?: boolean;
+  etiqueta?: string;
+  onNueva?: () => void;
 }
 
 // Cuadrícula de 4 columnas, como los selectores de categoría de iOS: cada
 // opción es el emoji sobre el color de identidad de la categoría (el mismo
 // de las listas y los gráficos) con su nombre debajo, así todas las filas
-// quedan alineadas. Es un grupo de radio: una sola categoría a la vez.
-export function SelectorCategoria({ categorias, seleccionadaId, onSeleccionar, onNueva }: Props) {
+// quedan alineadas. Con una sola elección es un grupo de radio; en los
+// filtros (multiple) cada opción es un checkbox.
+export function SelectorCategoria({
+  categorias,
+  estaElegida,
+  onElegir,
+  multiple = false,
+  etiqueta = 'Categoría',
+  onNueva,
+}: Props) {
   return (
-    <div role="radiogroup" aria-label="Categoría" className="grid grid-cols-4 gap-x-1 gap-y-2 px-3">
+    <div
+      role={multiple ? 'group' : 'radiogroup'}
+      aria-label={etiqueta}
+      className="grid grid-cols-4 gap-x-1 gap-y-2 px-3"
+    >
       {categorias.map((c) => {
-        const activa = c.id === seleccionadaId;
+        const activa = estaElegida(c.id);
         return (
           <button
             key={c.id}
             type="button"
-            role="radio"
+            role={multiple ? 'checkbox' : 'radio'}
             aria-checked={activa}
-            onClick={() => onSeleccionar(c.id)}
+            onClick={() => onElegir(c.id)}
             className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 pt-1.5 pb-1 transition-transform duration-150 active:scale-95"
           >
             <span
@@ -54,19 +69,21 @@ export function SelectorCategoria({ categorias, seleccionadaId, onSeleccionar, o
         );
       })}
 
-      <button
-        type="button"
-        onClick={onNueva}
-        className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 pt-1.5 pb-1 text-primary transition-transform duration-150 active:scale-95"
-      >
-        <span
-          className="flex size-13 items-center justify-center rounded-full border-2 border-dashed border-primary/45"
-          aria-hidden="true"
+      {onNueva && (
+        <button
+          type="button"
+          onClick={onNueva}
+          className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-1 pt-1.5 pb-1 text-primary transition-transform duration-150 active:scale-95"
         >
-          <IconoMas className="size-6" />
-        </span>
-        <span className="text-[13px] leading-tight font-medium">Nueva</span>
-      </button>
+          <span
+            className="flex size-13 items-center justify-center rounded-full border-2 border-dashed border-primary/45"
+            aria-hidden="true"
+          >
+            <IconoMas className="size-6" />
+          </span>
+          <span className="text-[13px] leading-tight font-medium">Nueva</span>
+        </button>
+      )}
     </div>
   );
 }

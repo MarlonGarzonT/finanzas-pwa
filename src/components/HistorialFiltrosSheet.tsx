@@ -1,12 +1,13 @@
 import { BlockTitle, Button, List, ListItem, Toggle } from 'konsta/react';
 import { useEffect, useState } from 'react';
-import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
+import { useCategoriasPorUso } from '../data/useCategoriasPorUso';
 import type { Categoria, Tipo } from '../types';
 import { capitalizarPrimera, nombreMes } from '../utils/fechas';
 import { FILTROS_INICIALES, type FiltrosHistorial } from '../utils/filtrosHistorial';
-import { ChipOpcion } from './ChipOpcion';
 import { HojaInferior } from './HojaInferior';
+import { SelectorCategoria } from './SelectorCategoria';
 import { SelectorMesSheet } from './SelectorMesSheet';
+import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 
 interface Props {
   abierto: boolean;
@@ -30,6 +31,8 @@ function textoAMonto(texto: string): number | null {
 export function HistorialFiltrosSheet({ abierto, categorias, filtros, onCerrar, onAplicar }: Props) {
   const [draft, setDraft] = useState<FiltrosHistorial>(filtros);
   const [ruedaMesAbierta, setRuedaMesAbierta] = useState(false);
+  const gastosPorUso = useCategoriasPorUso(categorias, 'egreso');
+  const ingresosPorUso = useCategoriasPorUso(categorias, 'ingreso');
 
   // Al reabrir el sheet, arranca desde los filtros que realmente están
   // aplicados (por si se cerró sin aplicar los cambios en el intento anterior).
@@ -87,19 +90,31 @@ export function HistorialFiltrosSheet({ abierto, categorias, filtros, onCerrar, 
           </SelectorVidrio>
         </div>
 
-        <BlockTitle>Categorías</BlockTitle>
-        <div className="flex flex-wrap gap-2 px-4" role="group" aria-label="Categorías">
-          {categorias.map((c) => (
-            <ChipOpcion
-              key={c.id}
-              activo={draft.categoriaIds.has(c.id)}
-              onClick={() => alternarCategoria(c.id)}
-              media={<span aria-hidden="true">{c.emoji}</span>}
-            >
-              {c.nombre}
-            </ChipOpcion>
-          ))}
-        </div>
+        {/* Solo las categorías del tipo elegido arriba; con "Todos", ambas. */}
+        {draft.tipo !== 'ingreso' && gastosPorUso.length > 0 && (
+          <>
+            <BlockTitle>Categorías de gasto</BlockTitle>
+            <SelectorCategoria
+              multiple
+              etiqueta="Categorías de gasto"
+              categorias={gastosPorUso}
+              estaElegida={(id) => draft.categoriaIds.has(id)}
+              onElegir={alternarCategoria}
+            />
+          </>
+        )}
+        {draft.tipo !== 'egreso' && ingresosPorUso.length > 0 && (
+          <>
+            <BlockTitle>Categorías de ingreso</BlockTitle>
+            <SelectorCategoria
+              multiple
+              etiqueta="Categorías de ingreso"
+              categorias={ingresosPorUso}
+              estaElegida={(id) => draft.categoriaIds.has(id)}
+              onElegir={alternarCategoria}
+            />
+          </>
+        )}
 
         <List strong inset className="mt-6 mb-2">
           <ListItem

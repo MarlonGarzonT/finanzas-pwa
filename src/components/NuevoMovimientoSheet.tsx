@@ -157,11 +157,11 @@ export function NuevoMovimientoSheet({
           </>
         }
       >
-        <BlockTitle className="mt-2 mb-3">Categoría</BlockTitle>
+        <BlockTitle className="mt-2">Categoría</BlockTitle>
         <SelectorCategoria
           categorias={tipo === 'egreso' ? gastosPorUso : ingresosPorUso}
-          seleccionadaId={categoriaId}
-          onSeleccionar={setCategoriaId}
+          estaElegida={(id) => id === categoriaId}
+          onElegir={setCategoriaId}
           onNueva={() => setCreandoCategoria(true)}
         />
 
