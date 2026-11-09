@@ -13,6 +13,14 @@ if ('serviceWorker' in navigator) {
     recargando = true;
     window.location.reload();
   });
+
+  // Contesta al Service Worker nuevo que esta ventana sabe mostrar el aviso
+  // "Nueva versión" (public/sw-transicion.js): así espera a que la persona
+  // toque "Actualizar" en vez de activarse solo.
+  navigator.serviceWorker.addEventListener('message', (evento) => {
+    if (evento.data?.tipo === 'FINANZAS_SOPORTA_AVISO') evento.ports[0]?.postMessage(true);
+  });
+  navigator.serviceWorker.startMessages();
 }
 
 // Konsta activa su modo oscuro con la clase `dark` en un ancestro, no con la

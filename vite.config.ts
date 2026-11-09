@@ -15,6 +15,10 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['apple-touch-icon.png'],
+      // Puente para ventanas con la versión vieja (sin aviso): ver el archivo.
+      workbox: {
+        importScripts: ['sw-transicion.js'],
+      },
       manifest: {
         name: 'Mis Finanzas',
         short_name: 'Finanzas',
