@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { Block, Button, List, ListItem, Page, Toggle } from 'konsta/react';
+import { useState, type FormEvent } from 'react';
+import { CampoTexto } from '../components/CampoTexto';
+import { IconoOjo, IconoOjoTachado } from '../components/Iconos';
 import { useAuth } from './AuthContext';
-import './Login.css';
 
 type Modo = 'login' | 'registro';
 
@@ -9,7 +11,7 @@ const LONGITUD_MINIMA = 8;
 const TEXTOS: Record<Modo, { titulo: string; subtitulo: string; cta: string }> = {
   login: {
     titulo: 'Bienvenido de nuevo',
-    subtitulo: 'Inicia sesión con tu correo y contraseña para seguir controlando tus finanzas.',
+    subtitulo: 'Inicia sesión para seguir controlando tus finanzas.',
     cta: 'Iniciar sesión',
   },
   registro: {
@@ -43,7 +45,7 @@ export function Login() {
     setAceptaTerminos(false);
   }
 
-  async function manejarEnvio(e: React.FormEvent) {
+  async function manejarEnvio(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setMensajeExito(null);
@@ -63,34 +65,44 @@ export function Login() {
 
     setEnviando(true);
     const correo = email.trim();
-    if (modo === 'login') {
-      const { error } = await iniciarSesion(correo, password);
-      if (error) setError(traducirError(error));
-    } else {
-      const { error, requiereConfirmacion } = await registrar(correo, password);
-      if (error) {
-        setError(traducirError(error));
-      } else if (requiereConfirmacion) {
-        // Sin este aviso, el formulario "no hace nada" visible: la cuenta sí
-        // se crea, pero queda pendiente de confirmar por correo.
-        setMensajeExito(`Te enviamos un correo a ${correo} para confirmar tu cuenta. Revísalo (y la carpeta de spam) antes de iniciar sesión.`);
-        setPassword('');
-        setConfirmarPassword('');
+    try {
+      if (modo === 'login') {
+        const { error } = await iniciarSesion(correo, password);
+        if (error) setError(traducirError(error));
+      } else {
+        const { error, requiereConfirmacion } = await registrar(correo, password);
+        if (error) {
+          setError(traducirError(error));
+        } else if (requiereConfirmacion) {
+          // Sin este aviso, el formulario "no hace nada" visible: la cuenta sí
+          // se crea, pero queda pendiente de confirmar por correo.
+          setMensajeExito(`Te enviamos un correo a ${correo} para confirmar tu cuenta. Revísalo (y la carpeta de spam) antes de iniciar sesión.`);
+          setPassword('');
+          setConfirmarPassword('');
+        }
       }
+    } catch {
+      setError('No hay conexión. Revisa tu internet e intenta de nuevo.');
+    } finally {
+      setEnviando(false);
     }
-    setEnviando(false);
   }
 
   async function manejarGoogle() {
     setError(null);
     setMensajeExito(null);
     setEnviandoGoogle(true);
-    const { error } = await iniciarSesionConGoogle();
-    if (error) {
-      setError(traducirError(error));
+    try {
+      const { error } = await iniciarSesionConGoogle();
+      if (error) {
+        setError(traducirError(error));
+        setEnviandoGoogle(false);
+      }
+      // Si no hay error, el navegador ya está siendo redirigido a Google.
+    } catch {
+      setError('No hay conexión. Revisa tu internet e intenta de nuevo.');
       setEnviandoGoogle(false);
     }
-    // Si no hay error, el navegador ya está siendo redirigido a Google.
   }
 
   async function manejarOlvidoPassword() {
@@ -102,147 +114,143 @@ export function Login() {
     setError(null);
     setMensajeExito(null);
     setEnviando(true);
-    const { error } = await restablecerPassword(correo);
-    setEnviando(false);
-    if (error) setError(traducirError(error));
-    else setMensajeExito(`Te enviamos un correo a ${correo} con instrucciones para restablecer tu contraseña.`);
+    try {
+      const { error } = await restablecerPassword(correo);
+      if (error) setError(traducirError(error));
+      else setMensajeExito(`Te enviamos un correo a ${correo} con instrucciones para restablecer tu contraseña.`);
+    } catch {
+      setError('No hay conexión. Revisa tu internet e intenta de nuevo.');
+    } finally {
+      setEnviando(false);
+    }
   }
 
+  const botonOjo = (
+    <button
+      type="button"
+      className="-mr-2 flex size-11 shrink-0 items-center justify-center text-secundario"
+      onClick={() => setMostrarPassword((v) => !v)}
+      aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+      aria-pressed={mostrarPassword}
+    >
+      {mostrarPassword ? <IconoOjoTachado className="size-5" /> : <IconoOjo className="size-5" />}
+    </button>
+  );
+
   return (
-    <div className="login">
-      <div className="login__fondo" aria-hidden="true" />
-      <div className="login__scroll">
-        <div className="login__card">
+    <Page className="pt-safe pb-safe">
+      <div className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center py-8">
+        <header className="flex flex-col items-center gap-3 px-6 text-center">
           <img
-            className="login__logo"
+            className="size-16 rounded-[18px]"
             src={`${import.meta.env.BASE_URL}icons/icon-192.png`}
-            alt="Mis Finanzas"
-            width={192}
-            height={192}
+            alt=""
+            width={64}
+            height={64}
           />
+          <h1 className="m-0 text-[28px] leading-tight font-bold tracking-tight">{textos.titulo}</h1>
+          <p className="m-0 text-[15px] text-secundario">{textos.subtitulo}</p>
+        </header>
 
-          <div className="login__encabezado">
-            <h1 className="login__titulo">{textos.titulo}</h1>
-            <p className="login__subtitulo">{textos.subtitulo}</p>
-          </div>
+        <Block className="my-6">
+          <Button large rounded outline onClick={manejarGoogle} disabled={enviandoGoogle || enviando} className="gap-2 normal-case">
+            <IconoGoogle />
+            {enviandoGoogle ? 'Abriendo Google…' : 'Continuar con Google'}
+          </Button>
+        </Block>
 
-          <div className="login__social">
-            <button
-              type="button"
-              className="login__social-boton"
-              onClick={manejarGoogle}
-              disabled={enviandoGoogle || enviando}
-            >
-              <IconoGoogle />
-              Continuar con Google
-            </button>
-          </div>
+        <div className="flex items-center gap-3 px-8 text-[13px] text-secundario" aria-hidden="true">
+          <span className="h-px flex-1 bg-black/15 dark:bg-white/15" />o con tu correo
+          <span className="h-px flex-1 bg-black/15 dark:bg-white/15" />
+        </div>
 
-          <div className="login__divisor">
-            <span />
-            <p>o</p>
-            <span />
-          </div>
-
-          <form onSubmit={manejarEnvio} className="login__form">
-            <label className="login__campo">
-              <span>Correo electrónico</span>
-              <input
-                type="email"
-                inputMode="email"
+        <form onSubmit={manejarEnvio}>
+          <List strong inset className="mt-4 mb-2">
+            <CampoTexto
+              etiqueta="Correo electrónico"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="off"
+              enterKeyHint="next"
+              placeholder="tu@correo.com"
+              valor={email}
+              onCambiar={setEmail}
+              required
+            />
+            <CampoTexto
+              etiqueta="Contraseña"
+              type={mostrarPassword ? 'text' : 'password'}
+              autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
+              autoCapitalize="off"
+              enterKeyHint={modo === 'login' ? 'go' : 'next'}
+              placeholder={`Mínimo ${LONGITUD_MINIMA} caracteres`}
+              valor={password}
+              onCambiar={setPassword}
+              required
+              accion={botonOjo}
+            />
+            {modo === 'registro' && (
+              <CampoTexto
+                etiqueta="Confirmar contraseña"
+                type={mostrarPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 autoCapitalize="off"
-                autoComplete="email"
-                placeholder="tu@correo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                enterKeyHint="go"
+                placeholder="Repite la contraseña"
+                valor={confirmarPassword}
+                onCambiar={setConfirmarPassword}
                 required
               />
-            </label>
-
-            <label className="login__campo">
-              <span>Contraseña</span>
-              <div className="login__campo-con-boton">
-                <input
-                  type={mostrarPassword ? 'text' : 'password'}
-                  autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  className="login__boton-ojo"
-                  onClick={() => setMostrarPassword((v) => !v)}
-                  aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                >
-                  {mostrarPassword ? <IconoOjoTachado /> : <IconoOjo />}
-                </button>
-              </div>
-            </label>
-
-            {modo === 'login' && (
-              <button type="button" className="login__olvido" onClick={manejarOlvidoPassword}>
-                ¿Olvidaste tu contraseña?
-              </button>
             )}
-
             {modo === 'registro' && (
-              <label className="login__campo">
-                <span>Confirmar contraseña</span>
-                <input
-                  type={mostrarPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  placeholder="••••••••"
-                  value={confirmarPassword}
-                  onChange={(e) => setConfirmarPassword(e.target.value)}
-                  required
-                />
-              </label>
-            )}
-
-            {modo === 'registro' && (
-              <label className="interruptor-fila">
-                <span>Acepto los Términos y la Política de Privacidad</span>
-                <span className="interruptor">
-                  <input
-                    type="checkbox"
+              <ListItem
+                label
+                title="Acepto los Términos y la Política de Privacidad"
+                after={
+                  <Toggle
                     checked={aceptaTerminos}
-                    onChange={(e) => setAceptaTerminos(e.target.checked)}
+                    onChange={() => setAceptaTerminos((v) => !v)}
+                    aria-label="Acepto los Términos y la Política de Privacidad"
                   />
-                  <span className="interruptor__riel" />
-                </span>
-              </label>
+                }
+              />
             )}
+          </List>
 
-            <button type="submit" className="login__cta" disabled={enviando}>
+          {modo === 'login' && (
+            <div className="flex justify-end px-4">
+              <Button type="button" clear small inline rounded className="h-11 normal-case" onClick={manejarOlvidoPassword} disabled={enviando}>
+                ¿Olvidaste tu contraseña?
+              </Button>
+            </div>
+          )}
+
+          <Block className="my-3 flex flex-col gap-3">
+            {error && (
+              <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+                {error}
+              </p>
+            )}
+            {mensajeExito && (
+              <p className="m-0 text-center text-[15px] text-ingreso" role="status">
+                {mensajeExito}
+              </p>
+            )}
+            <Button large rounded type="submit" disabled={enviando}>
               {enviando ? 'Un momento…' : textos.cta}
-            </button>
-          </form>
+            </Button>
+          </Block>
+        </form>
 
-          {error && <p className="login__error">{error}</p>}
-          {mensajeExito && <p className="login__exito">{mensajeExito}</p>}
-
-          <p className="login__pie">
-            {modo === 'login' ? (
-              <>
-                ¿No tienes cuenta?{' '}
-                <button type="button" onClick={() => cambiarModo('registro')}>
-                  Crear cuenta
-                </button>
-              </>
-            ) : (
-              <>
-                ¿Ya tienes cuenta?{' '}
-                <button type="button" onClick={() => cambiarModo('login')}>
-                  Iniciar sesión
-                </button>
-              </>
-            )}
-          </p>
-        </div>
+        <p className="m-0 flex items-center justify-center gap-1 text-[15px] text-secundario">
+          {modo === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+          <Button clear small inline rounded className="h-11 px-2 normal-case" onClick={() => cambiarModo(modo === 'login' ? 'registro' : 'login')}>
+            {modo === 'login' ? 'Crear cuenta' : 'Iniciar sesión'}
+          </Button>
+        </p>
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -265,24 +273,6 @@ function IconoGoogle() {
         fill="#1976D2"
         d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.2 5.2C39.9 37 45 32.1 45 24c0-1.4-.1-2.8-.4-4.5z"
       />
-    </svg>
-  );
-}
-
-function IconoOjo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function IconoOjoTachado() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.3 20.3 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a20.3 20.3 0 0 1-2.68 3.68M14.12 14.12a3 3 0 1 1-4.24-4.24" />
-      <line x1="1" y1="1" x2="23" y2="23" />
     </svg>
   );
 }

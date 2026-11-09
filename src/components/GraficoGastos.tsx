@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { formatearMontoCompacto } from '../utils/fechas';
-import './Graficos.css';
+import { colorCategoria } from '../utils/colorCategoria';
+import { formatearMonto, formatearMontoCompacto } from '../utils/fechas';
 
 interface Fila {
+  categoriaId: string;
   categoria: string;
   emoji: string;
   monto: number;
@@ -13,6 +14,9 @@ interface Props {
   mensajeVacio?: string;
 }
 
+// Cada barra lleva el color de su categoría (el mismo del avatar en las
+// listas y del arco en la dona), no verde/rojo: el gráfico compara
+// categorías entre sí, y el tipo ya lo dice el control de arriba.
 export function GraficoGastos({ datos, mensajeVacio = 'Aún no registras gastos este mes.' }: Props) {
   // Las barras arrancan en 0 y crecen a su alto real tras montar, para que
   // el gráfico "aparezca" animado en vez de dibujarse ya completo.
@@ -23,27 +27,35 @@ export function GraficoGastos({ datos, mensajeVacio = 'Aún no registras gastos 
   }, []);
 
   if (datos.length === 0) {
-    return <p className="gastos-barras__vacio">{mensajeVacio}</p>;
+    return <p className="m-0 py-6 text-center text-[15px] text-secundario">{mensajeVacio}</p>;
   }
 
   const max = Math.max(...datos.map((d) => d.monto));
 
   return (
-    <div className="gastos-barras">
+    <ul className="m-0 flex h-44 list-none items-stretch gap-2.5 p-0" aria-label="Montos por categoría">
       {datos.map((d) => (
-        <div key={d.categoria} className="gastos-barras__col">
-          <div className="gastos-barras__pista">
+        <li key={d.categoriaId} className="flex min-w-0 flex-1 flex-col items-center">
+          <span className="sr-only">
+            {d.categoria}: {formatearMonto(d.monto)}
+          </span>
+          <div className="flex w-full flex-1 items-end" aria-hidden="true">
             <div
-              className="gastos-barras__barra"
-              style={{ height: montado ? `${Math.max(6, (d.monto / max) * 100)}%` : '0%' }}
+              className="w-full origin-bottom rounded-t-[10px] rounded-b-[4px] transition-[height] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+              style={{
+                height: montado ? `${Math.max(6, (d.monto / max) * 100)}%` : '0%',
+                background: colorCategoria(d.categoriaId),
+              }}
             />
           </div>
-          <span className="gastos-barras__emoji" aria-hidden>
+          <span className="mt-2 text-xl leading-none" aria-hidden="true">
             {d.emoji}
           </span>
-          <span className="gastos-barras__monto">{formatearMontoCompacto(d.monto)}</span>
-        </div>
+          <span className="mt-1 text-xs font-semibold text-secundario cifras" aria-hidden="true">
+            {formatearMontoCompacto(d.monto)}
+          </span>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

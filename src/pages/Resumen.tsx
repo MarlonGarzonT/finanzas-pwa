@@ -1,17 +1,17 @@
+import { Actions, ActionsButton, ActionsGroup, Block, BlockTitle, Fab, Link, Navbar, Page } from 'konsta/react';
 import { useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { BalanceCard } from '../components/BalanceCard';
+import { Cargando } from '../components/Cargando';
 import { GestionCategorias } from '../components/GestionCategorias';
 import { GraficoGastos } from '../components/GraficoGastos';
+import { IconoMas, IconoMasOpciones } from '../components/Iconos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { SelectorMes } from '../components/SelectorMes';
-import { SelectorPagina } from '../components/SelectorPagina';
-import { Spinner } from '../components/Spinner';
 import { UltimosMovimientos } from '../components/UltimosMovimientos';
 import { useFinanzas } from '../data/FinanzasContext';
-import type { Tipo, Transaccion } from '../types';
-import { claveMesDeFecha, claveMes, fechaEnMesSeleccionado, nombreMes } from '../utils/fechas';
-import './Resumen.css';
+import type { NuevaTransaccion, Tipo, Transaccion } from '../types';
+import { claveMes, claveMesDeFecha, fechaEnMesSeleccionado, nombreMes } from '../utils/fechas';
 
 export function Resumen() {
   const {
@@ -29,7 +29,7 @@ export function Resumen() {
   const [sheetAbierto, setSheetAbierto] = useState(false);
   const [editando, setEditando] = useState<Transaccion | null>(null);
   const [categoriasAbierto, setCategoriasAbierto] = useState(false);
-  const [guardando, setGuardando] = useState(false);
+  const [opcionesAbiertas, setOpcionesAbiertas] = useState(false);
   const [filtroGrafico, setFiltroGrafico] = useState<Tipo>('egreso');
   // Cada mes es su propia contabilidad, independiente de los demás: el
   // Disponible arranca en $0 al cambiar de mes, no arrastra el saldo previo.
@@ -45,11 +45,6 @@ export function Resumen() {
     return transacciones.filter((t) => claveMes(t.fecha) === claveSeleccionada);
   }, [transacciones, mesSeleccionado]);
 
-  const disponible = useMemo(
-    () => transaccionesDelMes.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0),
-    [transaccionesDelMes]
-  );
-
   const { totalIngresos, totalEgresos } = useMemo(() => {
     let ingresos = 0;
     let egresos = 0;
@@ -60,8 +55,8 @@ export function Resumen() {
     return { totalIngresos: ingresos, totalEgresos: egresos };
   }, [transaccionesDelMes]);
 
-  const datosGastos = useMemo(() => {
-    const totales = new Map<string, { categoria: string; emoji: string; monto: number }>();
+  const datosGrafico = useMemo(() => {
+    const totales = new Map<string, { categoriaId: string; categoria: string; emoji: string; monto: number }>();
     for (const t of transaccionesDelMes) {
       if (t.tipo !== filtroGrafico) continue;
       const cat = categoriaPorId(t.categoriaId);
@@ -69,7 +64,12 @@ export function Resumen() {
       if (existente) {
         existente.monto += t.monto;
       } else {
-        totales.set(t.categoriaId, { categoria: cat?.nombre ?? 'Otros', emoji: cat?.emoji ?? '🏷️', monto: t.monto });
+        totales.set(t.categoriaId, {
+          categoriaId: t.categoriaId,
+          categoria: cat?.nombre ?? 'Otros',
+          emoji: cat?.emoji ?? '🏷️',
+          monto: t.monto,
+        });
       }
     }
     return Array.from(totales.values())
@@ -82,88 +82,107 @@ export function Resumen() {
     setEditando(null);
   }
 
-  async function manejarGuardar(datos: {
-    item: string;
-    categoriaId: string;
-    tipo: 'ingreso' | 'egreso';
-    monto: number;
-    mes: Date;
-  }) {
-    const { mes, ...resto } = datos;
+  async function manejarGuardar({ mes, ...datos }: NuevaTransaccion & { mes: Date }) {
+    // Cada movimiento queda en el mes elegido en la hoja (por defecto, el mes
+    // que se está viendo), no necesariamente en el mes real de hoy.
     const fecha = fechaEnMesSeleccionado(mes, editando ? new Date(editando.fecha) : new Date());
-    setGuardando(true);
-    if (editando) {
-      await actualizarMovimiento(editando.id, resto, fecha);
-    } else {
-      await crearMovimiento(resto, fecha);
-    }
-    setGuardando(false);
+    if (editando) await actualizarMovimiento(editando.id, datos, fecha);
+    else await crearMovimiento(datos, fecha);
     cerrarSheet();
   }
 
   async function manejarEliminar() {
     if (!editando) return;
-    setGuardando(true);
     await eliminarMovimiento(editando.id);
-    setGuardando(false);
     cerrarSheet();
   }
 
+  const mes = nombreMes(mesSeleccionado);
+
   return (
-    <div className="resumen">
-      <header className="resumen__header">
-        <SelectorPagina />
-        <div className="resumen__acciones">
-          <button onClick={() => setCategoriasAbierto(true)} aria-label="Gestionar categorías">
-            ⚙️
-          </button>
-          <button onClick={cerrarSesion} aria-label="Cerrar sesión">
-            ⎋
-          </button>
-        </div>
-      </header>
+    <Page className="pb-[calc(var(--k-safe-area-bottom)+168px)]">
+      <Navbar
+        centerTitle
+        title="Resumen"
+        right={
+          <Link iconOnly onClick={() => setOpcionesAbiertas(true)} aria-label="Más opciones">
+            <IconoMasOpciones className="size-7" />
+          </Link>
+        }
+      />
 
       {cargando ? (
-        <div className="resumen__cargando">
-          <Spinner />
-        </div>
+        <Cargando />
       ) : (
-        <div className="resumen__contenido">
+        <div className="aparecer-suave">
           <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
           <BalanceCard
-            disponible={disponible}
+            disponible={totalIngresos - totalEgresos}
             totalIngresos={totalIngresos}
             totalEgresos={totalEgresos}
             filtro={filtroGrafico}
             onFiltroChange={setFiltroGrafico}
           />
-          <GraficoGastos
-            datos={datosGastos}
-            mensajeVacio={
-              filtroGrafico === 'egreso'
-                ? `Aún no registras gastos en ${nombreMes(mesSeleccionado)}.`
-                : `Aún no registras ingresos en ${nombreMes(mesSeleccionado)}.`
-            }
-          />
+
+          <BlockTitle>{filtroGrafico === 'egreso' ? 'En qué se fue' : 'De dónde entró'}</BlockTitle>
+          <Block strong inset className="rounded-3xl">
+            <GraficoGastos
+              key={filtroGrafico}
+              datos={datosGrafico}
+              mensajeVacio={
+                filtroGrafico === 'egreso' ? `Aún no registras gastos en ${mes}.` : `Aún no registras ingresos en ${mes}.`
+              }
+            />
+          </Block>
+
           <UltimosMovimientos
             transacciones={transaccionesDelMes}
             categoriaPorId={categoriaPorId}
             onSeleccionar={setEditando}
-            mensajeVacio={`Aún no registras movimientos en ${nombreMes(mesSeleccionado)}.`}
+            mensajeVacio={`Aún no registras movimientos en ${mes}. Toca + para agregar el primero.`}
           />
         </div>
       )}
 
-      <button className="fab" onClick={() => setSheetAbierto(true)} aria-label="Nuevo movimiento">
-        +
-      </button>
+      <Fab
+        className="fixed right-4 bottom-[calc(var(--k-safe-area-bottom)+104px)] z-20 size-14"
+        icon={<IconoMas className="size-7" />}
+        onClick={() => setSheetAbierto(true)}
+        aria-label="Nuevo movimiento"
+      />
+
+      <Actions opened={opcionesAbiertas} onBackdropClick={() => setOpcionesAbiertas(false)}>
+        <ActionsGroup>
+          <ActionsButton
+            onClick={() => {
+              setOpcionesAbiertas(false);
+              setCategoriasAbierto(true);
+            }}
+          >
+            Gestionar categorías
+          </ActionsButton>
+          <ActionsButton
+            className="text-alerta"
+            onClick={() => {
+              setOpcionesAbiertas(false);
+              cerrarSesion();
+            }}
+          >
+            Cerrar sesión
+          </ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton bold onClick={() => setOpcionesAbiertas(false)}>
+            Cancelar
+          </ActionsButton>
+        </ActionsGroup>
+      </Actions>
 
       <NuevoMovimientoSheet
         abierto={sheetAbierto || editando !== null}
         categorias={categorias}
         transaccion={editando}
         mesSeleccionado={mesSeleccionado}
-        guardando={guardando}
         onCerrar={cerrarSheet}
         onGuardar={manejarGuardar}
         onEliminar={editando ? manejarEliminar : undefined}
@@ -180,6 +199,6 @@ export function Resumen() {
         onActualizar={actualizarCategoria}
         onEliminar={eliminarCategoria}
       />
-    </div>
+    </Page>
   );
 }

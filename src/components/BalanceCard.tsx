@@ -1,6 +1,6 @@
 import type { Tipo } from '../types';
 import { formatearMonto } from '../utils/fechas';
-import './BalanceCard.css';
+import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 
 interface Props {
   disponible: number;
@@ -10,37 +10,48 @@ interface Props {
   onFiltroChange: (filtro: Tipo) => void;
 }
 
+const SEGMENTOS: { tipo: Tipo; etiqueta: string }[] = [
+  { tipo: 'egreso', etiqueta: 'Gastos' },
+  { tipo: 'ingreso', etiqueta: 'Ingresos' },
+];
+
 export function BalanceCard({ disponible, totalIngresos, totalEgresos, filtro, onFiltroChange }: Props) {
-  const estado = disponible > 0 ? 'positivo' : disponible < 0 ? 'negativo' : 'neutro';
-  const signo = disponible > 0 ? '+' : disponible < 0 ? '−' : '';
+  const negativo = disponible < 0;
+  const totales: Record<Tipo, number> = { egreso: totalEgresos, ingreso: totalIngresos };
 
   return (
-    <div className={`balance-card balance-card--${estado}`}>
-      <span className="balance-card__label">Disponible</span>
-      <div className="balance-card__monto">
-        {signo && <span className="balance-card__signo">{signo}</span>}
-        <span className="balance-card__valor">{formatearMonto(Math.abs(disponible))}</span>
-      </div>
-      <div className="balance-card__pills">
-        <button
-          type="button"
-          className={`balance-card__pill balance-card__pill--egreso ${filtro === 'egreso' ? 'balance-card__pill--activo' : ''}`}
-          onClick={() => onFiltroChange('egreso')}
-          aria-pressed={filtro === 'egreso'}
+    <section className="flex flex-col gap-5 px-4 pt-1 pb-2" aria-label="Disponible del mes">
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-[15px] font-medium text-secundario">Disponible</span>
+        {/* Positivo va sin signo, como cualquier saldo; un negativo sí es una
+            alerta (se gastó más de lo que entró) y lleva signo y color. */}
+        <p
+          className={`m-0 text-[48px] leading-[1.1] font-bold tracking-[-0.03em] cifras ${negativo ? 'text-alerta' : ''}`}
         >
-          <span className="balance-card__pill-icono">−</span>
-          {formatearMonto(totalEgresos)}
-        </button>
-        <button
-          type="button"
-          className={`balance-card__pill balance-card__pill--ingreso ${filtro === 'ingreso' ? 'balance-card__pill--activo' : ''}`}
-          onClick={() => onFiltroChange('ingreso')}
-          aria-pressed={filtro === 'ingreso'}
-        >
-          <span className="balance-card__pill-icono">+</span>
-          {formatearMonto(totalIngresos)}
-        </button>
+          {negativo && <span className="sr-only">Negativo: </span>}
+          {negativo && <span aria-hidden="true">−</span>}
+          {formatearMonto(Math.abs(disponible))}
+        </p>
       </div>
-    </div>
+
+      {/* Define qué muestra el gráfico de abajo. */}
+      <SelectorVidrio className="mx-auto w-full max-w-96">
+        {SEGMENTOS.map((s) => (
+          <OpcionSelector
+            key={s.tipo}
+            active={filtro === s.tipo}
+            onClick={() => onFiltroChange(s.tipo)}
+            className="h-14 flex-col gap-0 normal-case"
+          >
+            <span className="text-xs font-medium text-secundario">{s.etiqueta}</span>
+            <span
+              className={`text-[17px] font-semibold tracking-tight cifras ${s.tipo === 'ingreso' ? 'text-ingreso' : 'text-black dark:text-white'}`}
+            >
+              {formatearMonto(totales[s.tipo])}
+            </span>
+          </OpcionSelector>
+        ))}
+      </SelectorVidrio>
+    </section>
   );
 }

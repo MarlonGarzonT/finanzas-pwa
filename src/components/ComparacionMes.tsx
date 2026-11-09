@@ -1,5 +1,5 @@
 import { formatearMonto } from '../utils/fechas';
-import './ComparacionMes.css';
+import { IconoTendencia } from './Iconos';
 
 interface Props {
   comparacion: { actual: number; anterior: number; deltaPorcentaje: number } | null;
@@ -8,27 +8,28 @@ interface Props {
 
 export function ComparacionMes({ comparacion, proyeccion }: Props) {
   if (!comparacion && proyeccion === null) {
-    return <p className="grafico-card__vacio">Aún no hay suficiente historial para comparar.</p>;
+    return <p className="m-0 px-2 text-center text-[15px] text-secundario">Aún no hay historial suficiente para comparar.</p>;
   }
 
+  const sube = comparacion ? comparacion.deltaPorcentaje > 0 : false;
+
   return (
-    <div className="comparacion-mes">
+    <div className="flex flex-col divide-y divide-black/10 dark:divide-white/10">
       {comparacion && (
-        <div className={`comparacion-mes__tarjeta ${comparacion.deltaPorcentaje > 0 ? 'comparacion-mes__tarjeta--sube' : 'comparacion-mes__tarjeta--baja'}`}>
-          <span className="comparacion-mes__flecha">{comparacion.deltaPorcentaje > 0 ? '▲' : '▼'}</span>
-          <span className="comparacion-mes__numero">{Math.abs(Math.round(comparacion.deltaPorcentaje))}%</span>
-          <span className="comparacion-mes__detalle">
-            {comparacion.deltaPorcentaje > 0 ? 'más' : 'menos'} que el mes pasado
+        <div className="flex flex-col items-center gap-0.5 px-1 py-2 text-center">
+          <span className={`flex items-center gap-1 text-[22px] leading-tight font-bold cifras ${sube ? 'text-alerta' : 'text-ingreso'}`}>
+            <IconoTendencia sube={sube} className="size-5" />
+            {Math.abs(Math.round(comparacion.deltaPorcentaje))}%
+          </span>
+          <span className="text-[13px] leading-snug text-secundario">
+            {sube ? 'más' : 'menos'} gasto que el mes pasado
           </span>
         </div>
       )}
       {proyeccion !== null && (
-        <div className="comparacion-mes__tarjeta comparacion-mes__tarjeta--proyeccion">
-          <span className="comparacion-mes__flecha" aria-hidden>
-            🔮
-          </span>
-          <span className="comparacion-mes__numero">{formatearMonto(proyeccion)}</span>
-          <span className="comparacion-mes__detalle">proyectados a fin de mes</span>
+        <div className="flex flex-col items-center gap-0.5 px-1 py-2 text-center">
+          <span className="text-[17px] leading-tight font-bold cifras">{formatearMonto(proyeccion)}</span>
+          <span className="text-[13px] leading-snug text-secundario">de gasto proyectado al cierre del mes</span>
         </div>
       )}
     </div>

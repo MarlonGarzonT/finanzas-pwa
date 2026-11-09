@@ -1,11 +1,12 @@
+import { BlockTitle, Button, List, ListItem, Toggle } from 'konsta/react';
 import { useEffect, useState } from 'react';
-import { SelectorMesSheet } from './SelectorMesSheet';
+import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 import type { Categoria, Tipo } from '../types';
+import { capitalizarPrimera, nombreMes } from '../utils/fechas';
 import { FILTROS_INICIALES, type FiltrosHistorial } from '../utils/filtrosHistorial';
-import { nombreMes } from '../utils/fechas';
-import './HistorialFiltrosSheet.css';
-import '../components/NuevoMovimientoSheet.css';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
+import { ChipOpcion } from './ChipOpcion';
+import { HojaInferior } from './HojaInferior';
+import { SelectorMesSheet } from './SelectorMesSheet';
 
 interface Props {
   abierto: boolean;
@@ -15,16 +16,20 @@ interface Props {
   onAplicar: (filtros: FiltrosHistorial) => void;
 }
 
-function capitalizarPrimera(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
+const TIPOS: { valor: Tipo | 'todos'; etiqueta: string }[] = [
+  { valor: 'todos', etiqueta: 'Todos' },
+  { valor: 'egreso', etiqueta: 'Gastos' },
+  { valor: 'ingreso', etiqueta: 'Ingresos' },
+];
+
+function textoAMonto(texto: string): number | null {
+  const digitos = texto.replace(/\D/g, '');
+  return digitos ? Number(digitos) : null;
 }
 
 export function HistorialFiltrosSheet({ abierto, categorias, filtros, onCerrar, onAplicar }: Props) {
   const [draft, setDraft] = useState<FiltrosHistorial>(filtros);
   const [ruedaMesAbierta, setRuedaMesAbierta] = useState(false);
-
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, onCerrar);
 
   // Al reabrir el sheet, arranca desde los filtros que realmente están
   // aplicados (por si se cerró sin aplicar los cambios en el intento anterior).
@@ -32,8 +37,6 @@ export function HistorialFiltrosSheet({ abierto, categorias, filtros, onCerrar, 
     if (abierto) setDraft(filtros);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al abrir
   }, [abierto]);
-
-  if (!abierto) return null;
 
   function alternarCategoria(id: string) {
     setDraft((prev) => {
@@ -44,166 +47,145 @@ export function HistorialFiltrosSheet({ abierto, categorias, filtros, onCerrar, 
     });
   }
 
-  function cambiarTipo(tipo: Tipo | 'todos') {
-    setDraft((prev) => ({ ...prev, tipo }));
-  }
-
   function manejarAplicar() {
     onAplicar(draft);
     onCerrar();
   }
 
-  function manejarLimpiar() {
-    setDraft(FILTROS_INICIALES);
-  }
+  const claseCampoMonto =
+    'h-11 w-full rounded-xl bg-black/[0.06] px-3 text-[17px] cifras placeholder-black/55 focus:outline-none dark:bg-white/10 dark:placeholder-white/50';
 
   return (
-    <div className="sheet-overlay" onClick={onCerrar} style={gestos.overlayStyle}>
-      <div
-        className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={gestos.onFocusCaptureSheet}
-        style={gestos.sheetStyle}
+    <>
+      <HojaInferior
+        abierto={abierto}
+        titulo="Filtros"
+        onCerrar={onCerrar}
+        pie={
+          <>
+            <Button large rounded onClick={manejarAplicar}>
+              Aplicar filtros
+            </Button>
+            <Button large rounded clear onClick={() => setDraft(FILTROS_INICIALES)}>
+              Limpiar filtros
+            </Button>
+          </>
+        }
       >
-        <div className="sheet__header">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={gestos.onPointerDownHandle}
-            onPointerMove={gestos.onPointerMoveHandle}
-            onPointerUp={gestos.onPointerUpHandle}
-            onPointerCancel={gestos.onPointerUpHandle}
-          >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">Filtros</h2>
-        </div>
-
-        <div className="filtros-sheet__seccion">
-          <p className="filtros-sheet__etiqueta">Tipo</p>
-          <div className="chips">
-            {(['todos', 'ingreso', 'egreso'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={`chip ${draft.tipo === t ? 'chip--activo' : ''}`}
-                onClick={() => cambiarTipo(t)}
+        <BlockTitle className="mt-2">Tipo</BlockTitle>
+        <div className="px-4">
+          <SelectorVidrio>
+            {TIPOS.map((t) => (
+              <OpcionSelector
+                key={t.valor}
+                active={draft.tipo === t.valor}
+                onClick={() => setDraft((prev) => ({ ...prev, tipo: t.valor }))}
               >
-                {t === 'todos' ? 'Todos' : t === 'ingreso' ? 'Ingresos' : 'Gastos'}
-              </button>
+                {t.etiqueta}
+              </OpcionSelector>
             ))}
-          </div>
+          </SelectorVidrio>
         </div>
 
-        <div className="filtros-sheet__seccion">
-          <p className="filtros-sheet__etiqueta">Categorías</p>
-          <div className="chips">
-            {categorias.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={`chip ${draft.categoriaIds.has(c.id) ? 'chip--activo' : ''}`}
-                onClick={() => alternarCategoria(c.id)}
-              >
-                <span aria-hidden>{c.emoji}</span>
-                {c.nombre}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="filtros-sheet__seccion">
-          <p className="filtros-sheet__etiqueta">Mes</p>
-          <button
-            type="button"
-            className="filtros-sheet__mes-boton"
-            onClick={() => setRuedaMesAbierta(true)}
-          >
-            {draft.mes ? capitalizarPrimera(nombreMes(draft.mes)) : 'Todos los meses'}
-          </button>
-          {draft.mes && (
-            <button
-              type="button"
-              className="filtros-sheet__mes-limpiar"
-              onClick={() => setDraft((prev) => ({ ...prev, mes: null }))}
+        <BlockTitle>Categorías</BlockTitle>
+        <div className="flex flex-wrap gap-2 px-4" role="group" aria-label="Categorías">
+          {categorias.map((c) => (
+            <ChipOpcion
+              key={c.id}
+              activo={draft.categoriaIds.has(c.id)}
+              onClick={() => alternarCategoria(c.id)}
+              media={<span aria-hidden="true">{c.emoji}</span>}
             >
-              Ver todos los meses
-            </button>
-          )}
+              {c.nombre}
+            </ChipOpcion>
+          ))}
         </div>
 
-        <div className="filtros-sheet__seccion">
-          <p className="filtros-sheet__etiqueta">Monto</p>
-          <div className="filtros-sheet__rango">
+        <List strong inset className="mt-6 mb-2">
+          <ListItem
+            link
+            linkComponent="button"
+            linkProps={{ type: 'button' }}
+            onClick={() => setRuedaMesAbierta(true)}
+            title="Mes"
+            after={draft.mes ? capitalizarPrimera(nombreMes(draft.mes)) : 'Todos'}
+            contentClassName="w-full text-left"
+          />
+          {draft.mes && (
+            <ListItem
+              link
+              chevron={false}
+              linkComponent="button"
+              linkProps={{ type: 'button' }}
+              onClick={() => setDraft((prev) => ({ ...prev, mes: null }))}
+              title={<span className="text-primary">Ver todos los meses</span>}
+              contentClassName="w-full text-left"
+            />
+          )}
+          <ListItem
+            label
+            title="Solo gastos fijos"
+            after={
+              <Toggle
+                checked={draft.soloFijos}
+                onChange={() => setDraft((prev) => ({ ...prev, soloFijos: !prev.soloFijos }))}
+                aria-label="Solo gastos fijos"
+              />
+            }
+          />
+        </List>
+
+        <BlockTitle>Monto</BlockTitle>
+        <div className="flex gap-2 px-4">
+          <label className="flex flex-1 flex-col gap-1">
+            <span className="sr-only">Monto mínimo</span>
             <input
-              className="texto-input"
+              className={claseCampoMonto}
               inputMode="numeric"
+              enterKeyHint="next"
               placeholder="Mínimo"
               value={draft.montoMin !== null ? draft.montoMin.toLocaleString('es-CO') : ''}
-              onChange={(e) => {
-                const digitos = e.target.value.replace(/\D/g, '');
-                setDraft((prev) => ({ ...prev, montoMin: digitos ? Number(digitos) : null }));
-              }}
+              onChange={(e) => setDraft((prev) => ({ ...prev, montoMin: textoAMonto(e.target.value) }))}
             />
+          </label>
+          <label className="flex flex-1 flex-col gap-1">
+            <span className="sr-only">Monto máximo</span>
             <input
-              className="texto-input"
+              className={claseCampoMonto}
               inputMode="numeric"
+              enterKeyHint="done"
               placeholder="Máximo"
               value={draft.montoMax !== null ? draft.montoMax.toLocaleString('es-CO') : ''}
-              onChange={(e) => {
-                const digitos = e.target.value.replace(/\D/g, '');
-                setDraft((prev) => ({ ...prev, montoMax: digitos ? Number(digitos) : null }));
-              }}
+              onChange={(e) => setDraft((prev) => ({ ...prev, montoMax: textoAMonto(e.target.value) }))}
             />
-          </div>
+          </label>
         </div>
 
-        <label className="interruptor-fila">
-          <span>📌 Solo gastos fijos</span>
-          <span className="interruptor">
-            <input
-              type="checkbox"
-              checked={draft.soloFijos}
-              onChange={(e) => setDraft((prev) => ({ ...prev, soloFijos: e.target.checked }))}
-            />
-            <span className="interruptor__riel" />
-          </span>
-        </label>
-
-        <div className="filtros-sheet__seccion">
-          <p className="filtros-sheet__etiqueta">Ordenar por</p>
-          <div className="chips">
-            <button
-              type="button"
-              className={`chip ${draft.orden === 'fecha' ? 'chip--activo' : ''}`}
+        <BlockTitle>Ordenar por</BlockTitle>
+        <div className="px-4">
+          <SelectorVidrio>
+            <OpcionSelector
+              active={draft.orden === 'fecha'}
               onClick={() => setDraft((prev) => ({ ...prev, orden: 'fecha' }))}
             >
               Más reciente
-            </button>
-            <button
-              type="button"
-              className={`chip ${draft.orden === 'monto' ? 'chip--activo' : ''}`}
+            </OpcionSelector>
+            <OpcionSelector
+              active={draft.orden === 'monto'}
               onClick={() => setDraft((prev) => ({ ...prev, orden: 'monto' }))}
             >
               Mayor monto
-            </button>
-          </div>
+            </OpcionSelector>
+          </SelectorVidrio>
         </div>
-
-        <button className="btn-primario" onClick={manejarAplicar}>
-          Aplicar filtros
-        </button>
-        <button className="btn-cancelar" onClick={manejarLimpiar}>
-          Limpiar filtros
-        </button>
-      </div>
+      </HojaInferior>
 
       <SelectorMesSheet
         abierto={ruedaMesAbierta}
         mes={draft.mes ?? new Date()}
         onCerrar={() => setRuedaMesAbierta(false)}
         onSeleccionar={(mes) => setDraft((prev) => ({ ...prev, mes }))}
-        anidado
       />
-    </div>
+    </>
   );
 }

@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code: skills de terceros (~45 MB) y configuración local de cada máquina
+.claude/

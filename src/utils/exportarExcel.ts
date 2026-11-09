@@ -1,6 +1,7 @@
 import type { ConditionalFormattingRule } from 'exceljs';
 import type { Categoria, Transaccion } from '../types';
 import {
+  capitalizarPrimera,
   claveMes,
   formatearFecha,
   formatearMonto,
@@ -12,9 +13,9 @@ import { dibujarComparativoMensual, dibujarGastosPorCategoria, type PuntoCategor
 // Misma paleta e igual algoritmo de asignación que utils/colorCategoria.ts,
 // para que el color de cada categoría coincida con el que ya ve el usuario
 // en la app (chips, dona de categorías). Se duplica en hexadecimal porque
-// colorCategoria.ts devuelve variables CSS (var(--color-sky)), que no sirven
+// colorCategoria.ts devuelve variables CSS (var(--categoria-azul)), que no sirven
 // para pintar una celda o un canvas fuera del navegador con estilos.
-const PALETA_CATEGORIAS = ['#0a84ff', '#ff9500', '#af52de', '#30b0c7', '#ff375f', '#05ad98', '#ffcc00', '#a2845e'];
+const PALETA_CATEGORIAS = ['#0a84ff', '#ff9500', '#af52de', '#30b0c7', '#ff2d55', '#00c7be', '#ffcc00', '#a2845e'];
 function colorCategoriaHex(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
@@ -32,10 +33,6 @@ const ARGB_TEXTO = 'FF1D1D1F';
 const ARGB_TEXTO_SECUNDARIO = 'FF6E6E73';
 const ARGB_ZEBRA = 'FFF7F7F8';
 const FUENTE = 'Segoe UI';
-
-function capitalizarPrimera(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
 
 function descargarBuffer(buffer: BlobPart, nombreArchivo: string): void {
   const blob = new Blob([buffer], {

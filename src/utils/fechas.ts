@@ -34,9 +34,10 @@ export function nombreMes(fecha: Date): string {
   return fecha.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
 }
 
-// Versión compacta para ejes de gráfico y espacios reducidos (ej. "oct 2026").
-export function nombreMesCorto(fecha: Date): string {
-  return fecha.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+// text-transform:capitalize pondría mayúscula en cada palabra ("Septiembre
+// De 2026"); esto solo capitaliza la primera letra ("Septiembre de 2026").
+export function capitalizarPrimera(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 export function claveMes(iso: string): string {
@@ -50,6 +51,11 @@ export function claveMesDeFecha(fecha: Date): string {
 
 export function sumarMeses(fecha: Date, delta: number): Date {
   return new Date(fecha.getFullYear(), fecha.getMonth() + delta, 1);
+}
+
+// Versión compacta para ejes de gráfico y espacios reducidos (ej. "oct 2026").
+export function nombreMesCorto(fecha: Date): string {
+  return fecha.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
 }
 
 // Un movimiento nuevo debe quedar en el mes que el usuario tiene seleccionado

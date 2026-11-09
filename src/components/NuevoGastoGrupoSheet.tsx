@@ -1,9 +1,13 @@
+import { BlockFooter, BlockTitle, Button, List, ListItem } from 'konsta/react';
 import { useEffect, useState } from 'react';
+import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 import type { MiembroGrupo, NuevoGastoGrupo } from '../types';
 import { formatearMonto } from '../utils/fechas';
 import { AvatarMiembro } from './AvatarMiembro';
-import './GrupoSheets.css';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
+import { CampoMonto } from './CampoMonto';
+import { CampoTexto } from './CampoTexto';
+import { ChipOpcion } from './ChipOpcion';
+import { HojaInferior } from './HojaInferior';
 
 interface Props {
   abierto: boolean;
@@ -33,9 +37,6 @@ export function NuevoGastoGrupoSheet({ abierto, grupoId, miembros, miId, onCerra
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, onCerrar);
-
   useEffect(() => {
     if (!abierto) return;
     setDescripcion('');
@@ -47,9 +48,8 @@ export function NuevoGastoGrupoSheet({ abierto, grupoId, miembros, miId, onCerra
     setError(null);
   }, [abierto, miId, miembros]);
 
-  if (!abierto) return null;
-
   const montoNum = Number(monto) || 0;
+  const nombre = (m: MiembroGrupo) => (m.userId === miId ? 'Tú' : m.nombreVisible);
 
   function alternarIncluido(userId: string) {
     setIncluidos((prev) => {
@@ -97,129 +97,121 @@ export function NuevoGastoGrupoSheet({ abierto, grupoId, miembros, miId, onCerra
     }
   }
 
+  const estadoReparto =
+    restante === 0
+      ? 'Las partes suman el total.'
+      : restante > 0
+        ? `Faltan ${formatearMonto(restante)} por asignar.`
+        : `Te pasaste por ${formatearMonto(Math.abs(restante))}.`;
+
   return (
-    <div className="sheet-overlay" onClick={onCerrar} style={gestos.overlayStyle}>
-      <div
-        className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={gestos.onFocusCaptureSheet}
-        style={gestos.sheetStyle}
-      >
-        <div className="sheet__header">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={gestos.onPointerDownHandle}
-            onPointerMove={gestos.onPointerMoveHandle}
-            onPointerUp={gestos.onPointerUpHandle}
-            onPointerCancel={gestos.onPointerUpHandle}
-          >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">Nuevo gasto</h2>
-
-          <div className="monto-input">
-            <span>$</span>
-            <input
-              inputMode="numeric"
-              placeholder="0"
-              value={monto ? Number(monto).toLocaleString('es-CO') : ''}
-              onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
-              autoFocus
-            />
-          </div>
+    <HojaInferior
+      abierto={abierto}
+      titulo="Nuevo gasto"
+      onCerrar={onCerrar}
+      cierreBloqueado={guardando}
+      cabecera={
+        <div className="px-4 pb-2">
+          <CampoMonto valor={monto} onCambiar={setMonto} autoFocus />
         </div>
+      }
+      pie={
+        <>
+          {error && (
+            <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+              {error}
+            </p>
+          )}
+          <Button large rounded onClick={manejarGuardar} disabled={guardando || !puedeGuardar}>
+            {guardando ? 'Guardando…' : 'Guardar gasto'}
+          </Button>
+        </>
+      }
+    >
+      <List strong inset className="my-2">
+        <CampoTexto etiqueta="Descripción" valor={descripcion} onCambiar={setDescripcion} placeholder="Comida, Hospedaje, Gasolina…" />
+      </List>
 
-        <input
-          className="texto-input"
-          placeholder="¿Qué fue? (ej. Comida, Hospedaje, Gasolina)"
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-        />
+      <BlockTitle>¿Quién pagó?</BlockTitle>
+      <div className="flex flex-wrap gap-2 px-4" role="group" aria-label="Quién pagó">
+        {miembros.map((m) => (
+          <ChipOpcion
+            key={m.userId}
+            activo={pagadoPor === m.userId}
+            onClick={() => setPagadoPor(m.userId)}
+            media={<AvatarMiembro id={m.userId} nombre={m.nombreVisible} tamano="sm" />}
+          >
+            {nombre(m)}
+          </ChipOpcion>
+        ))}
+      </div>
 
-        <div>
-          <p className="grupo-sheets__ayuda">¿Quién pagó?</p>
-          <div className="grupo-sheets__chips">
+      <BlockTitle>¿Cómo se divide?</BlockTitle>
+      <div className="px-4">
+        <SelectorVidrio>
+          <OpcionSelector active={!modoPersonalizado} onClick={() => setModoPersonalizado(false)}>
+            Partes iguales
+          </OpcionSelector>
+          <OpcionSelector active={modoPersonalizado} onClick={() => setModoPersonalizado(true)}>
+            Montos exactos
+          </OpcionSelector>
+        </SelectorVidrio>
+      </div>
+
+      {!modoPersonalizado ? (
+        <>
+          <div className="mt-4 flex flex-wrap gap-2 px-4" role="group" aria-label="Entre quiénes se divide">
             {miembros.map((m) => (
-              <button
+              <ChipOpcion
                 key={m.userId}
-                type="button"
-                className={`grupo-sheets__miembro-chip ${pagadoPor === m.userId ? 'grupo-sheets__miembro-chip--activo' : ''}`}
-                onClick={() => setPagadoPor(m.userId)}
+                activo={incluidos.has(m.userId)}
+                onClick={() => alternarIncluido(m.userId)}
+                media={<AvatarMiembro id={m.userId} nombre={m.nombreVisible} tamano="sm" />}
               >
-                <AvatarMiembro id={m.userId} nombre={m.nombreVisible} />
-                {m.userId === miId ? 'Tú' : m.nombreVisible}
-              </button>
+                {nombre(m)}
+              </ChipOpcion>
             ))}
           </div>
-        </div>
-
-        <div>
-          <div className="grupo-sheets__modo-partes">
-            <p className="grupo-sheets__ayuda">
-              {modoPersonalizado ? 'Montos personalizados' : '¿Entre quiénes se divide?'}
-            </p>
-          </div>
-
-          {!modoPersonalizado ? (
-            <div className="grupo-sheets__chips">
-              {miembros.map((m) => (
-                <button
-                  key={m.userId}
-                  type="button"
-                  className={`grupo-sheets__miembro-chip ${incluidos.has(m.userId) ? 'grupo-sheets__miembro-chip--activo' : 'grupo-sheets__miembro-chip--excluido'}`}
-                  onClick={() => alternarIncluido(m.userId)}
-                >
-                  <AvatarMiembro id={m.userId} nombre={m.nombreVisible} />
-                  {m.userId === miId ? 'Tú' : m.nombreVisible}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="grupo-sheets__partes-personalizadas">
-              {miembros.map((m) => (
-                <div key={m.userId} className="grupo-sheets__parte-fila">
-                  <AvatarMiembro id={m.userId} nombre={m.nombreVisible} />
-                  <span>{m.userId === miId ? 'Tú' : m.nombreVisible}</span>
-                  <input
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={montosPersonalizados[m.userId] ?? ''}
-                    onChange={(e) =>
-                      setMontosPersonalizados((prev) => ({
-                        ...prev,
-                        [m.userId]: e.target.value.replace(/\D/g, ''),
-                      }))
-                    }
-                  />
-                </div>
-              ))}
-              <p className={`grupo-sheets__restante ${restante !== 0 ? 'grupo-sheets__restante--error' : ''}`}>
-                {restante === 0
-                  ? 'Las partes suman el total ✓'
-                  : restante > 0
-                    ? `Faltan ${formatearMonto(restante)} por asignar`
-                    : `Te pasaste por ${formatearMonto(Math.abs(restante))}`}
-              </p>
-            </div>
-          )}
-
-          <div className="grupo-sheets__modo-partes">
-            <button type="button" onClick={() => setModoPersonalizado((v) => !v)}>
-              {modoPersonalizado ? 'Usar partes iguales' : 'Usar montos personalizados'}
-            </button>
-          </div>
-        </div>
-
-        {error && <p className="sheet__error">{error}</p>}
-
-        <button className="btn-primario" onClick={manejarGuardar} disabled={guardando || !puedeGuardar}>
-          {guardando ? 'Guardando…' : 'Guardar'}
-        </button>
-
-        <button className="btn-cancelar" onClick={onCerrar} disabled={guardando}>
-          Cancelar
-        </button>
-      </div>
-    </div>
+          <p className="mx-4 mt-4 mb-0 text-[15px] text-secundario cifras">
+            {incluidos.size > 0 && montoNum > 0
+              ? `${formatearMonto(Math.floor(montoNum / incluidos.size))} por persona aprox.`
+              : 'Toca a una persona para sacarla o incluirla en el reparto.'}
+          </p>
+        </>
+      ) : (
+        <>
+          <List strong inset dividers className="mt-4 mb-0">
+            {miembros.map((m) => (
+              <ListItem
+                key={m.userId}
+                media={<AvatarMiembro id={m.userId} nombre={m.nombreVisible} tamano="sm" />}
+                title={nombre(m)}
+                after={
+                  <label className="flex items-center gap-1">
+                    <span className="sr-only">Parte de {nombre(m)}</span>
+                    <span className="text-secundario" aria-hidden="true">
+                      $
+                    </span>
+                    <input
+                      inputMode="numeric"
+                      enterKeyHint="next"
+                      placeholder="0"
+                      value={montosPersonalizados[m.userId] ? Number(montosPersonalizados[m.userId]).toLocaleString('es-CO') : ''}
+                      onChange={(e) =>
+                        setMontosPersonalizados((prev) => ({ ...prev, [m.userId]: e.target.value.replace(/\D/g, '') }))
+                      }
+                      className="h-11 w-28 bg-transparent text-right text-[17px] text-black cifras placeholder-black/55 focus:outline-none dark:text-white dark:placeholder-white/50"
+                    />
+                  </label>
+                }
+              />
+            ))}
+          </List>
+          <BlockFooter className={`cifras ${restante !== 0 ? 'font-semibold text-alerta' : ''}`} aria-live="polite">
+            {estadoReparto}
+          </BlockFooter>
+        </>
+      )}
+    </HojaInferior>
   );
 }

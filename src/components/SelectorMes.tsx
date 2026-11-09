@@ -1,43 +1,53 @@
+import { Button } from 'konsta/react';
 import { useState } from 'react';
-import { nombreMes, sumarMeses } from '../utils/fechas';
+import { capitalizarPrimera, nombreMes, sumarMeses } from '../utils/fechas';
+import { IconoChevronAbajo, IconoChevronDerecha, IconoChevronIzquierda } from './Iconos';
 import { SelectorMesSheet } from './SelectorMesSheet';
-import './SelectorMes.css';
 
 interface Props {
   mes: Date;
   onCambiar: (mes: Date) => void;
 }
 
-// text-transform:capitalize pondría mayúscula en cada palabra ("Septiembre
-// De 2026"); esto solo capitaliza la primera letra ("Septiembre de 2026").
-function capitalizarPrimera(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
-
+// Navegación de mes discreta: es contexto, no la acción principal, así que
+// va en texto y no compite con el monto de abajo.
 export function SelectorMes({ mes, onCambiar }: Props) {
   const [ruedaAbierta, setRuedaAbierta] = useState(false);
+  const etiqueta = capitalizarPrimera(nombreMes(mes));
 
   return (
-    <div className="selector-mes">
-      <button
-        type="button"
-        className="selector-mes__flecha"
+    <div className="flex items-center justify-between px-2">
+      <Button
+        clear
+        rounded
+        inline
+        className="size-11 p-0 text-black/50 dark:text-white/55"
         onClick={() => onCambiar(sumarMeses(mes, -1))}
         aria-label="Mes anterior"
       >
-        ‹
-      </button>
-      <button type="button" className="selector-mes__etiqueta" onClick={() => setRuedaAbierta(true)}>
-        {capitalizarPrimera(nombreMes(mes))}
-      </button>
-      <button
-        type="button"
-        className="selector-mes__flecha"
+        <IconoChevronIzquierda className="size-5" />
+      </Button>
+      <Button
+        clear
+        rounded
+        inline
+        className="h-11 gap-1 px-3 text-[17px] font-semibold normal-case text-black dark:text-white"
+        onClick={() => setRuedaAbierta(true)}
+        aria-label={`${etiqueta}. Elegir otro mes`}
+      >
+        {etiqueta}
+        <IconoChevronAbajo className="size-4 text-black/45 dark:text-white/50" />
+      </Button>
+      <Button
+        clear
+        rounded
+        inline
+        className="size-11 p-0 text-black/50 dark:text-white/55"
         onClick={() => onCambiar(sumarMeses(mes, 1))}
         aria-label="Mes siguiente"
       >
-        ›
-      </button>
+        <IconoChevronDerecha className="size-5" />
+      </Button>
 
       <SelectorMesSheet
         abierto={ruedaAbierta}

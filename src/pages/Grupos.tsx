@@ -1,13 +1,13 @@
+import { Actions, ActionsButton, ActionsGroup, Block, Button, Fab, List, ListItem, Navbar, Page } from 'konsta/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AvatarMiembro } from '../components/AvatarMiembro';
+import { Cargando } from '../components/Cargando';
 import { CrearGrupoSheet } from '../components/CrearGrupoSheet';
-import { SelectorPagina } from '../components/SelectorPagina';
-import { Spinner } from '../components/Spinner';
+import { IconoMas } from '../components/Iconos';
 import { UnirseGrupoSheet } from '../components/UnirseGrupoSheet';
 import { useGrupos } from '../data/GruposContext';
 import type { Grupo } from '../types';
-import { colorCategoria } from '../utils/colorCategoria';
-import './Grupos.css';
 
 export function Grupos() {
   const { grupos, cargando } = useGrupos();
@@ -21,76 +21,79 @@ export function Grupos() {
   }
 
   return (
-    <div className="grupos">
-      <header className="grupos__header">
-        <SelectorPagina />
-      </header>
+    <Page className="pb-[calc(var(--k-safe-area-bottom)+168px)]">
+      <Navbar centerTitle title="Grupos" />
 
       {cargando ? (
-        <div className="grupos__cargando">
-          <Spinner />
-        </div>
+        <Cargando />
       ) : grupos.length === 0 ? (
-        <p className="grupos__vacio">
-          Aún no tienes grupos. Crea uno para dividir gastos con amigos o únete con un código.
-        </p>
-      ) : (
-        <ul className="grupos__lista">
-          {grupos.map((g) => (
-            <li key={g.id} className="grupo-fila" onClick={() => irAGrupo(g)}>
-              <span className="grupo-fila__avatar" style={{ background: colorCategoria(g.id) }} aria-hidden>
-                {g.nombre.slice(0, 1).toUpperCase()}
-              </span>
-              <span className="grupo-fila__nombre">{g.nombre}</span>
-              <span className="grupo-fila__flecha" aria-hidden>
-                ›
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <button className="fab" onClick={() => setMenuAbierto((v) => !v)} aria-label="Crear o unirse a un grupo">
-        +
-      </button>
-
-      {menuAbierto && (
-        <>
-          <div className="grupos__fondo-menu" onClick={() => setMenuAbierto(false)} />
-          <div className="grupos__menu">
-            <button
-              type="button"
-              onClick={() => {
-                setMenuAbierto(false);
-                setCrearAbierto(true);
-              }}
-            >
-              🆕 Crear grupo
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMenuAbierto(false);
-                setUnirseAbierto(true);
-              }}
-            >
-              🔗 Unirme con un código
-            </button>
+        <Block className="flex flex-col items-center gap-4 pt-6 text-center">
+          <p className="m-0 max-w-72 text-[17px] text-secundario">
+            Divide gastos con amigos o familia: cada quien registra lo que pagó y la app calcula quién le debe a quién.
+          </p>
+          <div className="flex w-full max-w-72 flex-col gap-2">
+            <Button large rounded onClick={() => setCrearAbierto(true)}>
+              Crear grupo
+            </Button>
+            <Button large rounded tonal onClick={() => setUnirseAbierto(true)}>
+              Unirme con un código
+            </Button>
           </div>
-        </>
+        </Block>
+      ) : (
+        <List strong inset dividers className="aparecer-suave">
+          {grupos.map((g) => (
+            <ListItem
+              key={g.id}
+              link
+              linkComponent="button"
+              linkProps={{ type: 'button' }}
+              onClick={() => irAGrupo(g)}
+              media={<AvatarMiembro id={g.id} nombre={g.nombre} />}
+              title={g.nombre}
+              contentClassName="w-full text-left"
+            />
+          ))}
+        </List>
       )}
 
-      <CrearGrupoSheet
-        abierto={crearAbierto}
-        onCerrar={() => setCrearAbierto(false)}
-        onCreado={(grupo) => irAGrupo(grupo)}
-      />
+      {grupos.length > 0 && (
+        <Fab
+          className="fixed right-4 bottom-[calc(var(--k-safe-area-bottom)+104px)] z-20 size-14"
+          icon={<IconoMas className="size-7" />}
+          onClick={() => setMenuAbierto(true)}
+          aria-label="Crear o unirse a un grupo"
+        />
+      )}
 
-      <UnirseGrupoSheet
-        abierto={unirseAbierto}
-        onCerrar={() => setUnirseAbierto(false)}
-        onUnido={(grupo) => irAGrupo(grupo)}
-      />
-    </div>
+      <Actions opened={menuAbierto} onBackdropClick={() => setMenuAbierto(false)}>
+        <ActionsGroup>
+          <ActionsButton
+            onClick={() => {
+              setMenuAbierto(false);
+              setCrearAbierto(true);
+            }}
+          >
+            Crear grupo
+          </ActionsButton>
+          <ActionsButton
+            onClick={() => {
+              setMenuAbierto(false);
+              setUnirseAbierto(true);
+            }}
+          >
+            Unirme con un código
+          </ActionsButton>
+        </ActionsGroup>
+        <ActionsGroup>
+          <ActionsButton bold onClick={() => setMenuAbierto(false)}>
+            Cancelar
+          </ActionsButton>
+        </ActionsGroup>
+      </Actions>
+
+      <CrearGrupoSheet abierto={crearAbierto} onCerrar={() => setCrearAbierto(false)} onCreado={irAGrupo} />
+      <UnirseGrupoSheet abierto={unirseAbierto} onCerrar={() => setUnirseAbierto(false)} onUnido={irAGrupo} />
+    </Page>
   );
 }

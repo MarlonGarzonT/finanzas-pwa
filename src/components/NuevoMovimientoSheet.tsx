@@ -1,25 +1,25 @@
+import { BlockTitle, Button, List, ListItem } from 'konsta/react';
 import { useEffect, useState } from 'react';
-import type { Categoria, Tipo, Transaccion } from '../types';
-import { nombreMes } from '../utils/fechas';
+import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
+import type { Categoria, NuevaTransaccion, Tipo, Transaccion } from '../types';
+import { capitalizarPrimera, nombreMes } from '../utils/fechas';
+import { CampoMonto } from './CampoMonto';
+import { CampoTexto } from './CampoTexto';
+import { ChipOpcion } from './ChipOpcion';
+import { DialogoConfirmar } from './DialogoConfirmar';
+import { HojaInferior } from './HojaInferior';
 import { NuevaCategoriaSheet } from './NuevaCategoriaSheet';
 import { SelectorMesSheet } from './SelectorMesSheet';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
-import './NuevoMovimientoSheet.css';
-
-function capitalizarPrimera(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
 
 interface Props {
   abierto: boolean;
   categorias: Categoria[];
   transaccion?: Transaccion | null;
-  // Mes que debe quedar preseleccionado al crear un movimiento nuevo (el mes
-  // que el usuario tiene elegido en la pantalla desde la que abrió el sheet).
+  // Mes que queda preseleccionado al crear un movimiento nuevo (el que la
+  // persona tiene elegido en la pantalla desde la que abrió la hoja).
   mesSeleccionado: Date;
-  guardando: boolean;
   onCerrar: () => void;
-  onGuardar: (datos: { item: string; categoriaId: string; tipo: Tipo; monto: number; mes: Date }) => Promise<void>;
+  onGuardar: (datos: NuevaTransaccion & { mes: Date }) => Promise<void>;
   onEliminar?: () => Promise<void>;
   onCrearCategoria: (nombre: string, tipo: Tipo) => Promise<Categoria>;
 }
@@ -29,7 +29,6 @@ export function NuevoMovimientoSheet({
   categorias,
   transaccion,
   mesSeleccionado,
-  guardando,
   onCerrar,
   onGuardar,
   onEliminar,
@@ -40,12 +39,11 @@ export function NuevoMovimientoSheet({
   const [item, setItem] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
   const [mes, setMes] = useState(mesSeleccionado);
-  const [mesSheetAbierto, setMesSheetAbierto] = useState(false);
+  const [mesAbierto, setMesAbierto] = useState(false);
   const [creandoCategoria, setCreandoCategoria] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, onCerrar);
 
   useEffect(() => {
     if (!abierto) return;
@@ -63,15 +61,14 @@ export function NuevoMovimientoSheet({
       setMes(mesSeleccionado);
     }
     setCreandoCategoria(false);
+    setGuardando(false);
     setError(null);
+    // Sin `categorias` en las dependencias: crear una categoría con la hoja
+    // abierta no debe borrar el monto ni la descripción ya escritos.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al abrir/cambiar de transacción
   }, [abierto, transaccion]);
 
-  if (!abierto) return null;
-
   const categoriasDelTipo = categorias.filter((c) => c.tipo === tipo);
-  const montoTexto = monto ? Number(monto).toLocaleString('es-CO') : '';
-  const tamFuenteMonto = montoTexto.length > 12 ? 24 : montoTexto.length > 9 ? 30 : montoTexto.length > 6 ? 36 : 40;
 
   function manejarCambiarTipo(nuevoTipo: Tipo) {
     setTipo(nuevoTipo);
@@ -86,111 +83,104 @@ export function NuevoMovimientoSheet({
 
   async function manejarGuardar() {
     const montoNum = Number(monto);
+    if (!montoNum || montoNum <= 0) return setError('Ingresa un monto mayor a cero.');
     if (!item.trim()) return setError('Escribe qué fue el movimiento.');
     if (!categoriaId) return setError('Elige una categoría.');
-    if (!montoNum || montoNum <= 0) return setError('Ingresa un monto válido.');
     setError(null);
-    await onGuardar({ item: item.trim(), categoriaId, tipo, monto: montoNum, mes });
+    setGuardando(true);
+    try {
+      await onGuardar({ item: item.trim(), categoriaId, tipo, monto: montoNum, mes });
+    } catch {
+      setError('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function manejarEliminar() {
+    if (!onEliminar) return;
+    setConfirmandoEliminar(false);
+    setGuardando(true);
+    try {
+      await onEliminar();
+    } catch {
+      setError('No se pudo eliminar. Intenta de nuevo.');
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return (
     <>
-      <div className="sheet-overlay" onClick={onCerrar} style={gestos.overlayStyle}>
-        <div
-          className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-          onClick={(e) => e.stopPropagation()}
-          onFocusCapture={gestos.onFocusCaptureSheet}
-          style={gestos.sheetStyle}
-        >
-          {/* Fijo (sticky) para que el monto nunca quede oculto tras el teclado,
-              sin importar cuánto scroll haga el usuario dentro del sheet. */}
-          <div className="sheet__header">
-            <div
-              className="sheet__handle-area"
-              onPointerDown={gestos.onPointerDownHandle}
-              onPointerMove={gestos.onPointerMoveHandle}
-              onPointerUp={gestos.onPointerUpHandle}
-              onPointerCancel={gestos.onPointerUpHandle}
-            >
-              <div className="sheet__handle" />
-            </div>
-            <h2 className="sheet__titulo">{transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
-
-            <button type="button" className="mes-movimiento" onClick={() => setMesSheetAbierto(true)}>
-              🗓️ {capitalizarPrimera(nombreMes(mes))}
-            </button>
-
-            <div className="segmented">
-              <button
-                type="button"
-                className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
-                onClick={() => manejarCambiarTipo('ingreso')}
-              >
-                Entrada
-              </button>
-              <button
-                type="button"
-                className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
+      <HojaInferior
+        abierto={abierto}
+        titulo={transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}
+        onCerrar={onCerrar}
+        cierreBloqueado={guardando}
+        cabecera={
+          <div className="flex flex-col gap-3 px-4 pb-3">
+            <SelectorVidrio>
+              <OpcionSelector
+                active={tipo === 'egreso'}
                 onClick={() => manejarCambiarTipo('egreso')}
               >
                 Salida
-              </button>
-            </div>
-
-            <div className="monto-input">
-              <span>$</span>
-              <input
-                inputMode="numeric"
-                placeholder="0"
-                value={montoTexto}
-                onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
-                style={{ fontSize: tamFuenteMonto }}
-                autoFocus
-              />
-            </div>
-          </div>
-
-          <input
-            className="texto-input"
-            placeholder="¿Qué fue? (ej. Almuerzo, Uber, Salario)"
-            value={item}
-            onChange={(e) => setItem(e.target.value)}
-          />
-
-          <div className="chips">
-            {categoriasDelTipo.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={`chip ${categoriaId === c.id ? 'chip--activo' : ''}`}
-                onClick={() => setCategoriaId(c.id)}
+              </OpcionSelector>
+              <OpcionSelector
+                active={tipo === 'ingreso'}
+                onClick={() => manejarCambiarTipo('ingreso')}
               >
-                <span aria-hidden>{c.emoji}</span>
-                {c.nombre}
-              </button>
-            ))}
-            <button type="button" className="chip chip--nueva" onClick={() => setCreandoCategoria(true)}>
-              + Nueva
-            </button>
+                Entrada
+              </OpcionSelector>
+            </SelectorVidrio>
+            <CampoMonto valor={monto} onCambiar={setMonto} tono={tipo} autoFocus={!transaccion} />
           </div>
+        }
+        pie={
+          <>
+            {error && (
+              <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+                {error}
+              </p>
+            )}
+            <Button large rounded onClick={manejarGuardar} disabled={guardando}>
+              {guardando ? 'Guardando…' : 'Guardar'}
+            </Button>
+            {transaccion && onEliminar && (
+              <Button large rounded clear className="text-alerta" onClick={() => setConfirmandoEliminar(true)} disabled={guardando}>
+                Eliminar movimiento
+              </Button>
+            )}
+          </>
+        }
+      >
+        <List strong inset className="my-2">
+          <CampoTexto etiqueta="Descripción" valor={item} onCambiar={setItem} placeholder="Almuerzo, Uber, Salario…" />
+          {/* El mes decide en qué contabilidad mensual cae el movimiento: se
+              puede registrar hoy algo que pertenece a otro mes. */}
+          <ListItem
+            link
+            linkComponent="button"
+            linkProps={{ type: 'button', 'aria-label': `Mes: ${capitalizarPrimera(nombreMes(mes))}. Cambiar` }}
+            onClick={() => setMesAbierto(true)}
+            title="Mes"
+            after={capitalizarPrimera(nombreMes(mes))}
+            contentClassName="w-full text-left"
+          />
+        </List>
 
-          {error && <p className="sheet__error">{error}</p>}
-
-          <button className="btn-primario" onClick={manejarGuardar} disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar'}
-          </button>
-
-          {transaccion && onEliminar && (
-            <button className="btn-eliminar" onClick={onEliminar} disabled={guardando}>
-              Eliminar movimiento
-            </button>
-          )}
-
-          <button className="btn-cancelar" onClick={onCerrar} disabled={guardando}>
-            Cancelar
-          </button>
+        <BlockTitle className="mt-4">Categoría</BlockTitle>
+        <div className="flex flex-wrap gap-2 px-4" role="group" aria-label="Categoría">
+          {categoriasDelTipo.map((c) => (
+            <ChipOpcion key={c.id} activo={categoriaId === c.id} onClick={() => setCategoriaId(c.id)} media={<span aria-hidden="true">{c.emoji}</span>}>
+              {c.nombre}
+            </ChipOpcion>
+          ))}
+          <ChipOpcion activo={false} onClick={() => setCreandoCategoria(true)}>
+            <span className="text-primary">+ Nueva</span>
+          </ChipOpcion>
         </div>
-      </div>
+      </HojaInferior>
 
       <NuevaCategoriaSheet
         abierto={creandoCategoria}
@@ -200,11 +190,19 @@ export function NuevoMovimientoSheet({
       />
 
       <SelectorMesSheet
-        abierto={mesSheetAbierto}
+        abierto={mesAbierto}
         mes={mes}
-        onCerrar={() => setMesSheetAbierto(false)}
+        onCerrar={() => setMesAbierto(false)}
         onSeleccionar={setMes}
-        anidado
+      />
+
+      <DialogoConfirmar
+        abierto={confirmandoEliminar}
+        titulo="¿Eliminar movimiento?"
+        mensaje="Se quitará de tu historial y de los totales del mes. No se puede deshacer."
+        textoConfirmar="Eliminar"
+        onConfirmar={manejarEliminar}
+        onCancelar={() => setConfirmandoEliminar(false)}
       />
     </>
   );

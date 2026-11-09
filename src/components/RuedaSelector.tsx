@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import './RuedaSelector.css';
+import { useEffect, useRef, type KeyboardEvent, type UIEvent } from 'react';
 
 export const ALTURA_ITEM_RUEDA = 40;
 export const ITEMS_VISIBLES_RUEDA = 5;
@@ -10,6 +9,7 @@ interface Props {
   opciones: string[];
   indice: number;
   onCambiar: (indice: number) => void;
+  etiqueta: string;
   className?: string;
 }
 
@@ -17,7 +17,8 @@ interface Props {
 // nativo del navegador, más un difuminado continuo (opacidad/escala) que
 // sigue el scroll en vivo, no solo al asentarse - eso es lo que le da la
 // sensación de rueda física en vez de una simple lista con resaltado.
-export function RuedaSelector({ opciones, indice, onCambiar, className }: Props) {
+// Konsta no trae un picker de rueda, así que este se mantiene propio.
+export function RuedaSelector({ opciones, indice, onCambiar, etiqueta, className = '' }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<(HTMLDivElement | null)[]>([]);
   const timeoutRef = useRef<number | undefined>(undefined);
@@ -34,14 +35,12 @@ export function RuedaSelector({ opciones, indice, onCambiar, className }: Props)
     itemsRef.current.forEach((el, i) => {
       if (!el) return;
       const distancia = Math.abs(i - centro);
-      const opacidad = Math.max(0.22, 1 - distancia * 0.4);
-      const escala = Math.max(0.72, 1 - distancia * 0.14);
-      el.style.opacity = String(opacidad);
-      el.style.transform = `scale(${escala})`;
+      el.style.opacity = String(Math.max(0.22, 1 - distancia * 0.4));
+      el.style.transform = `scale(${Math.max(0.72, 1 - distancia * 0.14)})`;
     });
   }
 
-  function manejarScroll(e: React.UIEvent<HTMLDivElement>) {
+  function manejarScroll(e: UIEvent<HTMLDivElement>) {
     const scrollTop = e.currentTarget.scrollTop;
     aplicarEstilosEnVivo(scrollTop);
 
@@ -54,26 +53,49 @@ export function RuedaSelector({ opciones, indice, onCambiar, className }: Props)
     }, 120);
   }
 
-  function manejarClickItem(i: number) {
-    contenedorRef.current?.scrollTo({ top: i * ALTURA_ITEM_RUEDA, behavior: 'smooth' });
+  function irA(i: number) {
+    const destino = Math.max(0, Math.min(opciones.length - 1, i));
+    contenedorRef.current?.scrollTo({ top: destino * ALTURA_ITEM_RUEDA, behavior: 'smooth' });
+  }
+
+  function manejarTecla(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      irA(indice + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      irA(indice - 1);
+    }
   }
 
   return (
-    <div className={`rueda-selector ${className ?? ''}`} ref={contenedorRef} onScroll={manejarScroll}>
-      <div style={{ height: PADDING_VERTICAL }} aria-hidden />
+    <div
+      ref={contenedorRef}
+      onScroll={manejarScroll}
+      onKeyDown={manejarTecla}
+      tabIndex={0}
+      role="listbox"
+      aria-label={etiqueta}
+      aria-activedescendant={`${etiqueta}-${indice}`}
+      className={`relative z-[1] h-[200px] snap-y snap-mandatory overflow-y-scroll rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
+    >
+      <div style={{ height: PADDING_VERTICAL }} aria-hidden="true" />
       {opciones.map((op, i) => (
         <div
           key={op}
+          id={`${etiqueta}-${i}`}
+          role="option"
+          aria-selected={i === indice}
           ref={(el) => {
             itemsRef.current[i] = el;
           }}
-          className="rueda-selector__item"
-          onClick={() => manejarClickItem(i)}
+          className="flex h-10 cursor-pointer snap-center items-center justify-center text-xl font-semibold tabular-nums select-none"
+          onClick={() => irA(i)}
         >
           {op}
         </div>
       ))}
-      <div style={{ height: PADDING_VERTICAL }} aria-hidden />
+      <div style={{ height: PADDING_VERTICAL }} aria-hidden="true" />
     </div>
   );
 }

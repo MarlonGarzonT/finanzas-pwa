@@ -3,10 +3,9 @@ import type { SegmentoCategoria } from '../utils/estadisticasMes';
 import { colorCategoria } from '../utils/colorCategoria';
 import { formatearMonto } from '../utils/fechas';
 import { useContarHasta } from './useContarHasta';
-import './DonaCategorias.css';
 
-const RADIO = 58;
-const GROSOR = 20;
+const RADIO = 54;
+const GROSOR = 18;
 const CIRCUNFERENCIA = 2 * Math.PI * RADIO;
 const TAMANO = (RADIO + GROSOR) * 2;
 
@@ -25,7 +24,7 @@ export function DonaCategorias({ segmentos, total }: Props) {
   const totalAnimado = useContarHasta(montado ? total : 0);
 
   if (segmentos.length === 0) {
-    return <p className="grafico-card__vacio">Nada que mostrar todavía.</p>;
+    return <p className="m-0 py-6 text-center text-[15px] text-secundario">Nada que mostrar en este mes todavía.</p>;
   }
 
   const montoResto = segmentos.slice(6).reduce((acc, s) => acc + s.monto, 0);
@@ -33,7 +32,7 @@ export function DonaCategorias({ segmentos, total }: Props) {
     .slice(0, 6)
     .map((s) => ({ id: s.categoriaId, nombre: s.nombre, emoji: s.emoji, monto: s.monto, color: colorCategoria(s.categoriaId) }));
   if (montoResto > 0) {
-    visibles.push({ id: '__resto', nombre: 'Otras', emoji: '🔹', monto: montoResto, color: 'var(--label-tertiary)' });
+    visibles.push({ id: '__resto', nombre: 'Otras', emoji: '', monto: montoResto, color: 'var(--color-pista)' });
   }
 
   // Posición (fracción acumulada) donde empieza cada arco, calculada sin
@@ -44,15 +43,15 @@ export function DonaCategorias({ segmentos, total }: Props) {
     return acc;
   }, []);
 
+  const porcentaje = (monto: number) => (total > 0 ? Math.round((monto / total) * 100) : 0);
+
   return (
-    <div className="dona-categorias">
-      <div className="dona-categorias__grafico">
+    <div className="flex items-center gap-4">
+      <div className="relative flex shrink-0 items-center justify-center" aria-hidden="true">
         <svg width={TAMANO} height={TAMANO} viewBox={`0 0 ${TAMANO} ${TAMANO}`}>
-          <circle cx={TAMANO / 2} cy={TAMANO / 2} r={RADIO} fill="none" stroke="var(--surface-tertiary)" strokeWidth={GROSOR} />
+          <circle cx={TAMANO / 2} cy={TAMANO / 2} r={RADIO} fill="none" stroke="var(--color-pista)" strokeWidth={GROSOR} />
           {visibles.map((s, i) => {
             const frac = total > 0 ? s.monto / total : 0;
-            const dash = montado ? frac * CIRCUNFERENCIA : 0;
-            const offset = -inicios[i] * CIRCUNFERENCIA;
             return (
               <circle
                 key={s.id}
@@ -62,27 +61,32 @@ export function DonaCategorias({ segmentos, total }: Props) {
                 fill="none"
                 stroke={s.color}
                 strokeWidth={GROSOR}
-                strokeDasharray={`${dash} ${CIRCUNFERENCIA}`}
-                strokeDashoffset={offset}
+                strokeDasharray={`${montado ? frac * CIRCUNFERENCIA : 0} ${CIRCUNFERENCIA}`}
+                strokeDashoffset={-inicios[i] * CIRCUNFERENCIA}
                 transform={`rotate(-90 ${TAMANO / 2} ${TAMANO / 2})`}
-                className="dona-categorias__segmento"
+                className="transition-[stroke-dasharray] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
                 style={{ transitionDelay: `${i * 70}ms` }}
               />
             );
           })}
         </svg>
-        <div className="dona-categorias__centro">
-          <span className="dona-categorias__total">{formatearMonto(totalAnimado)}</span>
-        </div>
+        <span className="absolute inset-0 flex items-center justify-center px-6 text-center text-[15px] font-bold cifras">
+          {formatearMonto(totalAnimado)}
+        </span>
       </div>
 
-      <ul className="dona-categorias__leyenda">
+      <ul className="m-0 flex min-w-0 flex-1 list-none flex-col gap-2 p-0">
+        <li className="sr-only">Total {formatearMonto(total)}</li>
         {visibles.map((s, i) => (
-          <li key={s.id} className="dona-categorias__item" style={{ transitionDelay: `${i * 60}ms` }}>
-            <span className="dona-categorias__punto" style={{ background: s.color }} aria-hidden />
-            <span aria-hidden>{s.emoji}</span>
-            <span className="dona-categorias__nombre">{s.nombre}</span>
-            <span className="dona-categorias__porcentaje">{total > 0 ? Math.round((s.monto / total) * 100) : 0}%</span>
+          <li
+            key={s.id}
+            className="aparecer-suave flex items-center gap-1.5 text-[15px]"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <span className="size-2.5 shrink-0 rounded-full" style={{ background: s.color }} aria-hidden="true" />
+            {s.emoji && <span aria-hidden="true">{s.emoji}</span>}
+            <span className="min-w-0 flex-1 truncate">{s.nombre}</span>
+            <span className="shrink-0 font-semibold text-secundario cifras">{porcentaje(s.monto)}%</span>
           </li>
         ))}
       </ul>

@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { Block, Button, List, Page } from 'konsta/react';
+import { useState, type FormEvent } from 'react';
+import { CampoTexto } from '../components/CampoTexto';
+import { IconoOjo, IconoOjoTachado } from '../components/Iconos';
 import { useAuth } from './AuthContext';
 import { traducirError } from './Login';
-import './Login.css';
 
 const LONGITUD_MINIMA = 8;
 
@@ -13,7 +15,7 @@ export function RestablecerPassword() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function manejarEnvio(e: React.FormEvent) {
+  async function manejarEnvio(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -27,80 +29,87 @@ export function RestablecerPassword() {
     }
 
     setEnviando(true);
-    const { error } = await actualizarPassword(password);
-    setEnviando(false);
-    if (error) setError(traducirError(error));
-    // Si no hay error, modoRecuperacion pasa a false y la app entra normalmente.
+    try {
+      const { error } = await actualizarPassword(password);
+      if (error) setError(traducirError(error));
+      // Si no hay error, modoRecuperacion pasa a false y la app entra normalmente.
+    } catch {
+      setError('No hay conexión. Revisa tu internet e intenta de nuevo.');
+    } finally {
+      setEnviando(false);
+    }
   }
 
+  const botonOjo = (
+    <button
+      type="button"
+      className="-mr-2 flex size-11 shrink-0 items-center justify-center text-secundario"
+      onClick={() => setMostrarPassword((v) => !v)}
+      aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+      aria-pressed={mostrarPassword}
+    >
+      {mostrarPassword ? <IconoOjoTachado className="size-5" /> : <IconoOjo className="size-5" />}
+    </button>
+  );
+
   return (
-    <div className="login">
-      <div className="login__fondo" aria-hidden="true" />
-      <div className="login__scroll">
-        <div className="login__card">
+    <Page className="pt-safe pb-safe">
+      <div className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center py-8">
+        <header className="flex flex-col items-center gap-3 px-6 text-center">
           <img
-            className="login__logo"
+            className="size-16 rounded-[18px]"
             src={`${import.meta.env.BASE_URL}icons/icon-192.png`}
-            alt="Mis Finanzas"
-            width={192}
-            height={192}
+            alt=""
+            width={64}
+            height={64}
           />
+          <h1 className="m-0 text-[28px] leading-tight font-bold tracking-tight">Elige tu nueva contraseña</h1>
+          <p className="m-0 text-[15px] text-secundario">Escribe una contraseña nueva para tu cuenta.</p>
+        </header>
 
-          <div className="login__encabezado">
-            <h1 className="login__titulo">Elige tu nueva contraseña</h1>
-            <p className="login__subtitulo">Escribe una contraseña nueva para tu cuenta.</p>
-          </div>
+        <form onSubmit={manejarEnvio}>
+          <List strong inset className="mt-6 mb-2">
+            <CampoTexto
+              etiqueta="Contraseña nueva"
+              type={mostrarPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              autoCapitalize="off"
+              enterKeyHint="next"
+              placeholder={`Mínimo ${LONGITUD_MINIMA} caracteres`}
+              valor={password}
+              onCambiar={setPassword}
+              required
+              autoFocus
+              accion={botonOjo}
+            />
+            <CampoTexto
+              etiqueta="Confirmar contraseña"
+              type={mostrarPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              autoCapitalize="off"
+              enterKeyHint="go"
+              placeholder="Repite la contraseña"
+              valor={confirmarPassword}
+              onCambiar={setConfirmarPassword}
+              required
+            />
+          </List>
 
-          <form onSubmit={manejarEnvio} className="login__form">
-            <label className="login__campo">
-              <span>Contraseña nueva</span>
-              <div className="login__campo-con-boton">
-                <input
-                  type={mostrarPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  className="login__boton-ojo"
-                  onClick={() => setMostrarPassword((v) => !v)}
-                  aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                >
-                  {mostrarPassword ? '🙈' : '👁️'}
-                </button>
-              </div>
-            </label>
-
-            <label className="login__campo">
-              <span>Confirmar contraseña</span>
-              <input
-                type={mostrarPassword ? 'text' : 'password'}
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={confirmarPassword}
-                onChange={(e) => setConfirmarPassword(e.target.value)}
-                required
-              />
-            </label>
-
-            <button type="submit" className="login__cta" disabled={enviando}>
+          <Block className="my-3 flex flex-col gap-3">
+            {error && (
+              <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+                {error}
+              </p>
+            )}
+            <Button large rounded type="submit" disabled={enviando}>
               {enviando ? 'Un momento…' : 'Guardar contraseña'}
-            </button>
-          </form>
-
-          {error && <p className="login__error">{error}</p>}
-
-          <p className="login__pie">
-            <button type="button" onClick={cancelarRecuperacion}>
+            </Button>
+            <Button large rounded clear type="button" onClick={cancelarRecuperacion} disabled={enviando}>
               Cancelar y volver a iniciar sesión
-            </button>
-          </p>
-        </div>
+            </Button>
+          </Block>
+        </form>
       </div>
-    </div>
+    </Page>
   );
 }

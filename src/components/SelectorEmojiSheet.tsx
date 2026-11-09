@@ -1,30 +1,18 @@
+import { Searchbar } from 'konsta/react';
 import { useRef, useState } from 'react';
 import { buscarEmojis, GRUPOS_EMOJIS, type EmojiInfo } from '../data/emojis';
-import './NuevoMovimientoSheet.css';
-import './SelectorEmojiSheet.css';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
+import { HojaInferior } from './HojaInferior';
 
 interface Props {
   abierto: boolean;
   seleccionado: string;
   onCerrar: () => void;
   onSeleccionar: (emoji: string) => void;
-  // A qué profundidad se abre este sheet respecto al de más afuera: 1 si
-  // está un nivel adentro (ej. dentro de "Nueva categoría"), 2 si está dos
-  // niveles adentro (ej. dentro de "Editar categoría", que a su vez está
-  // dentro de "Categorías"). Controla el z-index para quedar siempre por
-  // delante sin depender del orden en el DOM.
-  nivel?: 1 | 2;
 }
 
-export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccionar, nivel = 1 }: Props) {
+export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccionar }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const gruposRef = useRef<Record<string, HTMLElement | null>>({});
-
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, onCerrar);
-
-  if (!abierto) return null;
 
   function elegir(emoji: string) {
     onSeleccionar(emoji);
@@ -38,44 +26,27 @@ export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccio
   const resultados = busqueda.trim() ? buscarEmojis(busqueda) : null;
 
   return (
-    <div
-      className={`sheet-overlay ${nivel === 2 ? 'sheet-overlay--anidado-2' : 'sheet-overlay--anidado'}`}
-      onClick={onCerrar}
-      style={gestos.overlayStyle}
-    >
-      <div
-        className={`sheet selector-emoji-sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={gestos.onFocusCaptureSheet}
-        style={gestos.sheetStyle}
-      >
-        <div className="selector-emoji-sheet__fijo">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={gestos.onPointerDownHandle}
-            onPointerMove={gestos.onPointerMoveHandle}
-            onPointerUp={gestos.onPointerUpHandle}
-            onPointerCancel={gestos.onPointerUpHandle}
-          >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">Elegir emoji</h2>
-
-          <input
-            className="texto-input"
-            type="search"
-            placeholder="Buscar emoji"
+    <HojaInferior
+      abierto={abierto}
+      titulo="Elegir emoji"
+      onCerrar={onCerrar}
+      cabecera={
+        <div className="flex flex-col gap-2 pb-2">
+          <Searchbar
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar emoji (en inglés)"
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setBusqueda(e.target.value)}
+            onClear={() => setBusqueda('')}
+            clearButton
+            disableButton={false}
           />
-
           {!resultados && (
-            <div className="selector-emoji-sheet__tabs">
+            <div className="flex gap-1 overflow-x-auto px-4 [scrollbar-width:none]" role="toolbar" aria-label="Ir a grupo">
               {GRUPOS_EMOJIS.map((g) => (
                 <button
                   key={g.slug}
                   type="button"
-                  className="selector-emoji-sheet__tab"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full text-xl active:bg-black/10 dark:active:bg-white/15"
                   onClick={() => irAGrupo(g.slug)}
                   aria-label={g.etiqueta}
                   title={g.etiqueta}
@@ -86,50 +57,61 @@ export function SelectorEmojiSheet({ abierto, seleccionado, onCerrar, onSeleccio
             </div>
           )}
         </div>
-
+      }
+    >
+      <div className="px-3 pb-safe-4">
         {resultados ? (
           resultados.length === 0 ? (
-            <p className="selector-emoji-sheet__vacio">Ningún emoji coincide con "{busqueda}".</p>
+            <p className="py-10 text-center text-[15px] text-secundario">Ningún emoji coincide con “{busqueda}”.</p>
           ) : (
-            <div className="selector-emoji-sheet__grilla">
-              {resultados.map((e) => (
-                <BotonEmoji key={e.slug} info={e} activo={e.emoji === seleccionado} onClick={() => elegir(e.emoji)} />
-              ))}
-            </div>
+            <GrillaEmojis emojis={resultados} seleccionado={seleccionado} onElegir={elegir} />
           )
         ) : (
           GRUPOS_EMOJIS.map((g) => (
             <section
               key={g.slug}
-              className="selector-emoji-sheet__grupo"
+              className="scroll-mt-40"
               ref={(el) => {
                 gruposRef.current[g.slug] = el;
               }}
             >
-              <h3>{g.etiqueta}</h3>
-              <div className="selector-emoji-sheet__grilla">
-                {g.emojis.map((e) => (
-                  <BotonEmoji key={e.slug} info={e} activo={e.emoji === seleccionado} onClick={() => elegir(e.emoji)} />
-                ))}
-              </div>
+              <h3 className="mx-1 mt-3 mb-2 text-[13px] font-semibold text-secundario uppercase">{g.etiqueta}</h3>
+              <GrillaEmojis emojis={g.emojis} seleccionado={seleccionado} onElegir={elegir} />
             </section>
           ))
         )}
       </div>
-    </div>
+    </HojaInferior>
   );
 }
 
-function BotonEmoji({ info, activo, onClick }: { info: EmojiInfo; activo: boolean; onClick: () => void }) {
+function GrillaEmojis({
+  emojis,
+  seleccionado,
+  onElegir,
+}: {
+  emojis: EmojiInfo[];
+  seleccionado: string;
+  onElegir: (emoji: string) => void;
+}) {
+  // Botones planos a propósito: son hasta ~1900 celdas en el DOM y cualquier
+  // efecto por celda (blur, sombra) sería carísimo en un teléfono de gama media.
   return (
-    <button
-      type="button"
-      className={`selector-emoji-sheet__opcion ${activo ? 'selector-emoji-sheet__opcion--activa' : ''}`}
-      onClick={onClick}
-      aria-label={info.name}
-      title={info.name}
-    >
-      {info.emoji}
-    </button>
+    <div className="grid grid-cols-8 gap-1">
+      {emojis.map((e) => (
+        <button
+          key={e.slug}
+          type="button"
+          className={`flex aspect-square items-center justify-center rounded-xl text-2xl leading-none active:scale-90 ${
+            e.emoji === seleccionado ? 'bg-primary/15 ring-2 ring-primary ring-inset' : 'active:bg-black/10 dark:active:bg-white/15'
+          }`}
+          onClick={() => onElegir(e.emoji)}
+          aria-label={e.name}
+          aria-pressed={e.emoji === seleccionado}
+        >
+          {e.emoji}
+        </button>
+      ))}
+    </div>
   );
 }

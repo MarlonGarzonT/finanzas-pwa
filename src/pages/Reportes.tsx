@@ -1,12 +1,13 @@
+import { Block, BlockTitle, Navbar, Page } from 'konsta/react';
 import { useMemo, useState } from 'react';
+import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import { AnilloAhorro } from '../components/AnilloAhorro';
 import { BarraFijoVariable } from '../components/BarraFijoVariable';
+import { Cargando } from '../components/Cargando';
 import { ComparacionMes } from '../components/ComparacionMes';
 import { DonaCategorias } from '../components/DonaCategorias';
 import { GraficoSemanal } from '../components/GraficoSemanal';
 import { SelectorMes } from '../components/SelectorMes';
-import { SelectorPagina } from '../components/SelectorPagina';
-import { Spinner } from '../components/Spinner';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Tipo } from '../types';
 import {
@@ -19,7 +20,8 @@ import {
   tasaAhorro,
 } from '../utils/estadisticasMes';
 import { claveMes, claveMesDeFecha } from '../utils/fechas';
-import './Reportes.css';
+
+const TARJETA = 'rounded-3xl';
 
 export function Reportes() {
   const { transacciones, categorias, cargando } = useFinanzas();
@@ -58,64 +60,53 @@ export function Reportes() {
   const proyeccion = esMesActual(mesSeleccionado) && totalEgresos > 0 ? proyeccionFinDeMes(totalEgresos, mesSeleccionado) : null;
 
   return (
-    <div className="reportes">
-      <header className="reportes__header">
-        <SelectorPagina />
-      </header>
+    <Page className="pb-[calc(var(--k-safe-area-bottom)+112px)]">
+      <Navbar centerTitle title="Reportes" />
 
       {cargando ? (
-        <div className="reportes__cargando">
-          <Spinner />
-        </div>
+        <Cargando />
       ) : transacciones.length === 0 ? (
-        <p className="reportes__vacio">Aún no tienes movimientos para generar un reporte.</p>
+        <Block className="text-center text-[17px] text-secundario">
+          Cuando registres movimientos, aquí verás tu ahorro, en qué gastas y cómo vas frente al mes pasado.
+        </Block>
       ) : (
-        <div className="reportes__contenido" key={mesSeleccionado.getTime()}>
+        // La key reinicia las animaciones de los gráficos al cambiar de mes.
+        <div className="aparecer-suave" key={mesSeleccionado.getTime()}>
           <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
 
-          <div className="reportes__grid-superior">
-            <div className="grafico-card reportes__tarjeta-anillo">
+          <div className="mt-4 grid grid-cols-2 gap-3 px-4">
+            <Block strong className="m-0 flex items-center justify-center rounded-3xl px-2 py-4">
               <AnilloAhorro tasa={ahorro} />
-            </div>
-            <div className="grafico-card reportes__tarjeta-comparacion">
+            </Block>
+            <Block strong className="m-0 flex flex-col justify-center rounded-3xl px-2 py-3">
               <ComparacionMes comparacion={comparacion} proyeccion={proyeccion} />
-            </div>
+            </Block>
           </div>
 
-          <section className="grafico-card">
-            <div className="reportes__titulo-con-toggle">
-              <h3 className="grafico-card__titulo">Por categoría</h3>
-              <div className="reportes__toggle">
-                <button
-                  type="button"
-                  className={`reportes__toggle-btn ${tipoDona === 'egreso' ? 'reportes__toggle-btn--activo' : ''}`}
-                  onClick={() => setTipoDona('egreso')}
-                >
-                  Gastos
-                </button>
-                <button
-                  type="button"
-                  className={`reportes__toggle-btn ${tipoDona === 'ingreso' ? 'reportes__toggle-btn--activo' : ''}`}
-                  onClick={() => setTipoDona('ingreso')}
-                >
-                  Ingresos
-                </button>
-              </div>
-            </div>
-            <DonaCategorias segmentos={segmentosDona} total={totalDona} />
-          </section>
+          <BlockTitle>Por categoría</BlockTitle>
+          <Block strong inset className={TARJETA}>
+            <SelectorVidrio className="mb-4">
+              <OpcionSelector active={tipoDona === 'egreso'} onClick={() => setTipoDona('egreso')}>
+                Gastos
+              </OpcionSelector>
+              <OpcionSelector active={tipoDona === 'ingreso'} onClick={() => setTipoDona('ingreso')}>
+                Ingresos
+              </OpcionSelector>
+            </SelectorVidrio>
+            <DonaCategorias key={tipoDona} segmentos={segmentosDona} total={totalDona} />
+          </Block>
 
-          <section className="grafico-card">
-            <h3 className="grafico-card__titulo">Fijo vs. variable</h3>
+          <BlockTitle>Fijo vs. variable</BlockTitle>
+          <Block strong inset className={TARJETA}>
             <BarraFijoVariable {...fijoVariable} />
-          </section>
+          </Block>
 
-          <section className="grafico-card">
-            <h3 className="grafico-card__titulo">Gasto por semana</h3>
+          <BlockTitle>Gasto por semana</BlockTitle>
+          <Block strong inset className={TARJETA}>
             <GraficoSemanal datos={semanal} />
-          </section>
+          </Block>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

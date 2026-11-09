@@ -1,8 +1,10 @@
+import { Button, List, ListItem, Toggle } from 'konsta/react';
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 import type { Categoria, Tipo } from '../types';
-import './NuevoMovimientoSheet.css';
-import './EditarCategoriaSheet.css';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
+import { CampoTexto } from './CampoTexto';
+import { DialogoConfirmar } from './DialogoConfirmar';
+import { HojaInferior } from './HojaInferior';
 
 const SelectorEmojiSheet = lazy(() =>
   import('./SelectorEmojiSheet').then((m) => ({ default: m.SelectorEmojiSheet }))
@@ -22,11 +24,9 @@ export function EditarCategoriaSheet({ abierto, categoria, onCerrar, onGuardar, 
   const [tipo, setTipo] = useState<Tipo>('egreso');
   const [esFijo, setEsFijo] = useState(false);
   const [emojiAbierto, setEmojiAbierto] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, onCerrar);
 
   // Al abrir (o cambiar de categoría), arranca desde los datos reales.
   useEffect(() => {
@@ -39,9 +39,8 @@ export function EditarCategoriaSheet({ abierto, categoria, onCerrar, onGuardar, 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al abrir/cambiar de categoría
   }, [abierto, categoria?.id]);
 
-  if (!abierto || !categoria) return null;
-
   async function manejarGuardar() {
+    if (!categoria) return;
     const limpio = nombre.trim();
     if (!limpio) {
       setError('El nombre no puede quedar vacío.');
@@ -50,7 +49,7 @@ export function EditarCategoriaSheet({ abierto, categoria, onCerrar, onGuardar, 
     setGuardando(true);
     setError(null);
     try {
-      await onGuardar(categoria!.id, { nombre: limpio, emoji, tipo, esFijo });
+      await onGuardar(categoria.id, { nombre: limpio, emoji, tipo, esFijo });
       onCerrar();
     } catch {
       setError('No se pudo guardar. Intenta de nuevo.');
@@ -60,88 +59,80 @@ export function EditarCategoriaSheet({ abierto, categoria, onCerrar, onGuardar, 
   }
 
   async function manejarEliminar() {
+    if (!categoria) return;
+    setConfirmandoEliminar(false);
     setGuardando(true);
     try {
-      await onEliminar(categoria!.id);
+      await onEliminar(categoria.id);
       onCerrar();
     } catch {
       setError('No se pudo eliminar. Intenta de nuevo.');
+    } finally {
       setGuardando(false);
     }
   }
 
   return (
-    <div className="sheet-overlay sheet-overlay--anidado" onClick={onCerrar} style={gestos.overlayStyle}>
-      <div
-        className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={gestos.onFocusCaptureSheet}
-        style={gestos.sheetStyle}
+    <>
+      <HojaInferior
+        abierto={abierto && categoria !== null}
+        titulo="Editar categoría"
+        onCerrar={onCerrar}
+        cierreBloqueado={guardando}
+        pie={
+          <>
+            {error && (
+              <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+                {error}
+              </p>
+            )}
+            <Button large rounded onClick={manejarGuardar} disabled={guardando || !nombre.trim()}>
+              {guardando ? 'Guardando…' : 'Guardar'}
+            </Button>
+            <Button large rounded clear className="text-alerta" onClick={() => setConfirmandoEliminar(true)} disabled={guardando}>
+              Eliminar categoría
+            </Button>
+          </>
+        }
       >
-        <div className="sheet__header">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={gestos.onPointerDownHandle}
-            onPointerMove={gestos.onPointerMoveHandle}
-            onPointerUp={gestos.onPointerUpHandle}
-            onPointerCancel={gestos.onPointerUpHandle}
-          >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">Editar categoría</h2>
-        </div>
-
-        <button type="button" className="editar-categoria__emoji-boton" onClick={() => setEmojiAbierto(true)}>
-          <span aria-hidden>{emoji}</span>
-          Cambiar emoji
-        </button>
-
-        <input
-          className="texto-input"
-          placeholder="Nombre de la categoría"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-        />
-
-        <div className="segmented">
+        <div className="flex justify-center py-3">
           <button
             type="button"
-            className={`segmented__btn segmented__btn--entrada ${tipo === 'ingreso' ? 'segmented__btn--activo' : ''}`}
-            onClick={() => setTipo('ingreso')}
+            onClick={() => setEmojiAbierto(true)}
+            className="flex flex-col items-center gap-1.5 rounded-2xl px-4 py-2 active:opacity-60"
+            aria-label={`Emoji actual ${emoji}. Cambiar emoji`}
           >
-            Ingreso
-          </button>
-          <button
-            type="button"
-            className={`segmented__btn segmented__btn--salida ${tipo === 'egreso' ? 'segmented__btn--activo' : ''}`}
-            onClick={() => setTipo('egreso')}
-          >
-            Gasto
+            <span className="flex size-20 items-center justify-center rounded-full bg-black/[0.06] text-5xl dark:bg-white/10" aria-hidden="true">
+              {emoji}
+            </span>
+            <span className="text-[15px] text-primary">Cambiar emoji</span>
           </button>
         </div>
 
-        <label className="interruptor-fila">
-          <span>Gasto fijo mensual (arriendo, cuotas...)</span>
-          <span className="interruptor">
-            <input type="checkbox" checked={esFijo} onChange={(e) => setEsFijo(e.target.checked)} />
-            <span className="interruptor__riel" />
-          </span>
-        </label>
+        <List strong inset className="my-2">
+          <CampoTexto etiqueta="Nombre" valor={nombre} onCambiar={setNombre} placeholder="Nombre de la categoría" />
+        </List>
 
-        {error && <p className="sheet__error">{error}</p>}
+        <div className="px-4 py-2">
+          <SelectorVidrio>
+            <OpcionSelector active={tipo === 'egreso'} onClick={() => setTipo('egreso')}>
+              Gasto
+            </OpcionSelector>
+            <OpcionSelector active={tipo === 'ingreso'} onClick={() => setTipo('ingreso')}>
+              Ingreso
+            </OpcionSelector>
+          </SelectorVidrio>
+        </div>
 
-        <button className="btn-primario" onClick={manejarGuardar} disabled={guardando || !nombre.trim()}>
-          {guardando ? 'Guardando…' : 'Guardar'}
-        </button>
-
-        <button className="btn-eliminar" onClick={manejarEliminar} disabled={guardando}>
-          Eliminar categoría
-        </button>
-
-        <button className="btn-cancelar" onClick={onCerrar} disabled={guardando}>
-          Cancelar
-        </button>
-      </div>
+        <List strong inset className="my-2">
+          <ListItem
+            label
+            title="Gasto fijo mensual"
+            text="Arriendo, cuotas, suscripciones…"
+            after={<Toggle checked={esFijo} onChange={() => setEsFijo((v) => !v)} aria-label="Gasto fijo mensual" />}
+          />
+        </List>
+      </HojaInferior>
 
       {emojiAbierto && (
         <Suspense fallback={null}>
@@ -150,10 +141,18 @@ export function EditarCategoriaSheet({ abierto, categoria, onCerrar, onGuardar, 
             seleccionado={emoji}
             onCerrar={() => setEmojiAbierto(false)}
             onSeleccionar={setEmoji}
-            nivel={2}
           />
         </Suspense>
       )}
-    </div>
+
+      <DialogoConfirmar
+        abierto={confirmandoEliminar}
+        titulo={`¿Eliminar ${categoria?.nombre ?? 'la categoría'}?`}
+        mensaje="Esta acción no se puede deshacer."
+        textoConfirmar="Eliminar"
+        onConfirmar={manejarEliminar}
+        onCancelar={() => setConfirmandoEliminar(false)}
+      />
+    </>
   );
 }

@@ -1,27 +1,28 @@
+import { BlockTitle, Button } from 'konsta/react';
 import { useEffect, useState } from 'react';
 import type { MiembroGrupo } from '../types';
+import { formatearMonto } from '../utils/fechas';
 import type { DeudaSugerida } from '../utils/saldosGrupo';
 import { AvatarMiembro } from './AvatarMiembro';
-import './GrupoSheets.css';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
+import { CampoMonto } from './CampoMonto';
+import { ChipOpcion } from './ChipOpcion';
+import { HojaInferior } from './HojaInferior';
 
 interface Props {
   abierto: boolean;
   miembros: MiembroGrupo[];
+  miId: string;
   sugerencia: DeudaSugerida | null;
   onCerrar: () => void;
   onRegistrar: (de: string, a: string, monto: number) => Promise<void>;
 }
 
-export function RegistrarPagoSheet({ abierto, miembros, sugerencia, onCerrar, onRegistrar }: Props) {
+export function RegistrarPagoSheet({ abierto, miembros, miId, sugerencia, onCerrar, onRegistrar }: Props) {
   const [de, setDe] = useState('');
   const [a, setA] = useState('');
   const [monto, setMonto] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, onCerrar);
 
   useEffect(() => {
     if (!abierto || !sugerencia) return;
@@ -31,12 +32,11 @@ export function RegistrarPagoSheet({ abierto, miembros, sugerencia, onCerrar, on
     setError(null);
   }, [abierto, sugerencia]);
 
-  if (!abierto) return null;
-
   const montoNum = Number(monto) || 0;
   const puedeGuardar = de !== '' && a !== '' && de !== a && montoNum > 0;
 
   function nombreDe(userId: string) {
+    if (userId === miId) return 'Tú';
     return miembros.find((m) => m.userId === userId)?.nombreVisible ?? 'Alguien';
   }
 
@@ -48,93 +48,73 @@ export function RegistrarPagoSheet({ abierto, miembros, sugerencia, onCerrar, on
       await onRegistrar(de, a, montoNum);
     } catch {
       setError('No se pudo registrar el pago. Intenta de nuevo.');
+    } finally {
       setGuardando(false);
     }
   }
 
   return (
-    <div className="sheet-overlay" onClick={onCerrar} style={gestos.overlayStyle}>
-      <div
-        className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={gestos.onFocusCaptureSheet}
-        style={gestos.sheetStyle}
-      >
-        <div className="sheet__header">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={gestos.onPointerDownHandle}
-            onPointerMove={gestos.onPointerMoveHandle}
-            onPointerUp={gestos.onPointerUpHandle}
-            onPointerCancel={gestos.onPointerUpHandle}
+    <HojaInferior
+      abierto={abierto}
+      titulo="Registrar pago"
+      onCerrar={onCerrar}
+      cierreBloqueado={guardando}
+      cabecera={
+        <div className="px-4 pb-2">
+          <CampoMonto valor={monto} onCambiar={setMonto} etiqueta="Monto del pago" />
+        </div>
+      }
+      pie={
+        <>
+          {error && (
+            <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+              {error}
+            </p>
+          )}
+          <Button large rounded onClick={manejarGuardar} disabled={guardando || !puedeGuardar}>
+            {guardando ? 'Guardando…' : 'Registrar pago'}
+          </Button>
+        </>
+      }
+    >
+      <BlockTitle className="mt-2">¿Quién paga?</BlockTitle>
+      <div className="flex flex-wrap gap-2 px-4" role="group" aria-label="Quién paga">
+        {miembros.map((m) => (
+          <ChipOpcion
+            key={m.userId}
+            activo={de === m.userId}
+            onClick={() => {
+              setDe(m.userId);
+              if (a === m.userId) setA('');
+            }}
+            media={<AvatarMiembro id={m.userId} nombre={m.nombreVisible} tamano="sm" />}
           >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">Registrar pago</h2>
-
-          <div className="monto-input">
-            <span>$</span>
-            <input
-              inputMode="numeric"
-              placeholder="0"
-              value={monto ? Number(monto).toLocaleString('es-CO') : ''}
-              onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
-            />
-          </div>
-        </div>
-
-        <div>
-          <p className="grupo-sheets__ayuda">¿Quién paga?</p>
-          <div className="grupo-sheets__chips">
-            {miembros.map((m) => (
-              <button
-                key={m.userId}
-                type="button"
-                className={`grupo-sheets__miembro-chip ${de === m.userId ? 'grupo-sheets__miembro-chip--activo' : ''}`}
-                onClick={() => setDe(m.userId)}
-              >
-                <AvatarMiembro id={m.userId} nombre={m.nombreVisible} />
-                {m.nombreVisible}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="grupo-sheets__ayuda">¿A quién le paga?</p>
-          <div className="grupo-sheets__chips">
-            {miembros
-              .filter((m) => m.userId !== de)
-              .map((m) => (
-                <button
-                  key={m.userId}
-                  type="button"
-                  className={`grupo-sheets__miembro-chip ${a === m.userId ? 'grupo-sheets__miembro-chip--activo' : ''}`}
-                  onClick={() => setA(m.userId)}
-                >
-                  <AvatarMiembro id={m.userId} nombre={m.nombreVisible} />
-                  {m.nombreVisible}
-                </button>
-              ))}
-          </div>
-        </div>
-
-        {de && a && montoNum > 0 && (
-          <p className="grupo-sheets__ayuda">
-            {nombreDe(de)} le paga {nombreDe(a)}
-          </p>
-        )}
-
-        {error && <p className="sheet__error">{error}</p>}
-
-        <button className="btn-primario" onClick={manejarGuardar} disabled={guardando || !puedeGuardar}>
-          {guardando ? 'Guardando…' : 'Registrar pago'}
-        </button>
-
-        <button className="btn-cancelar" onClick={onCerrar} disabled={guardando}>
-          Cancelar
-        </button>
+            {nombreDe(m.userId)}
+          </ChipOpcion>
+        ))}
       </div>
-    </div>
+
+      <BlockTitle>¿A quién le paga?</BlockTitle>
+      <div className="flex flex-wrap gap-2 px-4" role="group" aria-label="A quién le paga">
+        {miembros
+          .filter((m) => m.userId !== de)
+          .map((m) => (
+            <ChipOpcion
+              key={m.userId}
+              activo={a === m.userId}
+              onClick={() => setA(m.userId)}
+              media={<AvatarMiembro id={m.userId} nombre={m.nombreVisible} tamano="sm" />}
+            >
+              {nombreDe(m.userId)}
+            </ChipOpcion>
+          ))}
+      </div>
+
+      {puedeGuardar && (
+        <p className="mx-4 mt-4 mb-0 text-[15px] text-secundario cifras" aria-live="polite">
+          {nombreDe(de)} {de === miId ? 'le pagas' : 'le paga'} {formatearMonto(montoNum)} a {a === miId ? 'ti' : nombreDe(a)}.
+        </p>
+      )}
+    </HojaInferior>
   );
 }

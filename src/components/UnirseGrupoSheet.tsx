@@ -1,9 +1,10 @@
+import { Button, List } from 'konsta/react';
 import { useState } from 'react';
 import { useGrupos } from '../data/GruposContext';
 import type { Grupo } from '../types';
+import { CampoTexto } from './CampoTexto';
+import { HojaInferior } from './HojaInferior';
 import { NOMBRE_VISIBLE_STORAGE_KEY, sugerenciaNombreVisible } from './nombreVisible';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
-import './GrupoSheets.css';
 
 interface Props {
   abierto: boolean;
@@ -18,11 +19,6 @@ export function UnirseGrupoSheet({ abierto, onCerrar, onUnido }: Props) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, onCerrar);
-
-  if (!abierto) return null;
-
   async function manejarUnirse() {
     const codigoLimpio = codigo.trim();
     const nombreVisibleLimpio = nombreVisible.trim();
@@ -31,7 +27,11 @@ export function UnirseGrupoSheet({ abierto, onCerrar, onUnido }: Props) {
     setError(null);
     try {
       const grupo = await unirseAGrupo(codigoLimpio, nombreVisibleLimpio);
-      localStorage.setItem(NOMBRE_VISIBLE_STORAGE_KEY, nombreVisibleLimpio);
+      try {
+        localStorage.setItem(NOMBRE_VISIBLE_STORAGE_KEY, nombreVisibleLimpio);
+      } catch {
+        // Sin almacenamiento local (modo privado): solo se pierde la sugerencia.
+      }
       setCodigo('');
       onCerrar();
       onUnido(grupo);
@@ -43,55 +43,43 @@ export function UnirseGrupoSheet({ abierto, onCerrar, onUnido }: Props) {
   }
 
   return (
-    <div className="sheet-overlay" onClick={onCerrar} style={gestos.overlayStyle}>
-      <div
-        className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={gestos.onFocusCaptureSheet}
-        style={gestos.sheetStyle}
-      >
-        <div className="sheet__header">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={gestos.onPointerDownHandle}
-            onPointerMove={gestos.onPointerMoveHandle}
-            onPointerUp={gestos.onPointerUpHandle}
-            onPointerCancel={gestos.onPointerUpHandle}
-          >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">Unirme a un grupo</h2>
-        </div>
-
-        <input
-          className="texto-input"
-          placeholder="Código de invitación"
-          value={codigo}
-          onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+    <HojaInferior
+      abierto={abierto}
+      titulo="Unirme a un grupo"
+      onCerrar={onCerrar}
+      cierreBloqueado={guardando}
+      pie={
+        <>
+          {error && (
+            <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+              {error}
+            </p>
+          )}
+          <Button large rounded onClick={manejarUnirse} disabled={guardando || !codigo.trim() || !nombreVisible.trim()}>
+            {guardando ? 'Uniéndome…' : 'Unirme'}
+          </Button>
+        </>
+      }
+    >
+      <List strong inset className="my-2">
+        <CampoTexto
+          etiqueta="Código de invitación"
+          valor={codigo}
+          onCambiar={(v) => setCodigo(v.toUpperCase())}
+          placeholder="ABC123"
           autoCapitalize="characters"
+          enterKeyHint="next"
           autoFocus
         />
-        <input
-          className="texto-input"
-          placeholder="Tu nombre para este grupo"
-          value={nombreVisible}
-          onChange={(e) => setNombreVisible(e.target.value)}
+        <CampoTexto
+          etiqueta="Tu nombre en el grupo"
+          valor={nombreVisible}
+          onCambiar={setNombreVisible}
+          placeholder="Cómo te verán los demás"
+          autoComplete="given-name"
+          autoCapitalize="words"
         />
-
-        {error && <p className="sheet__error">{error}</p>}
-
-        <button
-          className="btn-primario"
-          onClick={manejarUnirse}
-          disabled={guardando || !codigo.trim() || !nombreVisible.trim()}
-        >
-          {guardando ? 'Uniéndome…' : 'Unirme'}
-        </button>
-
-        <button className="btn-cancelar" onClick={onCerrar} disabled={guardando}>
-          Cancelar
-        </button>
-      </div>
-    </div>
+      </List>
+    </HojaInferior>
   );
 }

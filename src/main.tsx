@@ -3,10 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-// El Service Worker (registerType: 'autoUpdate') se activa solo en segundo
-// plano tras cada deploy, pero no recarga la pestaña ya abierta: sin esto,
-// la primera visita después de un deploy sigue corriendo el JS viejo hasta
-// que el usuario refresca a mano.
+// Cuando el Service Worker nuevo toma el control (la persona tocó
+// "Actualizar", aquí o en otra pestaña), esta pestaña recarga: si siguiera
+// con el JS viejo, pediría chunks que el deploy ya borró.
 if ('serviceWorker' in navigator) {
   let recargando = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -15,6 +14,17 @@ if ('serviceWorker' in navigator) {
     window.location.reload();
   });
 }
+
+// Konsta activa su modo oscuro con la clase `dark` en un ancestro, no con la
+// media query; se sincroniza aquí con la preferencia del sistema antes del
+// primer render para que no haya un destello claro al abrir de noche.
+const preferenciaOscura = window.matchMedia('(prefers-color-scheme: dark)');
+function aplicarModoOscuro() {
+  document.documentElement.classList.toggle('dark', preferenciaOscura.matches);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', preferenciaOscura.matches ? '#000000' : '#f2f2f7');
+}
+aplicarModoOscuro();
+preferenciaOscura.addEventListener('change', aplicarModoOscuro);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

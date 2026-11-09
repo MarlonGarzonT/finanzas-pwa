@@ -1,9 +1,11 @@
+import { Block, Button, List } from 'konsta/react';
 import { useState } from 'react';
 import { useGrupos } from '../data/GruposContext';
 import type { Grupo } from '../types';
+import { CampoTexto } from './CampoTexto';
+import { HojaInferior } from './HojaInferior';
+import { IconoCheck, IconoCompartir, IconoCopiar } from './Iconos';
 import { NOMBRE_VISIBLE_STORAGE_KEY, sugerenciaNombreVisible } from './nombreVisible';
-import { useBloqueoDeFondo, useGestosSheet } from './useComportamientoSheet';
-import './GrupoSheets.css';
 
 interface Props {
   abierto: boolean;
@@ -19,11 +21,6 @@ export function CrearGrupoSheet({ abierto, onCerrar, onCreado }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [grupoCreado, setGrupoCreado] = useState<Grupo | null>(null);
   const [copiado, setCopiado] = useState(false);
-
-  useBloqueoDeFondo(abierto);
-  const gestos = useGestosSheet(abierto, cerrarYLimpiar);
-
-  if (!abierto) return null;
 
   function cerrarYLimpiar() {
     onCerrar();
@@ -42,7 +39,11 @@ export function CrearGrupoSheet({ abierto, onCerrar, onCreado }: Props) {
     setError(null);
     try {
       const nuevo = await crearGrupo(limpio, nombreVisibleLimpio);
-      localStorage.setItem(NOMBRE_VISIBLE_STORAGE_KEY, nombreVisibleLimpio);
+      try {
+        localStorage.setItem(NOMBRE_VISIBLE_STORAGE_KEY, nombreVisibleLimpio);
+      } catch {
+        // Sin almacenamiento local (modo privado): solo se pierde la sugerencia.
+      }
       setGrupoCreado(nuevo);
     } catch {
       setError('No se pudo crear el grupo. Intenta de nuevo.');
@@ -53,9 +54,13 @@ export function CrearGrupoSheet({ abierto, onCerrar, onCreado }: Props) {
 
   async function copiarCodigo() {
     if (!grupoCreado) return;
-    await navigator.clipboard.writeText(grupoCreado.codigo);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 1500);
+    try {
+      await navigator.clipboard.writeText(grupoCreado.codigo);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1500);
+    } catch {
+      setError('No se pudo copiar. Mantén presionado el código para copiarlo.');
+    }
   }
 
   async function compartirCodigo() {
@@ -65,79 +70,81 @@ export function CrearGrupoSheet({ abierto, onCerrar, onCreado }: Props) {
       try {
         await navigator.share({ text: texto });
       } catch {
-        // el usuario canceló el share sheet, no hacer nada
+        // la persona canceló la hoja de compartir: no hay nada que hacer
       }
     } else {
       await copiarCodigo();
     }
   }
 
+  const errorVisible = error && (
+    <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+      {error}
+    </p>
+  );
+
   return (
-    <div className="sheet-overlay" onClick={cerrarYLimpiar} style={gestos.overlayStyle}>
-      <div
-        className={`sheet ${gestos.arrastrando ? 'sheet--arrastrando' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onFocusCapture={gestos.onFocusCaptureSheet}
-        style={gestos.sheetStyle}
-      >
-        <div className="sheet__header">
-          <div
-            className="sheet__handle-area"
-            onPointerDown={gestos.onPointerDownHandle}
-            onPointerMove={gestos.onPointerMoveHandle}
-            onPointerUp={gestos.onPointerUpHandle}
-            onPointerCancel={gestos.onPointerUpHandle}
-          >
-            <div className="sheet__handle" />
-          </div>
-          <h2 className="sheet__titulo">{grupoCreado ? '¡Grupo creado!' : 'Nuevo grupo'}</h2>
-        </div>
-
-        {!grupoCreado ? (
+    <HojaInferior
+      abierto={abierto}
+      titulo={grupoCreado ? 'Grupo creado' : 'Nuevo grupo'}
+      onCerrar={cerrarYLimpiar}
+      textoCerrar={grupoCreado ? 'Listo' : 'Cancelar'}
+      cierreBloqueado={guardando}
+      pie={
+        grupoCreado ? (
           <>
-            <input
-              className="texto-input"
-              placeholder="Nombre del grupo (ej. Viaje a la playa)"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              autoFocus
-            />
-            <input
-              className="texto-input"
-              placeholder="Tu nombre para este grupo"
-              value={nombreVisible}
-              onChange={(e) => setNombreVisible(e.target.value)}
-            />
-
-            {error && <p className="sheet__error">{error}</p>}
-
-            <button
-              className="btn-primario"
-              onClick={manejarCrear}
-              disabled={guardando || !nombre.trim() || !nombreVisible.trim()}
-            >
-              {guardando ? 'Creando…' : 'Crear grupo'}
-            </button>
+            {errorVisible}
+            <Button large rounded onClick={compartirCodigo} className="gap-2">
+              <IconoCompartir className="size-5" />
+              Compartir código
+            </Button>
+            <Button large rounded clear onClick={copiarCodigo} className="gap-2">
+              {copiado ? <IconoCheck className="size-5" /> : <IconoCopiar className="size-5" />}
+              {copiado ? 'Copiado' : 'Copiar código'}
+            </Button>
           </>
         ) : (
           <>
-            <p className="grupo-sheets__ayuda">
-              Comparte este código con quienes quieras sumar al grupo. Lo usan para unirse desde su propia cuenta.
-            </p>
-            <div className="grupo-sheets__codigo">{grupoCreado.codigo}</div>
-            <button className="btn-primario" onClick={compartirCodigo}>
-              Compartir código
-            </button>
-            <button className="btn-cancelar" onClick={copiarCodigo}>
-              {copiado ? 'Copiado ✓' : 'Copiar código'}
-            </button>
+            {errorVisible}
+            <Button large rounded onClick={manejarCrear} disabled={guardando || !nombre.trim() || !nombreVisible.trim()}>
+              {guardando ? 'Creando…' : 'Crear grupo'}
+            </Button>
           </>
-        )}
-
-        <button className="btn-cancelar" onClick={cerrarYLimpiar} disabled={guardando}>
-          {grupoCreado ? 'Listo' : 'Cancelar'}
-        </button>
-      </div>
-    </div>
+        )
+      }
+    >
+      {!grupoCreado ? (
+        <List strong inset className="my-2">
+          <CampoTexto
+            etiqueta="Nombre del grupo"
+            valor={nombre}
+            onCambiar={setNombre}
+            placeholder="Viaje a la playa"
+            enterKeyHint="next"
+            autoFocus
+          />
+          <CampoTexto
+            etiqueta="Tu nombre en el grupo"
+            valor={nombreVisible}
+            onCambiar={setNombreVisible}
+            placeholder="Cómo te verán los demás"
+            autoComplete="given-name"
+            autoCapitalize="words"
+          />
+        </List>
+      ) : (
+        <Block className="my-4 flex flex-col items-center gap-4 text-center">
+          <p className="m-0 text-[15px] text-secundario">
+            Comparte este código con quienes quieras sumar. Lo usan para unirse desde su propia cuenta.
+          </p>
+          <p
+            className="m-0 rounded-2xl bg-ios-light-surface-1 px-7 py-3 text-[34px] font-bold tracking-[0.2em] select-all cifras dark:bg-ios-dark-surface-1"
+            aria-label={`Código ${grupoCreado.codigo.split('').join(' ')}`}
+          >
+            {grupoCreado.codigo}
+          </p>
+        </Block>
+      )}
+    </HojaInferior>
   );
 }

@@ -1,455 +1,116 @@
-# Apple — Style Reference
-> Midnight hardware gallery. Treat each section as a dark, museum-like plinth for one precisely lit product detail, with typography and blue controls operating as restrained labels around it.
-
-**Theme:** dark
-
-Source measurements are normalized; roles and recommendations are interpreted. Font summary lists are independent, not paired by position. HTML examples are reconstructions, not source components.
-
-Apple — a black-stage product reveal where oversized SF Pro Display headlines sit beneath meticulously rendered hardware imagery. The page moves between absolute black hero scenes, charcoal information bands, and occasional white comparison surfaces; blue is reserved for purchase and navigational links while burgundy product finishes stay inside the device storytelling. Broad 28px media corners, near-invisible elevation, compact utility navigation, and dense product-detail modules make the interface feel like a controlled exhibition rather than a conventional card-based storefront.
-
-## Tokens — Colors
-
-| Name | Value | Token | Role |
-|------|-------|-------|------|
-| Obsidian | `#000000` | `--color-obsidian` | Hero canvas, full-bleed media stages, feature-tile backgrounds, and dark product controls |
-| Graphite | `#0e0e0e` | `--color-graphite` | Raised navigation and near-black control surfaces |
-| Carbon | `linear-gradient(#1d1d1f, #000000 288px)` | `--color-carbon` | Charcoal content bands, comparison panels, and dark text on white sections |
-| Steel | `#333336` | `--color-steel` | Hairline card borders, translucent control fills, and dark chrome |
-| Slate | `#6e6e73` | `--color-slate` | Input outlines, secondary dividers, and subdued interface text |
-| Ash | `#86868b` | `--color-ash` | Muted explanatory copy, inactive labels, and subdued metadata |
-| Porcelain | `#f5f5f7` | `--color-porcelain` | Primary text on dark surfaces and pale alternate section backgrounds |
-| White | `#ffffff` | `--color-white` | High-contrast dark-surface text, bright comparison cards, and icon details |
-| Apple Blue | `#0071e3` | `--color-apple-blue` | Filled Buy and Learn More controls — a concentrated blue punctuates the otherwise monochrome purchase path |
-| Electric Link | `#2997ff` | `--color-electric-link` | Links on black and charcoal surfaces, including inline learning paths and section navigation |
-| Cobalt Link | `#0066cc` | `--color-cobalt-link` | Links on pale surfaces and footer-like utility contexts |
-| Copper New | `#b64400` | `--color-copper-new` | Small New labels and release-status annotations |
-| Optical Yellow | `#ffd500` | `--color-optical-yellow` | Technical camera-spec emphasis within product storytelling |
-
-## Tokens — Typography
-
-### SF Pro Text — Navigation, purchase controls, links, body copy, product labels, legal markers, input text, and compact feature explanations. The compact negative tracking keeps dense interface language visually quiet beside large hardware imagery. · `--font-sf-pro-text`
-- **Substitute:** Inter
-- **Weights:** 400, 500, 600
-- **Sizes:** 12px, 14px, 17px, 20px, 26px, 44px
-- **Line height:** 1.00, 1.18, 1.24, 1.29, 1.33, 1.43, 1.47
-- **Letter spacing:** -0.264px at 12px, -0.224px at 14px, -0.374px at 17px, -0.38px at 20px, -0.26px at 26px, -0.132px at 44px
-- **OpenType features:** `"numr"`
-- **Role:** Navigation, purchase controls, links, body copy, product labels, legal markers, input text, and compact feature explanations. The compact negative tracking keeps dense interface language visually quiet beside large hardware imagery.
-
-### SF Pro Display — Section labels, product names, feature metrics, and exhibition-scale headlines. At 80px and 96px, -1.2px and -1.44px tracking compress the heavy 600 weight into a single sculptural block rather than a loud promotional banner. · `--font-sf-pro-display`
-- **Substitute:** Inter
-- **Weights:** 500, 600
-- **Sizes:** 19px, 21px, 28px, 32px, 40px, 48px, 56px, 80px, 96px
-- **Line height:** 1.00, 1.04, 1.05, 1.07, 1.08, 1.13, 1.14, 1.19, 1.21, 1.38
-- **Letter spacing:** -1.44px at 96px, -1.2px at 80px, -0.84px at 56px, -0.24px at 48px, -0.12px at 40px, 0.128px at 32px, 0.196px at 28px, 0.231px at 21px, 0.228px at 19px
-- **OpenType features:** `"numr"`
-- **Role:** Section labels, product names, feature metrics, and exhibition-scale headlines. At 80px and 96px, -1.2px and -1.44px tracking compress the heavy 600 weight into a single sculptural block rather than a loud promotional banner.
-
-### Type Scale
-
-| Role | Family | Weight | Size | Line Height | Letter Spacing | Token |
-|------|--------|--------|------|-------------|----------------|-------|
-| utility-nav | SF Pro Text | 400 | 12px | 1.33 | -0.12px | `--text-utility-nav` |
-| body | SF Pro Text | 400 | 14px | 1.29 | -0.224px | `--text-body` |
-| body-strong | SF Pro Text | 600 | 14px | 1.29 | -0.224px | `--text-body-strong` |
-| section-nav | SF Pro Text | 500 | 17px | 1.47 | -0.374px | `--text-section-nav` |
-| product-label | SF Pro Display | 600 | 19px | 1.21 | 0.228px | `--text-product-label` |
-| feature-stat | SF Pro Display | 600 | 28px | 1 | 0.196px | `--text-feature-stat` |
-| hero-product-name | SF Pro Display | 600 | 32px | 1.13 | 0.128px | `--text-hero-product-name` |
-| display | SF Pro Display | 600 | 80px | 1.05 | -1.2px | `--text-display` |
-| display-xl | SF Pro Display | 600 | 96px | 1.04 | -1.44px | `--text-display-xl` |
+# Mis Finanzas — Sistema de diseño
 
-## Tokens — Spacing & Shapes
+> Una app de finanzas personales que se siente nativa de iPhone. La interfaz es **Konsta UI 5 con tema iOS (iOS 26, Liquid Glass)** sobre Tailwind v4; este documento fija lo que es propio de la app encima de eso.
 
-**Density:** comfortable
+**Fuente de verdad:** los componentes de Konsta definen la forma de los controles (barras, listas, hojas, botones, segmentados, toggles). Este archivo define color de dinero, tipografía de montos, iconografía, espaciado de pantallas y reglas de uso. Si algo no está aquí, se usa el componente de Konsta tal cual, sin restilizarlo.
 
-### Spacing Scale
+**Modo:** Operate. La persona viene a registrar o revisar plata; la interfaz desaparece en la tarea. Familiaridad iOS > expresión.
 
-| Name | Value | Token |
-|------|-------|-------|
-| 4 | 4px | `--spacing-4` |
-| 6 | 6px | `--spacing-6` |
-| 7 | 7px | `--spacing-7` |
-| 8 | 8px | `--spacing-8` |
-| 10 | 10px | `--spacing-10` |
-| 12 | 12px | `--spacing-12` |
-| 14 | 14px | `--spacing-14` |
-| 16 | 16px | `--spacing-16` |
-| 20 | 20px | `--spacing-20` |
-| 24 | 24px | `--spacing-24` |
-| 28 | 28px | `--spacing-28` |
-| 32 | 32px | `--spacing-32` |
-| 48 | 48px | `--spacing-48` |
-| 90 | 90px | `--spacing-90` |
-| 144 | 144px | `--spacing-144` |
-| 210 | 210px | `--spacing-210` |
+**Claro y oscuro:** ambos son de primera clase. La clase `dark` en `<html>` sigue a `prefers-color-scheme` (ver `src/main.tsx`); Konsta y los tokens propios responden a esa clase.
 
-### Border Radius
+## Stack de UI
 
-| Element | Value |
-|---------|-------|
-| cards | 28px |
-| links | 10px |
-| pills | 9999px |
-| images | 28px |
-| inputs | 980px |
-| buttons | 170px |
-| navigation | 20px |
-| compactButtons | 36px |
+| Pieza | Uso |
+|---|---|
+| `konsta/react` (`theme="ios"`) | Todos los controles y estructuras |
+| Tailwind v4 (`@tailwindcss/vite`) | Utilidades y tokens (`src/index.css`) |
+| Componentes propios | Solo donde Konsta no tiene equivalente: gráficos, rueda de mes, campo de monto, hoja inferior con gestos |
 
-### Shadows
+## Color
 
-| Name | Value | Token |
-|------|-------|-------|
-| subtle | `rgb(40, 40, 40) 0px 0px 0px 1px` | `--shadow-subtle` |
-| subtle-2 | `rgb(110, 110, 115) 0px 0px 0px 1px` | `--shadow-subtle-2` |
+Acento único (tint): **azul del sistema iOS `#007aff`** (`--color-brand-primary`). Solo para acciones, selección y estado; nunca decoración.
 
-### Layout
+### Dinero (estilo Apple Card)
 
-- **Section gap:** 24px
-- **Card padding:** 16px
-- **Element gap:** 4px
+**Solo el ingreso lleva color.** El gasto se escribe en el color normal del texto (negro en claro, blanco en oscuro) con su signo −; gastar es lo normal y no se pinta de rojo. El signo (+/−) siempre acompaña al monto en texto; el color nunca es la única señal.
 
-## Components
+| Token Tailwind | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `text-ingreso` | `#047857` | `#34d399` | Texto de montos que entran (esmeralda) |
+| `ingreso-relleno` | `#10b981` | `#34d399` | Anillo de ahorro (no texto) |
+| `text-alerta` | `#c22e12` | `#ff8d78` | Lo que sí pide atención: Disponible negativo, más gasto que el mes pasado, errores, acciones destructivas |
+| `alerta-relleno` | `#f0563c` | `#ff7a63` | Anillo de ahorro negativo (no texto) |
 
-### Global Utility Navigation
-**Role:** 44px-tall global product navigation
+"Alerta" no es sinónimo de "gasto": nunca se usa para pintar un gasto normal. Los tonos de texto en claro pasan 4.5:1 sobre blanco y sobre el gris agrupado.
 
-Use a #000000 bar with compact SF Pro Text at 12px/400, -0.12px tracking, and rgba(255,255,255,0.8) labels. Keep logo and utility glyphs #cccccc; opened dark navigation uses #161617 with a 20px radius where it becomes contained.
+Los gráficos que comparan categorías (barras de Resumen, dona de Reportes) usan el **color de cada categoría**, no verde/rojo.
 
-### Upgrade Announcement Strip
-**Role:** Global promotional message
+### Neutros
 
-Set the strip on #1d1d1f with 14px/400 SF Pro Text in #f5f5f7, 20px line-height, and -0.224px tracking. Render embedded links in Electric Link #2997ff.
+| Token | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `text-secundario` | `rgb(60 60 67 / .75)` | `rgb(235 235 245 / .6)` | Texto de apoyo, subtítulos, vacíos |
+| `pista` | `rgb(120 120 128 / .16)` | `/ .32` | Fondo de anillos, barras y "Otras" en la dona |
+| Superficies | las de Konsta (`ios-light-surface*`, `ios-dark-surface*`) | | Fondo agrupado gris + listas blancas |
 
-### Product Section Navigation
-**Role:** Sticky local product header
+El secundario está más oscuro que el `secondaryLabel` de iOS (60%) a propósito: así cumple WCAG AA sobre blanco y sobre el gris agrupado.
 
-Use a #0e0e0e contained bar with a 20px radius and a 1px #282828 keyline. Product name is SF Pro Display 19px/600, #f5f5f7; section links use SF Pro Text 17px/500, 25px line-height, and -0.374px tracking.
+### Identidad de categorías y miembros
 
-### Blue Purchase Pill
-**Role:** Filled purchase control
+`--categoria-azul, -naranja, -morado, -cian, -rosa, -menta, -amarillo, -cafe`. Se asignan por hash del id (`colorCategoria`). Nunca para dinero ni para el acento. En avatares van como **tinte** (22–35%) detrás del emoji o la inicial, no como relleno pleno, para no romper contraste.
 
-Fill with Apple Blue #0071e3, set white SF Pro Text at 12px/400 with 16px line-height and -0.12px tracking, and use a 170px radius. Compact instances use 7px vertical and 14px horizontal padding.
+## Tipografía
 
-### Dark Pricing Capsule
-**Role:** Hero price and financing disclosure
+Fuente del sistema (SF Pro en Apple, `font-ios` de Konsta). Una sola familia.
 
-Use rgba(66,66,69,0.72) fill with rgba(255,255,255,0.8) text and a 36px radius. Pair it directly with the Blue Purchase Pill rather than turning every hero action into a blue block.
+| Rol | Tamaño / peso |
+|---|---|
+| Título de pantalla | Navbar compacto de Konsta, centrado (17px, semibold) |
+| Monto protagonista | Disponible 48px bold, campo de monto 44px bold; tracking -0.03em, `cifras` |
+| Cuerpo / filas | 17px (Konsta) |
+| Montos en filas | 17px semibold, color de dinero |
+| Apoyo | 15px `text-secundario` |
+| Pie / microcopy | 13px |
 
-### Outlined Explore Pill
-**Role:** Secondary local-navigation control
+Todo monto lleva la clase `.cifras` (`tabular-nums`) para que las columnas no bailen.
 
-Use transparent fill, #f5f5f7 text, a 1px #6e6e73 outline, and a 9999px radius. Keep the label in SF Pro Text at 12px/400, 16px line-height, with -0.12px tracking.
+## Iconografía
 
-### Hero Product Stage
-**Role:** Full-bleed product reveal
+Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redondeados, imitando SF Symbols. Nada de emojis o glifos Unicode como íconos de interfaz. Los emojis son **contenido** elegido por la persona (identidad de la categoría) y van ocultos al lector de pantalla.
 
-Place photorealistic hardware on an uninterrupted #000000 stage. Use #f5f5f7 SF Pro Display product name at 32px/600, 36px line-height, and a 80px/600, 84px-line-height display statement with -1.2px tracking; position pricing controls along the lower edge.
+## Estructura de pantallas
 
-### Highlights Media Frame
-**Role:** Large feature-film or camera demonstration
+- **Navegación:** `Tabbar` + `ToolbarPane` de Konsta (cápsula Liquid Glass flotante) con 4 secciones: Resumen, Historial, Reportes, Grupos. Detalle de grupo se apila con `NavbarBackLink`.
+- **Pantallas de primer nivel:** `Page` + `Navbar centerTitle` compacto (título centrado arriba, alineado con los botones de vidrio). Sin `large` ni `transparent`: el título grande quedaba bajo y a la izquierda, y `transparent` lo oculta hasta hacer scroll.
+- **Resumen:** selector de mes en texto discreto (‹ Mes ⌄ ›), "Disponible" grande sin signo si es positivo (con − y color de alerta si es negativo) y un `SelectorVidrio` con Gastos / Ingresos (etiqueta + total) que filtra el gráfico. Su resaltado se desliza con curva de resorte iOS (clase `.selector-fluido`, 420 ms, solo `transform`).
+- **Contenido:** `BlockTitle` + `List strong inset dividers` (listas agrupadas) o `Block strong inset rounded-3xl` (tarjetas de gráfico). No se pisan los márgenes verticales de Konsta (`my-*`) en bloques que siguen a un `BlockTitle`.
+- **Acción principal:** `Fab` de 56px, abajo a la derecha, sobre la barra de pestañas (al alcance del pulgar).
+- **Menús de acciones:** `Actions` (hoja de acciones iOS), nunca menús flotantes propios.
+- **Destructivo:** `DialogoConfirmar` (alerta iOS) antes de eliminar.
+- **Formularios:** `HojaInferior` → cabecera con asa, "Cancelar" a la izquierda y título centrado; campos en `List strong inset` con `CampoTexto`; acción principal `Button large rounded` anclada abajo.
 
-Use a contained cinematic image or video with a 28px radius and no drop shadow. Overlay #f5f5f7 SF Pro Display messaging directly over dark imagery; playback pagination lives in a translucent #333336 pill.
+## Componentes propios
 
-### Feature Metric Tile
-**Role:** Product capability module
+| Componente | Por qué existe |
+|---|---|
+| `HojaInferior` | Sheet de Konsta + montaje diferido, asa para cerrar arrastrando, anclaje al teclado de iOS (visualViewport), Escape, `role="dialog"`, portal a `#capa-hojas` |
+| `CampoTexto` | `ListInput` con `<label>` real asociado y `enterkeyhint` (el de Konsta no los da) |
+| `CampoMonto` | Monto grande centrado, solo dígitos, separador de miles, ancho que sigue a las cifras |
+| `SelectorVidrio` / `OpcionSelector` | `Segmented` de Konsta con material Liquid Glass (riel de vidrio con reflejos, resaltado tipo gota que se desliza con resorte). Se usa en **todos** los selectores de la app; no usar `Segmented` directo |
+| `AvisoActualizacion` | Cápsula Liquid Glass (`Glass` de Konsta) que baja desde arriba con rebote cuando hay versión nueva: ícono con halo y flecha que flota, botón "Actualizar" con destello, "Ahora no" para descartarla hasta volver a la app. La lógica vive en `useActualizacionApp` (SW en modo `prompt`) |
+| `ChipOpcion` | `Chip` de Konsta seleccionable, 36px visibles con área táctil extendida a 44px |
+| `RuedaSelector` | Picker de rueda tipo UIPickerView (Konsta no lo trae), con `listbox` y flechas de teclado |
+| `FilaMovimiento` | Fila de lista de un movimiento, compartida por Resumen e Historial |
+| Gráficos (`GraficoGastos`, `DonaCategorias`, `AnilloAhorro`, `BarraFijoVariable`, `GraficoSemanal`) | SVG/CSS propios, con texto alternativo para lector de pantalla |
 
-Use #000000 fill and a 28px radius with no shadow. Center product crop or technical iconography with #f5f5f7 SF Pro Display at 28px/600, 28px line-height, 0.196px tracking, plus supporting #86868b SF Pro Text.
+## Movimiento
 
-### Upgrade Comparison Panel
-**Role:** Device comparison workspace
+- Transiciones de Konsta para hojas, alertas y pestañas (no se reemplazan).
+- Gráficos: crecen una vez al montar (700 ms, ease-out exponencial). Al cambiar de mes se reinician.
+- Contenido de pantalla: aparece con `aparecer-suave` (400 ms, `opacity` + `transform`).
+- `prefers-reduced-motion`: todas las animaciones y transiciones se reducen a ~0.
 
-Set the parent panel on #1d1d1f with a 28px radius and no shadow. Use #f5f5f7 SF Pro Display at 40px or larger for the comparison statement, #86868b for support text, and arrange black 28px feature tiles in a multi-column grid.
+## Accesibilidad (piso)
 
-### Device Selector Input
-**Role:** Comparison device picker
+- Contraste AA en texto y placeholders (placeholders al 55% en claro, 50% en oscuro; el "0" del monto al 45% por ser texto grande).
+- Áreas táctiles ≥ 44×44: segmentos forzados a 44px, chips con área extendida, botones de icono `size-11`.
+- Foco visible en controles (anillo del color de acento); en campos de texto marca el cursor, como en iOS.
+- Iconos solo-icono con `aria-label`; selección con `aria-pressed`; errores con `role="alert"`.
 
-Use rgba(255,255,255,0.04) fill, a 1px #6e6e73 border, #f5f5f7 input text, 980px radius, and 24px left / 45px right padding. Apply a 1px Apple Blue #0071e3 focus outline with a 1px offset.
+## No hacer
 
-### New Release Marker
-**Role:** Small status label
-
-Render as text-only Copper New #b64400 in SF Pro Text 12px/600, 16px line-height, and -0.12px tracking. Do not place it in a colored badge container.
-
-### Pale Comparison Card
-**Role:** Light-mode product comparison surface
-
-Use #ffffff fill, #1d1d1f text, a 28px radius, and no shadow. Preserve the same 16px internal spacing rhythm as dark tiles; use Cobalt Link #0066cc for links.
-
-## Do's and Don'ts
-
-### Do
-- Use Obsidian #000000 for full-bleed product reveals and Feature Metric Tile backgrounds.
-- Set dark-surface headlines in Porcelain #f5f5f7; use Ash #86868b for supporting copy.
-- Use SF Pro Display 80px/600 with 84px line-height and -1.2px tracking for hero-scale statements.
-- Use 28px corners for media frames, comparison panels, and feature tiles.
-- Reserve Apple Blue #0071e3 filled pills for Buy and Learn More controls.
-- Use Electric Link #2997ff for links on Carbon #1d1d1f or Obsidian #000000 surfaces and Cobalt Link #0066cc on White #ffffff surfaces.
-- Keep local product navigation at 20px radius and global utility navigation at 44px height.
-
-### Don't
-- Do not use shadows on product media, cards, or comparison tiles; retain 28px shape separation instead.
-- Do not use Apple Blue #0071e3 as a general section background or feature-card fill.
-- Do not round feature tiles below 28px or replace purchase pills with rectangular buttons.
-- Do not use White #ffffff as the default dark-surface headline color when Porcelain #f5f5f7 is available.
-- Do not set hero display text in SF Pro Text or above the measured 96px/600 display treatment.
-- Do not use Copper New #b64400 for error messages, purchase controls, or large headings.
-- Do not introduce gradients beyond the Carbon #1d1d1f-to-Obsidian #000000 section fade.
-
-## Surfaces
-
-| Level | Name | Value | Purpose |
-|-------|------|-------|---------|
-| 0 | Obsidian Stage | `#000000` | Full-bleed hero, product media, and black feature-tile canvas. |
-| 1 | Graphite Chrome | `#0e0e0e` | Raised local navigation and dark control surfaces. |
-| 2 | Carbon Panel | `#1d1d1f` | Charcoal content sections and rounded comparison workspaces. |
-| 3 | White Comparison | `#ffffff` | Pale product-comparison cards and light contextual surfaces. |
-
-## Elevation
-
-Elevation is almost entirely absent: separate layers through black-to-charcoal surface shifts, 1px keylines, blur-backed navigation, and 28px media geometry. The only shadow-like treatment is a 1px outline—rgb(40, 40, 40) 0px 0px 0px 1px on navigation and rgb(110, 110, 115) 0px 0px 0px 1px on compact outlined controls.
-
-## Imagery
-
-Imagery is product-first, not lifestyle-first: large photorealistic iPhone renders, extreme camera-module crops, illuminated chip graphics, and sparse capability symbols occupy most of the visual field. Hardware is isolated against pure black or deep burgundy-black environments, with high-contrast rim lighting and glossy metal detail; media is contained in 28px rounded frames when it enters content sections. Visuals explain specific product systems—camera, processor, battery, and controls—while text overlays remain minimal and bright. Icons are predominantly monochrome, thin utility glyphs; the single green battery graphic and occasional yellow camera value operate as technical visual cues, not a broad illustration palette.
-
-## Layout
-
-The page is a long, full-bleed dark product narrative under a compact global utility bar, a 72px announcement strip, and a contained local product-navigation bar. The opening screen is an Obsidian hardware stage: a centered phone render dominates the upper field while product name, oversized slogan, pricing capsule, and Buy pill anchor the lower edge. Subsequent sections switch to Carbon bands with contained headers and wide 28px media frames, then move into a large rounded comparison panel with a multi-column grid of black feature tiles. Content remains spacious at the page level but tightly composed inside media overlays and feature modules; white comparison surfaces appear later as deliberate visual resets rather than alternating page bands.
-
-## Agent Prompt Guide
-
-Quick Color Reference:
-- Obsidian: #000000 — Hero canvas, full-bleed media stages, feature-tile backgrounds, and dark product controls
-- Graphite: #0e0e0e — Raised navigation and near-black control surfaces
-- Carbon: linear-gradient(#1d1d1f, #000000 288px) — Charcoal content bands, comparison panels, and dark text on white sections
-- Steel: #333336 — Hairline card borders, translucent control fills, and dark chrome
-- Slate: #6e6e73 — Input outlines, secondary dividers, and subdued interface text
-- Ash: #86868b — Muted explanatory copy, inactive labels, and subdued metadata
-- Porcelain: #f5f5f7 — Primary text on dark surfaces and pale alternate section backgrounds
-- White: #ffffff — High-contrast dark-surface text, bright comparison cards, and icon details
-- Apple Blue: #0071e3 — Filled Buy and Learn More controls — a concentrated blue punctuates the otherwise monochrome purchase path
-- Electric Link: #2997ff — Links on black and charcoal surfaces, including inline learning paths and section navigation
-- Cobalt Link: #0066cc — Links on pale surfaces and footer-like utility contexts
-- Copper New: #b64400 — Small New labels and release-status annotations
-- Optical Yellow: #ffd500 — Technical camera-spec emphasis within product storytelling
-
-Create an Obsidian Stage hero with a centered photorealistic phone render, a #f5f5f7 SF Pro Display product label at 32px/600, 36px line-height and 0.128px tracking, then a #f5f5f7 display statement at 80px/600, 84px line-height and -1.2px tracking.
-Create a compact purchase cluster: a rgba(66,66,69,0.72) pricing capsule with rgba(255,255,255,0.8) copy beside an Apple Blue #0071e3 Buy pill in SF Pro Text 12px/400, 16px line-height, -0.12px tracking, 170px radius, and 7px × 14px padding.
-Create a black 28px-radius feature metric tile with an isolated chip or battery visual, a #f5f5f7 SF Pro Display metric at 28px/600, 28px line-height and 0.196px tracking, and #86868b supporting copy.
-Create a Carbon #1d1d1f comparison panel with 28px corners, #f5f5f7 SF Pro Display section text, an input with rgba(255,255,255,0.04) fill and #6e6e73 border, and a grid of Obsidian 28px feature tiles.
-
-## Similar Brands
-
-- **Google Store** — Uses sparse hardware-led product storytelling, isolated device renders, and blue purchase controls against broad neutral fields.
-- **Samsung** — Shares full-bleed flagship-device launches with cinematic black product stages and oversized display typography.
-- **Sony** — Uses black product photography, technical camera emphasis, and restrained monochrome interface chrome around premium hardware.
-- **Tesla** — Pairs an image-dominant dark product presentation with minimal navigation and narrowly deployed blue conversion controls.
-
-## Quick Start
-
-### CSS Custom Properties
-
-```css
-:root {
-  /* Colors */
-  --color-obsidian: #000000;
-  --color-graphite: #0e0e0e;
-  --color-carbon: #1d1d1f;
-  --gradient-carbon: linear-gradient(#1d1d1f, #000000 288px);
-  --color-steel: #333336;
-  --color-slate: #6e6e73;
-  --color-ash: #86868b;
-  --color-porcelain: #f5f5f7;
-  --color-white: #ffffff;
-  --color-apple-blue: #0071e3;
-  --color-electric-link: #2997ff;
-  --color-cobalt-link: #0066cc;
-  --color-copper-new: #b64400;
-  --color-optical-yellow: #ffd500;
-
-  /* Typography — Font Families */
-  --font-sf-pro-text: 'SF Pro Text', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-sf-pro-display: 'SF Pro Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  /* Typography — Scale */
-  --text-utility-nav: 12px;
-  --leading-utility-nav: 1.33;
-  --tracking-utility-nav: -0.12px;
-  --text-body: 14px;
-  --leading-body: 1.29;
-  --tracking-body: -0.224px;
-  --text-body-strong: 14px;
-  --leading-body-strong: 1.29;
-  --tracking-body-strong: -0.224px;
-  --text-section-nav: 17px;
-  --leading-section-nav: 1.47;
-  --tracking-section-nav: -0.374px;
-  --text-product-label: 19px;
-  --leading-product-label: 1.21;
-  --tracking-product-label: 0.228px;
-  --text-feature-stat: 28px;
-  --leading-feature-stat: 1;
-  --tracking-feature-stat: 0.196px;
-  --text-hero-product-name: 32px;
-  --leading-hero-product-name: 1.13;
-  --tracking-hero-product-name: 0.128px;
-  --text-display: 80px;
-  --leading-display: 1.05;
-  --tracking-display: -1.2px;
-  --text-display-xl: 96px;
-  --leading-display-xl: 1.04;
-  --tracking-display-xl: -1.44px;
-
-  /* Typography — Weights */
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-
-  /* Spacing */
-  --spacing-4: 4px;
-  --spacing-6: 6px;
-  --spacing-7: 7px;
-  --spacing-8: 8px;
-  --spacing-10: 10px;
-  --spacing-12: 12px;
-  --spacing-14: 14px;
-  --spacing-16: 16px;
-  --spacing-20: 20px;
-  --spacing-24: 24px;
-  --spacing-28: 28px;
-  --spacing-32: 32px;
-  --spacing-48: 48px;
-  --spacing-90: 90px;
-  --spacing-144: 144px;
-  --spacing-210: 210px;
-
-  /* Layout */
-  --section-gap: 24px;
-  --card-padding: 16px;
-  --element-gap: 4px;
-
-  /* Border Radius */
-  --radius-md: 4px;
-  --radius-lg: 10px;
-  --radius-2xl: 20px;
-  --radius-3xl: 28px;
-  --radius-3xl-2: 32px;
-  --radius-3xl-3: 36px;
-  --radius-full: 120px;
-  --radius-full-2: 170px;
-  --radius-full-3: 980px;
-  --radius-full-4: 999px;
-  --radius-full-5: 9999px;
-
-  /* Named Radii */
-  --radius-cards: 28px;
-  --radius-links: 10px;
-  --radius-pills: 9999px;
-  --radius-images: 28px;
-  --radius-inputs: 980px;
-  --radius-buttons: 170px;
-  --radius-navigation: 20px;
-  --radius-compactbuttons: 36px;
-
-  /* Shadows */
-  --shadow-subtle: rgb(40, 40, 40) 0px 0px 0px 1px;
-  --shadow-subtle-2: rgb(110, 110, 115) 0px 0px 0px 1px;
-
-  /* Surfaces */
-  --surface-obsidian-stage: #000000;
-  --surface-graphite-chrome: #0e0e0e;
-  --surface-carbon-panel: #1d1d1f;
-  --surface-white-comparison: #ffffff;
-}
-```
-
-### Tailwind v4
-
-```css
-@theme {
-  /* Colors */
-  --color-obsidian: #000000;
-  --color-graphite: #0e0e0e;
-  --color-carbon: #1d1d1f;
-  --color-steel: #333336;
-  --color-slate: #6e6e73;
-  --color-ash: #86868b;
-  --color-porcelain: #f5f5f7;
-  --color-white: #ffffff;
-  --color-apple-blue: #0071e3;
-  --color-electric-link: #2997ff;
-  --color-cobalt-link: #0066cc;
-  --color-copper-new: #b64400;
-  --color-optical-yellow: #ffd500;
-
-  /* Typography */
-  --font-sf-pro-text: 'SF Pro Text', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-sf-pro-display: 'SF Pro Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  /* Typography — Scale */
-  --text-utility-nav: 12px;
-  --leading-utility-nav: 1.33;
-  --tracking-utility-nav: -0.12px;
-  --text-body: 14px;
-  --leading-body: 1.29;
-  --tracking-body: -0.224px;
-  --text-body-strong: 14px;
-  --leading-body-strong: 1.29;
-  --tracking-body-strong: -0.224px;
-  --text-section-nav: 17px;
-  --leading-section-nav: 1.47;
-  --tracking-section-nav: -0.374px;
-  --text-product-label: 19px;
-  --leading-product-label: 1.21;
-  --tracking-product-label: 0.228px;
-  --text-feature-stat: 28px;
-  --leading-feature-stat: 1;
-  --tracking-feature-stat: 0.196px;
-  --text-hero-product-name: 32px;
-  --leading-hero-product-name: 1.13;
-  --tracking-hero-product-name: 0.128px;
-  --text-display: 80px;
-  --leading-display: 1.05;
-  --tracking-display: -1.2px;
-  --text-display-xl: 96px;
-  --leading-display-xl: 1.04;
-  --tracking-display-xl: -1.44px;
-
-  /* Spacing */
-  --spacing-4: 4px;
-  --spacing-6: 6px;
-  --spacing-7: 7px;
-  --spacing-8: 8px;
-  --spacing-10: 10px;
-  --spacing-12: 12px;
-  --spacing-14: 14px;
-  --spacing-16: 16px;
-  --spacing-20: 20px;
-  --spacing-24: 24px;
-  --spacing-28: 28px;
-  --spacing-32: 32px;
-  --spacing-48: 48px;
-  --spacing-90: 90px;
-  --spacing-144: 144px;
-  --spacing-210: 210px;
-
-  /* Border Radius */
-  --radius-md: 4px;
-  --radius-lg: 10px;
-  --radius-2xl: 20px;
-  --radius-3xl: 28px;
-  --radius-3xl-2: 32px;
-  --radius-3xl-3: 36px;
-  --radius-full: 120px;
-  --radius-full-2: 170px;
-  --radius-full-3: 980px;
-  --radius-full-4: 999px;
-  --radius-full-5: 9999px;
-
-  /* Shadows */
-  --shadow-subtle: rgb(40, 40, 40) 0px 0px 0px 1px;
-  --shadow-subtle-2: rgb(110, 110, 115) 0px 0px 0px 1px;
-}
-```
+- No restilizar componentes de Konsta con colores o radios propios fuera de los tokens de arriba.
+- No pintar gastos de rojo ni usar el esmeralda fuera de ingresos; el coral de alerta solo para lo que pide atención. El azul no es decoración.
+- No volver a glassmorphism hecho a mano: el vidrio lo ponen `Navbar`, `ToolbarPane`, `Fab`, `Actions` y `SelectorVidrio`, todos con los materiales de vidrio de Konsta.
+- No usar emojis como íconos de interfaz.
+- No sobrescribir `my-*` en `Block`/`List` que siguen a un `BlockTitle` (el título se esconde detrás).

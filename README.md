@@ -40,7 +40,8 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 - Registro e inicio de sesión con correo y contraseña, cuentas privadas por usuario (Supabase Auth), con recuperación de contraseña por correo ("¿Olvidaste tu contraseña?").
 - Aislamiento de datos por usuario mediante Row Level Security a nivel de base de datos.
 - Instalable como PWA (ícono propio, pantalla completa, funciona con la app cerrada en segundo plano).
-- Interfaz construida siguiendo el lenguaje visual de iOS: tipografía del sistema, colores del sistema, tarjetas y hojas modales (sheets), barra de navegación inferior traslúcida.
+- Interfaz con aspecto nativo de iOS 26 (Konsta UI, material Liquid Glass): barra de pestañas flotante de vidrio, listas agrupadas, hojas inferiores con gesto para cerrar, selectores de vidrio animados y modo claro/oscuro automático.
+- Aviso de nueva versión: cuando se publica una actualización, aparece una cápsula animada con el botón "Actualizar"; la app no se recarga sola a mitad de un formulario.
 - Soporte de modo claro y oscuro basado en la preferencia del sistema operativo.
 
 ## Arquitectura y stack tecnológico
@@ -52,10 +53,11 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 | Enrutamiento | React Router (`HashRouter`, compatible con GitHub Pages) |
 | Backend / base de datos | Supabase (PostgreSQL, Auth, Row Level Security) |
 | Cliente de datos | `@supabase/supabase-js` |
-| Visualización de datos | Componentes propios (CSS), sin librería de gráficos |
+| Interfaz | Konsta UI 5 (tema iOS) sobre Tailwind CSS v4 |
+| Visualización de datos | Componentes propios (SVG y Tailwind), sin librería de gráficos |
 | Exportación a Excel | `exceljs`, cargado en un chunk separado solo al exportar (no afecta la carga inicial) |
-| Progresive Web App | `vite-plugin-pwa` (manifest y service worker) |
-| Estilos | CSS con variables de diseño, sin framework de utilidades |
+| Progresive Web App | `vite-plugin-pwa` (manifest y service worker en modo `prompt`, con aviso de actualización) |
+| Estilos | Tailwind CSS v4 con tokens propios (`src/index.css`); sistema documentado en `DESIGN.md` |
 | Hosting / CI-CD | GitHub Pages, desplegado mediante GitHub Actions |
 
 La aplicación es una SPA (Single Page Application) estática: no existe un servidor propio. Toda la persistencia y autenticación se delegan a Supabase, consumido directamente desde el navegador mediante su cliente JavaScript y protegido por políticas de seguridad a nivel de fila.

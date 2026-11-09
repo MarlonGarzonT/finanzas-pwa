@@ -1,13 +1,16 @@
+import { Badge, Block, BlockTitle, Link, List, Navbar, Page, Preloader, Searchbar } from 'konsta/react';
 import { useMemo, useState } from 'react';
+import { Cargando } from '../components/Cargando';
+import { ChipOpcion } from '../components/ChipOpcion';
+import { FilaMovimiento } from '../components/FilaMovimiento';
 import { HistorialFiltrosSheet } from '../components/HistorialFiltrosSheet';
+import { IconoDescargar, IconoFiltro } from '../components/Iconos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
-import { SelectorPagina } from '../components/SelectorPagina';
-import { Spinner } from '../components/Spinner';
 import { useFinanzas } from '../data/FinanzasContext';
-import type { Transaccion } from '../types';
-import { colorCategoria } from '../utils/colorCategoria';
+import type { NuevaTransaccion, Transaccion } from '../types';
 import { exportarTransaccionesExcel } from '../utils/exportarExcel';
 import {
+  capitalizarPrimera,
   fechaEnMesSeleccionado,
   formatearFechaCorta,
   formatearMonto,
@@ -20,26 +23,14 @@ import {
   FILTROS_INICIALES,
   type FiltrosHistorial,
 } from '../utils/filtrosHistorial';
-import './Historial.css';
-
-function capitalizarPrimera(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
 
 export function Historial() {
-  const {
-    transacciones,
-    categorias,
-    cargando,
-    actualizarMovimiento,
-    eliminarMovimiento,
-    crearCategoria,
-  } = useFinanzas();
+  const { transacciones, categorias, cargando, actualizarMovimiento, eliminarMovimiento, crearCategoria } = useFinanzas();
   const [editando, setEditando] = useState<Transaccion | null>(null);
-  const [guardando, setGuardando] = useState(false);
   const [filtros, setFiltros] = useState<FiltrosHistorial>(FILTROS_INICIALES);
   const [filtrosAbierto, setFiltrosAbierto] = useState(false);
   const [exportando, setExportando] = useState(false);
+  const [errorExportar, setErrorExportar] = useState<string | null>(null);
 
   const categoriaPorId = useMemo(() => {
     const mapa = new Map(categorias.map((c) => [c.id, c]));
@@ -54,8 +45,7 @@ export function Historial() {
   const grupos = useMemo(() => {
     const mapa = new Map<string, Transaccion[]>();
     for (const t of transaccionesFiltradas) {
-      const fecha = new Date(t.fecha);
-      const clave = capitalizarPrimera(nombreMes(fecha));
+      const clave = capitalizarPrimera(nombreMes(new Date(t.fecha)));
       if (!mapa.has(clave)) mapa.set(clave, []);
       mapa.get(clave)!.push(t);
     }
@@ -71,9 +61,9 @@ export function Historial() {
   );
 
   const filtrosActivos = contarFiltrosActivos(filtros);
-  const hayFiltrosDeChip = filtrosActivos > 0;
+  const hayMovimientos = !cargando && transacciones.length > 0;
 
-  function limpiarCategoria(id: string) {
+  function quitarCategoria(id: string) {
     setFiltros((prev) => {
       const copia = new Set(prev.categoriaIds);
       copia.delete(id);
@@ -81,207 +71,184 @@ export function Historial() {
     });
   }
 
-  async function manejarGuardar(datos: {
-    item: string;
-    categoriaId: string;
-    tipo: 'ingreso' | 'egreso';
-    monto: number;
-    mes: Date;
-  }) {
-    if (!editando) return;
-    const { mes, ...resto } = datos;
-    const fecha = fechaEnMesSeleccionado(mes, new Date(editando.fecha));
-    setGuardando(true);
-    await actualizarMovimiento(editando.id, resto, fecha);
-    setGuardando(false);
-    setEditando(null);
-  }
-
-  async function manejarEliminar() {
-    if (!editando) return;
-    setGuardando(true);
-    await eliminarMovimiento(editando.id);
-    setGuardando(false);
-    setEditando(null);
-  }
-
+  // Exporta todo el historial (no solo lo filtrado) a un .xlsx; ExcelJS se
+  // carga recién aquí, en su propio chunk.
   async function manejarExportar() {
     setExportando(true);
+    setErrorExportar(null);
     try {
       await exportarTransaccionesExcel(transacciones, categoriaPorId);
+    } catch {
+      setErrorExportar('No se pudo generar el Excel. Revisa tu conexión e intenta de nuevo.');
     } finally {
       setExportando(false);
     }
   }
 
+  async function manejarGuardar({ mes, ...datos }: NuevaTransaccion & { mes: Date }) {
+    if (!editando) return;
+    await actualizarMovimiento(editando.id, datos, fechaEnMesSeleccionado(mes, new Date(editando.fecha)));
+    setEditando(null);
+  }
+
+  async function manejarEliminar() {
+    if (!editando) return;
+    await eliminarMovimiento(editando.id);
+    setEditando(null);
+  }
+
+  const etiquetaMonto =
+    filtros.montoMin !== null && filtros.montoMax !== null
+      ? `${formatearMonto(filtros.montoMin)} – ${formatearMonto(filtros.montoMax)}`
+      : filtros.montoMin !== null
+        ? `Desde ${formatearMonto(filtros.montoMin)}`
+        : filtros.montoMax !== null
+          ? `Hasta ${formatearMonto(filtros.montoMax)}`
+          : null;
+
   return (
-    <div className="historial">
-      <header className="historial__header">
-        <SelectorPagina />
-
-        {!cargando && transacciones.length > 0 && (
-          <div className="historial__buscador">
-            <span aria-hidden>🔎</span>
-            <input
-              type="search"
-              placeholder="Buscar movimiento"
+    <Page className="pb-[calc(var(--k-safe-area-bottom)+112px)]">
+      <Navbar
+        centerTitle
+        title="Historial"
+        right={
+          hayMovimientos && (
+            <>
+              <Link
+                iconOnly
+                onClick={manejarExportar}
+                aria-label={exportando ? 'Generando Excel' : 'Exportar a Excel'}
+                aria-busy={exportando}
+                className={exportando ? 'pointer-events-none' : ''}
+              >
+                {exportando ? <Preloader className="size-6" /> : <IconoDescargar className="size-7" />}
+              </Link>
+              <Link
+                iconOnly
+                onClick={() => setFiltrosAbierto(true)}
+                aria-label={filtrosActivos > 0 ? `Filtros, ${filtrosActivos} activos` : 'Filtros'}
+                className="relative"
+              >
+                <IconoFiltro className="size-7" />
+                {filtrosActivos > 0 && (
+                  <Badge small className="absolute -top-0.5 -right-1" aria-hidden="true">
+                    {filtrosActivos}
+                  </Badge>
+                )}
+              </Link>
+            </>
+          )
+        }
+        subnavbar={
+          hayMovimientos && (
+            <Searchbar
               value={filtros.texto}
-              onChange={(e) => setFiltros((prev) => ({ ...prev, texto: e.target.value }))}
+              placeholder="Buscar movimiento"
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFiltros((prev) => ({ ...prev, texto: e.target.value }))}
+              onClear={() => setFiltros((prev) => ({ ...prev, texto: '' }))}
+              clearButton
+              disableButton={false}
             />
-          </div>
-        )}
+          )
+        }
+      />
 
-        {!cargando && transacciones.length > 0 && (
-          <button
-            type="button"
-            className="historial__boton-filtros"
-            onClick={manejarExportar}
-            disabled={exportando}
-            aria-label="Exportar a Excel"
-            title="Exportar a Excel"
-          >
-            {exportando ? (
-              <Spinner />
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </button>
-        )}
+      {errorExportar && (
+        <Block className="my-3 text-[15px] text-alerta" role="alert">
+          {errorExportar}
+        </Block>
+      )}
 
-        {!cargando && transacciones.length > 0 && (
-          <button
-            type="button"
-            className={`historial__boton-filtros ${filtrosActivos > 0 ? 'historial__boton-filtros--activo' : ''}`}
-            onClick={() => setFiltrosAbierto(true)}
-            aria-label="Filtros"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
-            </svg>
-            {filtrosActivos > 0 && <span className="historial__insignia">{filtrosActivos}</span>}
-          </button>
-        )}
-      </header>
-
-      {hayFiltrosDeChip && (
-        <div className="historial__chips-activos">
+      {filtrosActivos > 0 && (
+        <div className="flex gap-2 overflow-x-auto px-4 pt-3 pb-1 [scrollbar-width:none]" role="group" aria-label="Filtros activos">
           {Array.from(filtros.categoriaIds).map((id) => {
             const cat = categoriaPorId(id);
             return (
-              <button key={id} type="button" className="chip chip--activo" onClick={() => limpiarCategoria(id)}>
-                {cat?.emoji} {cat?.nombre ?? 'Categoría'} ✕
-              </button>
+              <ChipOpcion key={id} activo onClick={() => quitarCategoria(id)} onQuitar={() => quitarCategoria(id)}>
+                {cat?.emoji} {cat?.nombre ?? 'Categoría'}
+              </ChipOpcion>
             );
           })}
           {filtros.tipo !== 'todos' && (
-            <button
-              type="button"
-              className="chip chip--activo"
+            <ChipOpcion
+              activo
               onClick={() => setFiltros((prev) => ({ ...prev, tipo: 'todos' }))}
+              onQuitar={() => setFiltros((prev) => ({ ...prev, tipo: 'todos' }))}
             >
-              {filtros.tipo === 'ingreso' ? 'Ingresos' : 'Gastos'} ✕
-            </button>
+              {filtros.tipo === 'ingreso' ? 'Ingresos' : 'Gastos'}
+            </ChipOpcion>
           )}
           {filtros.soloFijos && (
-            <button
-              type="button"
-              className="chip chip--activo"
+            <ChipOpcion
+              activo
               onClick={() => setFiltros((prev) => ({ ...prev, soloFijos: false }))}
+              onQuitar={() => setFiltros((prev) => ({ ...prev, soloFijos: false }))}
             >
-              📌 Fijos ✕
-            </button>
+              Solo fijos
+            </ChipOpcion>
           )}
-          {(filtros.montoMin !== null || filtros.montoMax !== null) && (
-            <button
-              type="button"
-              className="chip chip--activo"
+          {etiquetaMonto && (
+            <ChipOpcion
+              activo
               onClick={() => setFiltros((prev) => ({ ...prev, montoMin: null, montoMax: null }))}
+              onQuitar={() => setFiltros((prev) => ({ ...prev, montoMin: null, montoMax: null }))}
             >
-              {filtros.montoMin !== null && filtros.montoMax !== null
-                ? `${formatearMonto(filtros.montoMin)} – ${formatearMonto(filtros.montoMax)}`
-                : filtros.montoMin !== null
-                  ? `Desde ${formatearMonto(filtros.montoMin)}`
-                  : `Hasta ${formatearMonto(filtros.montoMax!)}`}{' '}
-              ✕
-            </button>
+              {etiquetaMonto}
+            </ChipOpcion>
           )}
           {filtros.mes && (
-            <button
-              type="button"
-              className="chip chip--activo"
+            <ChipOpcion
+              activo
               onClick={() => setFiltros((prev) => ({ ...prev, mes: null }))}
+              onQuitar={() => setFiltros((prev) => ({ ...prev, mes: null }))}
             >
-              {capitalizarPrimera(nombreMes(filtros.mes))} ✕
-            </button>
+              {capitalizarPrimera(nombreMes(filtros.mes))}
+            </ChipOpcion>
           )}
-          <button type="button" className="chip" onClick={() => setFiltros(FILTROS_INICIALES)}>
+          <ChipOpcion activo={false} onClick={() => setFiltros(FILTROS_INICIALES)}>
             Limpiar todo
-          </button>
+          </ChipOpcion>
         </div>
-      )}
-
-      {!cargando && transaccionesFiltradas.length > 0 && (
-        <p className="historial__total">
-          {transaccionesFiltradas.length} movimiento{transaccionesFiltradas.length === 1 ? '' : 's'} ·{' '}
-          <span
-            className={
-              totalFiltrado > 0
-                ? 'historial__total-monto--ingreso'
-                : totalFiltrado < 0
-                  ? 'historial__total-monto--egreso'
-                  : undefined
-            }
-          >
-            {formatearMontoConSigno(totalFiltrado)}
-          </span>
-        </p>
       )}
 
       {cargando ? (
-        <div className="historial__cargando">
-          <Spinner />
-        </div>
+        <Cargando />
       ) : transacciones.length === 0 ? (
-        <p className="historial__vacio">Aún no tienes movimientos registrados.</p>
+        <Block className="text-center text-[17px] text-secundario">
+          Aún no tienes movimientos. Regístralos desde Resumen con el botón +.
+        </Block>
       ) : transaccionesFiltradas.length === 0 ? (
-        <p className="historial__vacio">Ningún movimiento coincide con estos filtros.</p>
+        <Block className="flex flex-col items-center gap-3 text-center">
+          <p className="m-0 text-[17px] text-secundario">Ningún movimiento coincide con esta búsqueda.</p>
+          <Link onClick={() => setFiltros(FILTROS_INICIALES)}>Quitar búsqueda y filtros</Link>
+        </Block>
       ) : (
-        <div className="historial__contenido">
+        <div className="aparecer-suave">
+          <p className="mx-4 mt-3 mb-0 text-[15px] text-secundario cifras" aria-live="polite">
+            {transaccionesFiltradas.length} movimiento{transaccionesFiltradas.length === 1 ? '' : 's'} ·{' '}
+            <span
+              className={`font-semibold ${totalFiltrado > 0 ? 'text-ingreso' : 'text-black dark:text-white'}`}
+            >
+              {formatearMontoConSigno(totalFiltrado)}
+            </span>
+          </p>
           {grupos.map(([mes, items]) => (
-            <section key={mes} className="historial__grupo">
-              <h2>{mes}</h2>
-              <ul>
+            <section key={mes} aria-label={mes}>
+              <BlockTitle>{mes}</BlockTitle>
+              <List strong inset dividers>
                 {items.map((t) => {
                   const categoria = categoriaPorId(t.categoriaId);
                   return (
-                    <li key={t.id} className="movimiento" onClick={() => setEditando(t)}>
-                      <span
-                        className="movimiento__icono"
-                        style={{ background: `color-mix(in srgb, ${colorCategoria(t.categoriaId)} 22%, var(--surface))` }}
-                        aria-hidden
-                      >
-                        {categoria?.emoji ?? '🏷️'}
-                      </span>
-                      <div className="movimiento__detalle">
-                        <span className="movimiento__item">{t.item}</span>
-                        <span className="movimiento__meta">
-                          <span className="movimiento__categoria">{categoria?.nombre ?? 'Otros'}</span>
-                          <span className="movimiento__meta-separador">·</span>
-                          <span>{formatearFechaCorta(t.fecha)}</span>
-                          <span className="movimiento__meta-separador">·</span>
-                          <span>Sem. {t.semanaDelMes}</span>
-                        </span>
-                      </div>
-                      <span className={`movimiento__monto movimiento__monto--${t.tipo}`}>
-                        {t.tipo === 'ingreso' ? '+' : '-'}
-                        {formatearMonto(t.monto)}
-                      </span>
-                    </li>
+                    <FilaMovimiento
+                      key={t.id}
+                      transaccion={t}
+                      categoria={categoria}
+                      onSeleccionar={setEditando}
+                      detalle={`${categoria?.nombre ?? 'Otros'} · ${formatearFechaCorta(t.fecha)} · Sem. ${t.semanaDelMes}`}
+                    />
                   );
                 })}
-              </ul>
+              </List>
             </section>
           ))}
         </div>
@@ -292,7 +259,6 @@ export function Historial() {
         categorias={categorias}
         transaccion={editando}
         mesSeleccionado={editando ? new Date(editando.fecha) : new Date()}
-        guardando={guardando}
         onCerrar={() => setEditando(null)}
         onGuardar={manejarGuardar}
         onEliminar={manejarEliminar}
@@ -306,6 +272,6 @@ export function Historial() {
         onCerrar={() => setFiltrosAbierto(false)}
         onAplicar={setFiltros}
       />
-    </div>
+    </Page>
   );
 }

@@ -1,23 +1,31 @@
+import { App as AppKonsta } from 'konsta/react';
+import { lazy, Suspense } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { Login } from './auth/Login';
 import { RestablecerPassword } from './auth/RestablecerPassword';
-import { Spinner } from './components/Spinner';
+import { BarraPestanas } from './components/BarraPestanas';
+import { Cargando } from './components/Cargando';
+import { AvisoActualizacion } from './components/AvisoActualizacion';
+import { LimiteDeError } from './components/LimiteDeError';
 import { FinanzasProvider } from './data/FinanzasContext';
 import { GruposProvider } from './data/GruposContext';
-import { GrupoDetalle } from './pages/GrupoDetalle';
-import { Grupos } from './pages/Grupos';
-import { Historial } from './pages/Historial';
-import { Reportes } from './pages/Reportes';
 import { Resumen } from './pages/Resumen';
+
+// Resumen es la pantalla de entrada y va en el bundle principal; el resto se
+// carga al abrir su pestaña.
+const Historial = lazy(() => import('./pages/Historial').then((m) => ({ default: m.Historial })));
+const Reportes = lazy(() => import('./pages/Reportes').then((m) => ({ default: m.Reportes })));
+const Grupos = lazy(() => import('./pages/Grupos').then((m) => ({ default: m.Grupos })));
+const GrupoDetalle = lazy(() => import('./pages/GrupoDetalle').then((m) => ({ default: m.GrupoDetalle })));
 
 function AppShell() {
   const { session, cargando, modoRecuperacion } = useAuth();
 
   if (cargando) {
     return (
-      <div className="app-cargando">
-        <Spinner />
+      <div className="flex h-full">
+        <Cargando />
       </div>
     );
   }
@@ -37,13 +45,18 @@ function AppShell() {
     <FinanzasProvider>
       <GruposProvider>
         <HashRouter>
-          <Routes>
-            <Route path="/" element={<Resumen />} />
-            <Route path="/historial" element={<Historial />} />
-            <Route path="/reportes" element={<Reportes />} />
-            <Route path="/grupos" element={<Grupos />} />
-            <Route path="/grupos/:id" element={<GrupoDetalle />} />
-          </Routes>
+          <LimiteDeError>
+            <Suspense fallback={<Cargando />}>
+              <Routes>
+                <Route path="/" element={<Resumen />} />
+                <Route path="/historial" element={<Historial />} />
+                <Route path="/reportes" element={<Reportes />} />
+                <Route path="/grupos" element={<Grupos />} />
+                <Route path="/grupos/:id" element={<GrupoDetalle />} />
+              </Routes>
+            </Suspense>
+          </LimiteDeError>
+          <BarraPestanas />
         </HashRouter>
       </GruposProvider>
     </FinanzasProvider>
@@ -52,8 +65,14 @@ function AppShell() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppShell />
-    </AuthProvider>
+    <AppKonsta theme="ios" safeAreas className="h-full min-h-0">
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
+      {/* Las hojas inferiores y alertas se dibujan aquí (portal), dentro del
+          contexto de Konsta pero fuera de cualquier pantalla con transform. */}
+      <div id="capa-hojas" />
+      <AvisoActualizacion />
+    </AppKonsta>
   );
 }

@@ -1,1 +1,222 @@
-@import './styles/theme.css';
+@import 'tailwindcss';
+@import 'konsta/react/theme.css';
+
+/* Azul del sistema de iOS como color de acento (tint) de toda la app. Konsta
+   deriva de aquí los tonos de botones, links, toggles y pestañas. */
+@theme {
+  --color-brand-primary: #007aff;
+}
+
+/* Color del dinero, estilo Apple Card: solo el ingreso lleva color
+   (esmeralda); el gasto se escribe en el color normal del texto, con su
+   signo −. El coral de "alerta" no es "gasto": queda para lo que sí pide
+   atención (saldo del mes en negativo, más gasto que el mes pasado, errores
+   y acciones destructivas). Los tonos de texto en claro pasan 4.5:1 sobre
+   blanco y sobre el gris agrupado. */
+:root {
+  --dinero-ingreso: #047857;
+  --dinero-ingreso-relleno: #10b981;
+  --alerta: #c22e12;
+  --alerta-relleno: #f0563c;
+  --texto-secundario: rgb(60 60 67 / 0.75);
+  --pista-grafico: rgb(120 120 128 / 0.16);
+
+  /* Tonos solo para identidad de categorías y miembros: nunca dinero ni acento. */
+  --categoria-azul: #0a84ff;
+  --categoria-naranja: #ff9500;
+  --categoria-morado: #af52de;
+  --categoria-cian: #30b0c7;
+  --categoria-rosa: #ff2d55;
+  --categoria-menta: #00c7be;
+  --categoria-amarillo: #ffcc00;
+  --categoria-cafe: #a2845e;
+}
+
+.dark {
+  --dinero-ingreso: #34d399;
+  --dinero-ingreso-relleno: #34d399;
+  --alerta: #ff8d78;
+  --alerta-relleno: #ff7a63;
+  --texto-secundario: rgb(235 235 245 / 0.6);
+  --pista-grafico: rgb(120 120 128 / 0.32);
+}
+
+@theme inline {
+  --color-ingreso: var(--dinero-ingreso);
+  --color-ingreso-relleno: var(--dinero-ingreso-relleno);
+  --color-alerta: var(--alerta);
+  --color-alerta-relleno: var(--alerta-relleno);
+  --color-secundario: var(--texto-secundario);
+  --color-pista: var(--pista-grafico);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* La página nunca scrollea: cada pantalla (k-page) scrollea por dentro. Así
+   el rebote de iOS no arrastra la barra de pestañas ni deja huecos. */
+html,
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--color-ios-light-surface);
+}
+
+.dark body,
+body.dark {
+  background: var(--color-ios-dark-surface);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+/* Anillo de foco solo para controles: en los campos de texto el cursor ya
+   marca el foco, como en iOS. */
+:focus-visible:not(input, textarea) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+input,
+textarea {
+  caret-color: var(--color-primary);
+}
+
+/* Los segmentos de Konsta miden 34px; se llevan al mínimo táctil de 44px.
+   (CSS sin capa: le gana a las utilidades de Tailwind sin !important.) */
+.k-segmented .k-button {
+  min-height: 2.75rem;
+}
+
+/* Deslizamiento del resaltado de un Segmented de Konsta con curva tipo
+   resorte de iOS (el de fábrica es lineal y de 200 ms). Solo transform,
+   que va por GPU; con reduce-motion lo apaga la regla global de abajo. */
+.selector-fluido > span.pointer-events-none {
+  transition-property: transform, width;
+  transition-duration: 420ms;
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.selector-fluido .k-button:active {
+  transform: scale(0.97);
+  transition: transform 120ms ease-out;
+}
+
+/* Montos: siempre cifras tabulares para que las columnas de dinero no bailen. */
+.cifras {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes aparecer-suave {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.aparecer-suave {
+  animation: aparecer-suave 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Aviso de versión nueva (AvisoActualizacion). Todo con transform/opacity. */
+@keyframes aviso-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-130%) scale(0.9);
+  }
+}
+
+@keyframes aviso-sale {
+  to {
+    opacity: 0;
+    transform: translateY(-130%) scale(0.9);
+  }
+}
+
+/* Entra con un rebote de resorte (se pasa un poco y vuelve), como la isla
+   dinámica; sale más rápido de lo que entra. */
+.aviso-entra {
+  animation: aviso-entra 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.aviso-sale {
+  animation: aviso-sale 0.28s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes aviso-halo {
+  from {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+.aviso-halo {
+  animation: aviso-halo 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes aviso-flotar {
+  0%,
+  100% {
+    transform: translateY(1.5px);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+.aviso-flotar {
+  animation: aviso-flotar 1.6s ease-in-out infinite;
+}
+
+@keyframes aviso-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.aviso-girar {
+  animation: aviso-girar 0.9s linear infinite;
+}
+
+/* Destello que cruza el botón cada pocos segundos para invitar a tocarlo.
+   El Button de Konsta ya es relative + overflow-hidden. */
+@keyframes boton-brillo {
+  0%,
+  55% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+  }
+}
+
+.boton-brillo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  pointer-events: none;
+  animation: boton-brillo 3.2s ease-in-out 0.8s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

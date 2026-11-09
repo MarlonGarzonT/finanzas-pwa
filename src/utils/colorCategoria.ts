@@ -1,12 +1,12 @@
 const PALETA = [
-  'var(--color-sky)',
-  'var(--warning)',
-  'var(--color-purple)',
-  'var(--color-teal)',
-  'var(--color-pink)',
-  'var(--color-turquoise)',
-  'var(--color-yellow)',
-  'var(--color-brown)',
+  'var(--categoria-azul)',
+  'var(--categoria-naranja)',
+  'var(--categoria-morado)',
+  'var(--categoria-cian)',
+  'var(--categoria-rosa)',
+  'var(--categoria-menta)',
+  'var(--categoria-amarillo)',
+  'var(--categoria-cafe)',
 ];
 
 export function colorCategoria(id: string | null | undefined): string {
