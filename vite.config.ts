@@ -3,8 +3,16 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Versión visible en el Perfil, para saber qué build tiene cada teléfono al
+// dar soporte: fecha del build y, en GitHub Actions, el commit corto.
+const fechaBuild = new Date().toISOString().slice(0, 10);
+const commit = process.env.GITHUB_SHA?.slice(0, 7);
+
 export default defineConfig({
   base: '/finanzas-pwa/',
+  define: {
+    __VERSION_APP__: JSON.stringify(commit ? `${fechaBuild} (${commit})` : `${fechaBuild} (local)`),
+  },
   plugins: [
     react(),
     tailwindcss(),

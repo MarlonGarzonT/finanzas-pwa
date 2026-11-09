@@ -9,15 +9,13 @@ import { Cargando } from './components/Cargando';
 import { AvisoActualizacion } from './components/AvisoActualizacion';
 import { LimiteDeError } from './components/LimiteDeError';
 import { FinanzasProvider } from './data/FinanzasContext';
-import { GruposProvider } from './data/GruposContext';
 import { Resumen } from './pages/Resumen';
 
 // Resumen es la pantalla de entrada y va en el bundle principal; el resto se
 // carga al abrir su pestaña.
 const Historial = lazy(() => import('./pages/Historial').then((m) => ({ default: m.Historial })));
 const Reportes = lazy(() => import('./pages/Reportes').then((m) => ({ default: m.Reportes })));
-const Grupos = lazy(() => import('./pages/Grupos').then((m) => ({ default: m.Grupos })));
-const GrupoDetalle = lazy(() => import('./pages/GrupoDetalle').then((m) => ({ default: m.GrupoDetalle })));
+const Perfil = lazy(() => import('./pages/Perfil').then((m) => ({ default: m.Perfil })));
 
 function AppShell() {
   const { session, cargando, modoRecuperacion } = useAuth();
@@ -43,22 +41,19 @@ function AppShell() {
 
   return (
     <FinanzasProvider>
-      <GruposProvider>
-        <HashRouter>
-          <LimiteDeError>
-            <Suspense fallback={<Cargando />}>
-              <Routes>
-                <Route path="/" element={<Resumen />} />
-                <Route path="/historial" element={<Historial />} />
-                <Route path="/reportes" element={<Reportes />} />
-                <Route path="/grupos" element={<Grupos />} />
-                <Route path="/grupos/:id" element={<GrupoDetalle />} />
-              </Routes>
-            </Suspense>
-          </LimiteDeError>
-          <BarraPestanas />
-        </HashRouter>
-      </GruposProvider>
+      <HashRouter>
+        <LimiteDeError>
+          <Suspense fallback={<Cargando />}>
+            <Routes>
+              <Route path="/" element={<Resumen />} />
+              <Route path="/historial" element={<Historial />} />
+              <Route path="/reportes" element={<Reportes />} />
+              <Route path="/perfil" element={<Perfil />} />
+            </Routes>
+          </Suspense>
+        </LimiteDeError>
+        <BarraPestanas />
+      </HashRouter>
     </FinanzasProvider>
   );
 }

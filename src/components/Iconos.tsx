@@ -55,13 +55,58 @@ export function IconoReportes(props: PropsIcono) {
   );
 }
 
-export function IconoGrupos(props: PropsIcono) {
+export function IconoPerfil(props: PropsIcono) {
   return (
     <Trazo {...props}>
-      <circle cx="9" cy="8.5" r="3.2" />
-      <path d="M3.5 19.5c.6-3.3 2.8-5.2 5.5-5.2s4.9 1.9 5.5 5.2" />
-      <circle cx="17" cy="9.5" r="2.5" />
-      <path d="M16.2 14.4c2.3.3 3.8 2 4.3 5.1" />
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="10" r="3" />
+      <path d="M6.2 18.1c1.2-2.1 3.3-3.3 5.8-3.3s4.6 1.2 5.8 3.3" />
+    </Trazo>
+  );
+}
+
+export function IconoMedalla(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <path d="M8 3.5h8l-2.2 5.2M8 3.5l2.2 5.2" />
+      <circle cx="12" cy="14.5" r="5.5" />
+      <path d="M12 12.2l.9 1.7 1.9.3-1.4 1.3.3 1.9-1.7-.9-1.7.9.3-1.9-1.4-1.3 1.9-.3z" fill="currentColor" strokeWidth="1" />
+    </Trazo>
+  );
+}
+
+export function IconoApariencia(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 4v16a8 8 0 0 0 0-16z" fill="currentColor" />
+    </Trazo>
+  );
+}
+
+export function IconoEtiqueta(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <path d="M3.5 12.2V5a1.5 1.5 0 0 1 1.5-1.5h7.2l8.3 8.3a1.5 1.5 0 0 1 0 2.1l-6.1 6.1a1.5 1.5 0 0 1-2.1 0z" />
+      <circle cx="8" cy="8" r="1.3" />
+    </Trazo>
+  );
+}
+
+export function IconoCorreo(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <rect x="3" y="5.5" width="18" height="13" rx="2.5" />
+      <path d="M3.5 7l8.5 6 8.5-6" />
+    </Trazo>
+  );
+}
+
+export function IconoLlave(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <circle cx="8" cy="15" r="4" />
+      <path d="M11 12l8.5-8.5M16.5 6.5l2.5 2.5M14.5 8.5l2 2" />
     </Trazo>
   );
 }
@@ -70,15 +115,6 @@ export function IconoMas(props: PropsIcono) {
   return (
     <Trazo {...props}>
       <path d="M12 5v14M5 12h14" />
-    </Trazo>
-  );
-}
-
-export function IconoMasOpciones(props: PropsIcono) {
-  return (
-    <Trazo {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 12h.01M12 12h.01M16 12h.01" strokeWidth="2.6" />
     </Trazo>
   );
 }

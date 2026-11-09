@@ -18,8 +18,15 @@
   --dinero-ingreso-relleno: #10b981;
   --alerta: #c22e12;
   --alerta-relleno: #f0563c;
+  /* Fijo en ambos modos: relleno de botones destructivos con texto blanco
+     (5.7:1). El coral claro del modo oscuro no pasa AA con blanco encima. */
+  --alerta-boton: #c22e12;
   --texto-secundario: rgb(60 60 67 / 0.75);
   --pista-grafico: rgb(120 120 128 / 0.16);
+  /* Logros del perfil (medalla y avance de hitos): el ámbar de iOS. El tono
+     de texto pasa 4.5:1 sobre su propio relleno al 15%. */
+  --logro: #ff9500;
+  --logro-texto: #9a5200;
   /* Barra de "Salió": neutra, como el texto de los gastos (estilo Apple Card). */
   --barra-neutra: rgb(60 60 67 / 0.55);
 
@@ -41,6 +48,7 @@
   --alerta-relleno: #ff7a63;
   --texto-secundario: rgb(235 235 245 / 0.6);
   --pista-grafico: rgb(120 120 128 / 0.32);
+  --logro-texto: #ffb340;
   --barra-neutra: rgb(235 235 245 / 0.7);
 }
 

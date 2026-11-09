@@ -1,7 +1,7 @@
 import { Tabbar, TabbarLink, ToolbarPane } from 'konsta/react';
 import type { ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { IconoGrupos, IconoHistorial, IconoReportes, IconoResumen } from './Iconos';
+import { IconoHistorial, IconoPerfil, IconoReportes, IconoResumen } from './Iconos';
 
 interface Pestana {
   ruta: string;
@@ -13,7 +13,7 @@ const PESTANAS: Pestana[] = [
   { ruta: '/', etiqueta: 'Resumen', icono: <IconoResumen className="size-7" /> },
   { ruta: '/historial', etiqueta: 'Historial', icono: <IconoHistorial className="size-7" /> },
   { ruta: '/reportes', etiqueta: 'Reportes', icono: <IconoReportes className="size-7" /> },
-  { ruta: '/grupos', etiqueta: 'Grupos', icono: <IconoGrupos className="size-7" /> },
+  { ruta: '/perfil', etiqueta: 'Perfil', icono: <IconoPerfil className="size-7" /> },
 ];
 
 // Barra de pestañas de iOS: las cuatro secciones de primer nivel siempre a
@@ -23,7 +23,6 @@ export function BarraPestanas() {
   const { pathname } = useLocation();
 
   function estaActiva(ruta: string) {
-    // "/grupos" también queda activa en /grupos/:id (el detalle de un grupo).
     return ruta === '/' ? pathname === '/' : pathname.startsWith(ruta);
   }
 

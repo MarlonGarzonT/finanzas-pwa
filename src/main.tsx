@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { iniciarTema } from './utils/tema'
 
 // Cuando el Service Worker nuevo toma el control (la persona tocó
 // "Actualizar", aquí o en otra pestaña), esta pestaña recarga: si siguiera
@@ -23,16 +24,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.startMessages();
 }
 
-// Konsta activa su modo oscuro con la clase `dark` en un ancestro, no con la
-// media query; se sincroniza aquí con la preferencia del sistema antes del
-// primer render para que no haya un destello claro al abrir de noche.
-const preferenciaOscura = window.matchMedia('(prefers-color-scheme: dark)');
-function aplicarModoOscuro() {
-  document.documentElement.classList.toggle('dark', preferenciaOscura.matches);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', preferenciaOscura.matches ? '#000000' : '#f2f2f7');
-}
-aplicarModoOscuro();
-preferenciaOscura.addEventListener('change', aplicarModoOscuro);
+iniciarTema();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

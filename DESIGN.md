@@ -45,6 +45,15 @@ Los gráficos que comparan categorías (barras de Resumen, dona de Reportes) usa
 
 El secundario está más oscuro que el `secondaryLabel` de iOS (60%) a propósito: así cumple WCAG AA sobre blanco y sobre el gris agrupado.
 
+### Logros (perfil)
+
+| Token | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `--logro` | `#ff9500` | `#ff9500` | Medalla del hito alcanzado y barra de avance hacia el siguiente (no texto) |
+| `--logro-texto` | `#9a5200` | `#ffb340` | Texto del Chip de la medalla sobre `--logro` al 15% (pasa 4.5:1) |
+
+Solo para la permanencia del usuario en el perfil: nunca dinero, alertas ni acento.
+
 ### Identidad de categorías y miembros
 
 `--categoria-azul, -naranja, -morado, -cian, -rosa, -menta, -amarillo, -cafe`. Se asignan por hash del id (`colorCategoria`). Nunca para dinero ni para el acento. En avatares van como **tinte** (22–35%) detrás del emoji o la inicial, no como relleno pleno, para no romper contraste.
@@ -70,7 +79,7 @@ Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redo
 
 ## Estructura de pantallas
 
-- **Navegación:** `Tabbar` + `ToolbarPane` de Konsta (cápsula Liquid Glass flotante) con 4 secciones: Resumen, Historial, Reportes, Grupos. Detalle de grupo se apila con `NavbarBackLink`.
+- **Navegación:** `Tabbar` + `ToolbarPane` de Konsta (cápsula Liquid Glass flotante) con 4 secciones: Resumen, Historial, Reportes y Perfil. Las pantallas que se apilen usan `NavbarBackLink`.
 - **Pantallas de primer nivel:** `Page` + `Navbar centerTitle` compacto (título centrado arriba, alineado con los botones de vidrio). Sin `large` ni `transparent`: el título grande quedaba bajo y a la izquierda, y `transparent` lo oculta hasta hacer scroll.
 - **Resumen:** selector de mes en texto discreto (‹ Mes ⌄ ›), "Disponible" grande sin signo si es positivo (con − y color de alerta si es negativo) y un `SelectorVidrio` con Gastos / Ingresos (etiqueta + total) que filtra el gráfico. Su resaltado se desliza con curva de resorte iOS (clase `.selector-fluido`, 420 ms, solo `transform`).
 - **Contenido:** `BlockTitle` + `List strong inset dividers` (listas agrupadas) o `Block strong inset rounded-3xl` (tarjetas de gráfico). No se pisan los márgenes verticales de Konsta (`my-*`) en bloques que siguen a un `BlockTitle`.
@@ -89,6 +98,7 @@ Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redo
 | `CampoMonto` | Monto grande centrado, solo dígitos, separador de miles, ancho que sigue a las cifras |
 | `SelectorVidrio` / `OpcionSelector` | `Segmented` de Konsta con material Liquid Glass (riel de vidrio con reflejos, resaltado tipo gota que se desliza con resorte). Se usa en **todos** los selectores de la app; no usar `Segmented` directo |
 | `AvisoActualizacion` | Cápsula Liquid Glass (`Glass` de Konsta) que baja desde arriba con rebote cuando hay versión nueva: ícono con halo y flecha que flota, botón "Actualizar" con destello, "Ahora no" para descartarla hasta volver a la app. La lógica vive en `useActualizacionApp` (SW en modo `prompt`) |
+| Perfil (`CabeceraPerfil`, `AvatarUsuario`, `IconoAjuste`) | Estilo cuenta de Apple en Ajustes: foto de Google (o iniciales sobre el acento), nombre, correo y método de inicio; debajo, la permanencia como protagonista (`TarjetaAntiguedad`: tiempo en la app en meses de calendario a 56px, Chip con la medalla del último hito y `Progressbar` de Konsta hacia el siguiente; hitos de 1 semana a 5 años en `utils/antiguedad.ts`) y "Tu constancia" (`ConstanciaMeses`: racha de meses seguidos, una barra por mes de los últimos 6 y total/promedio); ajustes en listas agrupadas con cuadro de color + ícono blanco a la izquierda (gris apariencia/contraseña, naranja categorías, verde exportar, azul correo). Cerrar sesión centrado en coral y con confirmación. La lógica vive en `usePerfil`, `usePreferenciaTema` y `useExportarExcel` |
 | `BalanceMes` | Tarjeta al inicio de Reportes con el balance del mes elegido: balance grande con signo, etiqueta de estado ("Vas bien" <80% de lo que entró, "Ojo" 80–100%, "Te pasaste" >100%, "Sin ingresos") y frase, más dos barras en la misma escala (Entró esmeralda / Salió neutra, coral si superó lo que entró). El estado siempre va en texto |
 | `GraficoMensual` | Últimos 6 meses en columnas pareadas Entró / Salió (coral si ese mes se gastó más de lo que entró). Cada columna es un botón que abre ese mes; la ventana termina en el mes actual y no se mueve al tocar |
 | `SelectorCategoria` | Cuadrícula de 4 columnas para elegir la categoría de un movimiento: emoji sobre el color de la categoría, nombre debajo, anillo + ✓ con rebote en la elegida y "Nueva" punteada al final. Ordena por uso real (`useCategoriasPorUso`) y preselecciona la más usada. Es un `radiogroup`. Va justo debajo del monto |

@@ -1,11 +1,9 @@
-import { Actions, ActionsButton, ActionsGroup, Block, BlockTitle, Fab, Link, Navbar, Page } from 'konsta/react';
+import { Block, BlockTitle, Fab, Navbar, Page } from 'konsta/react';
 import { useMemo, useState } from 'react';
-import { useAuth } from '../auth/AuthContext';
 import { BalanceCard } from '../components/BalanceCard';
 import { Cargando } from '../components/Cargando';
-import { GestionCategorias } from '../components/GestionCategorias';
 import { GraficoGastos } from '../components/GraficoGastos';
-import { IconoMas, IconoMasOpciones } from '../components/Iconos';
+import { IconoMas } from '../components/Iconos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { SelectorMes } from '../components/SelectorMes';
 import { UltimosMovimientos } from '../components/UltimosMovimientos';
@@ -22,14 +20,9 @@ export function Resumen() {
     actualizarMovimiento,
     eliminarMovimiento,
     crearCategoria,
-    actualizarCategoria,
-    eliminarCategoria,
   } = useFinanzas();
-  const { cerrarSesion } = useAuth();
   const [sheetAbierto, setSheetAbierto] = useState(false);
   const [editando, setEditando] = useState<Transaccion | null>(null);
-  const [categoriasAbierto, setCategoriasAbierto] = useState(false);
-  const [opcionesAbiertas, setOpcionesAbiertas] = useState(false);
   const [filtroGrafico, setFiltroGrafico] = useState<Tipo>('egreso');
   // Cada mes es su propia contabilidad, independiente de los demás: el
   // Disponible arranca en $0 al cambiar de mes, no arrastra el saldo previo.
@@ -101,15 +94,7 @@ export function Resumen() {
 
   return (
     <Page className="pagina-con-fab">
-      <Navbar
-        centerTitle
-        title="Resumen"
-        right={
-          <Link iconOnly onClick={() => setOpcionesAbiertas(true)} aria-label="Más opciones">
-            <IconoMasOpciones className="size-7" />
-          </Link>
-        }
-      />
+      <Navbar centerTitle title="Resumen" />
 
       {cargando ? (
         <Cargando />
@@ -151,33 +136,6 @@ export function Resumen() {
         aria-label="Nuevo movimiento"
       />
 
-      <Actions opened={opcionesAbiertas} onBackdropClick={() => setOpcionesAbiertas(false)}>
-        <ActionsGroup>
-          <ActionsButton
-            onClick={() => {
-              setOpcionesAbiertas(false);
-              setCategoriasAbierto(true);
-            }}
-          >
-            Gestionar categorías
-          </ActionsButton>
-          <ActionsButton
-            className="text-alerta"
-            onClick={() => {
-              setOpcionesAbiertas(false);
-              cerrarSesion();
-            }}
-          >
-            Cerrar sesión
-          </ActionsButton>
-        </ActionsGroup>
-        <ActionsGroup>
-          <ActionsButton bold onClick={() => setOpcionesAbiertas(false)}>
-            Cancelar
-          </ActionsButton>
-        </ActionsGroup>
-      </Actions>
-
       <NuevoMovimientoSheet
         abierto={sheetAbierto || editando !== null}
         categorias={categorias}
@@ -187,17 +145,6 @@ export function Resumen() {
         onGuardar={manejarGuardar}
         onEliminar={editando ? manejarEliminar : undefined}
         onCrearCategoria={crearCategoria}
-      />
-
-      <GestionCategorias
-        abierto={categoriasAbierto}
-        categorias={categorias}
-        onCerrar={() => setCategoriasAbierto(false)}
-        onCrear={async (nombre, tipo) => {
-          await crearCategoria(nombre, tipo);
-        }}
-        onActualizar={actualizarCategoria}
-        onEliminar={eliminarCategoria}
       />
     </Page>
   );

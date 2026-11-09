@@ -7,9 +7,9 @@ import { HistorialFiltrosSheet } from '../components/HistorialFiltrosSheet';
 import { IconoDescargar, IconoFiltro } from '../components/Iconos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { useFinanzas } from '../data/FinanzasContext';
+import { useExportarExcel } from '../data/useExportarExcel';
 import type { NuevaTransaccion, Transaccion } from '../types';
 import { resumirMovimientos } from '../utils/estadisticasMes';
-import { exportarTransaccionesExcel } from '../utils/exportarExcel';
 import {
   capitalizarPrimera,
   fechaEnMesSeleccionado,
@@ -30,8 +30,7 @@ export function Historial() {
   const [editando, setEditando] = useState<Transaccion | null>(null);
   const [filtros, setFiltros] = useState<FiltrosHistorial>(FILTROS_INICIALES);
   const [filtrosAbierto, setFiltrosAbierto] = useState(false);
-  const [exportando, setExportando] = useState(false);
-  const [errorExportar, setErrorExportar] = useState<string | null>(null);
+  const excel = useExportarExcel();
 
   const categoriaPorId = useMemo(() => {
     const mapa = new Map(categorias.map((c) => [c.id, c]));
@@ -69,20 +68,6 @@ export function Historial() {
     });
   }
 
-  // Exporta todo el historial (no solo lo filtrado) a un .xlsx; ExcelJS se
-  // carga recién aquí, en su propio chunk.
-  async function manejarExportar() {
-    setExportando(true);
-    setErrorExportar(null);
-    try {
-      await exportarTransaccionesExcel(transacciones, categoriaPorId);
-    } catch {
-      setErrorExportar('No se pudo generar el Excel. Revisa tu conexión e intenta de nuevo.');
-    } finally {
-      setExportando(false);
-    }
-  }
-
   async function manejarGuardar({ mes, ...datos }: NuevaTransaccion & { mes: Date }) {
     if (!editando) return;
     await actualizarMovimiento(editando.id, datos, fechaEnMesSeleccionado(mes, new Date(editando.fecha)));
@@ -114,12 +99,12 @@ export function Historial() {
             <>
               <Link
                 iconOnly
-                onClick={manejarExportar}
-                aria-label={exportando ? 'Generando Excel' : 'Exportar a Excel'}
-                aria-busy={exportando}
-                className={exportando ? 'pointer-events-none' : ''}
+                onClick={excel.exportar}
+                aria-label={excel.exportando ? 'Generando Excel' : 'Exportar a Excel'}
+                aria-busy={excel.exportando}
+                className={excel.exportando ? 'pointer-events-none' : ''}
               >
-                {exportando ? <Preloader className="size-6" /> : <IconoDescargar className="size-7" />}
+                {excel.exportando ? <Preloader className="size-6" /> : <IconoDescargar className="size-7" />}
               </Link>
               <Link
                 iconOnly
@@ -151,9 +136,9 @@ export function Historial() {
         }
       />
 
-      {errorExportar && (
+      {excel.error && (
         <Block className="my-3 text-[15px] text-alerta" role="alert">
-          {errorExportar}
+          {excel.error}
         </Block>
       )}
 

@@ -194,4 +194,4 @@ En Android, Chrome ofrece un mecanismo equivalente (**Instalar aplicación** o *
 ## Limitaciones conocidas
 
 - La aplicación requiere conexión a internet para leer y escribir datos; el service worker únicamente cachea el shell de la interfaz, no el contenido dinámico.
-- La exportación a Excel cubre solo transacciones y sus categorías (no incluye datos de grupos compartidos).
+- La exportación a Excel cubre solo transacciones y sus categorías.
