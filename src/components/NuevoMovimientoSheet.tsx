@@ -1,15 +1,16 @@
 import { BlockTitle, Button, List, ListItem } from 'konsta/react';
 import { useEffect, useState } from 'react';
-import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
+import { useCategoriasPorUso } from '../data/useCategoriasPorUso';
 import type { Categoria, NuevaTransaccion, Tipo, Transaccion } from '../types';
 import { capitalizarPrimera, nombreMes } from '../utils/fechas';
 import { CampoMonto } from './CampoMonto';
 import { CampoTexto } from './CampoTexto';
-import { ChipOpcion } from './ChipOpcion';
 import { DialogoConfirmar } from './DialogoConfirmar';
 import { HojaInferior } from './HojaInferior';
 import { NuevaCategoriaSheet } from './NuevaCategoriaSheet';
+import { SelectorCategoria } from './SelectorCategoria';
 import { SelectorMesSheet } from './SelectorMesSheet';
+import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 
 interface Props {
   abierto: boolean;
@@ -44,6 +45,10 @@ export function NuevoMovimientoSheet({
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const gastosPorUso = useCategoriasPorUso(categorias, 'egreso');
+  const ingresosPorUso = useCategoriasPorUso(categorias, 'ingreso');
+  // La preseleccionada es la más usada del tipo, no la primera alfabética.
+  const masUsada = (t: Tipo) => (t === 'egreso' ? gastosPorUso : ingresosPorUso)[0]?.id ?? '';
 
   useEffect(() => {
     if (!abierto) return;
@@ -57,7 +62,7 @@ export function NuevoMovimientoSheet({
       setTipo('egreso');
       setMonto('');
       setItem('');
-      setCategoriaId(categorias.find((c) => c.tipo === 'egreso')?.id ?? '');
+      setCategoriaId(masUsada('egreso'));
       setMes(mesSeleccionado);
     }
     setCreandoCategoria(false);
@@ -68,11 +73,9 @@ export function NuevoMovimientoSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al abrir/cambiar de transacción
   }, [abierto, transaccion]);
 
-  const categoriasDelTipo = categorias.filter((c) => c.tipo === tipo);
-
   function manejarCambiarTipo(nuevoTipo: Tipo) {
     setTipo(nuevoTipo);
-    setCategoriaId(categorias.find((c) => c.tipo === nuevoTipo)?.id ?? '');
+    setCategoriaId(masUsada(nuevoTipo));
   }
 
   async function manejarCrearCategoria(nombre: string) {
@@ -154,7 +157,15 @@ export function NuevoMovimientoSheet({
           </>
         }
       >
-        <List strong inset className="my-2">
+        <BlockTitle className="mt-2 mb-3">Categoría</BlockTitle>
+        <SelectorCategoria
+          categorias={tipo === 'egreso' ? gastosPorUso : ingresosPorUso}
+          seleccionadaId={categoriaId}
+          onSeleccionar={setCategoriaId}
+          onNueva={() => setCreandoCategoria(true)}
+        />
+
+        <List strong inset className="mt-5 mb-2">
           <CampoTexto etiqueta="Descripción" valor={item} onCambiar={setItem} placeholder="Almuerzo, Uber, Salario…" />
           {/* El mes decide en qué contabilidad mensual cae el movimiento: se
               puede registrar hoy algo que pertenece a otro mes. */}
@@ -168,18 +179,6 @@ export function NuevoMovimientoSheet({
             contentClassName="w-full text-left"
           />
         </List>
-
-        <BlockTitle className="mt-4">Categoría</BlockTitle>
-        <div className="flex flex-wrap gap-2 px-4" role="group" aria-label="Categoría">
-          {categoriasDelTipo.map((c) => (
-            <ChipOpcion key={c.id} activo={categoriaId === c.id} onClick={() => setCategoriaId(c.id)} media={<span aria-hidden="true">{c.emoji}</span>}>
-              {c.nombre}
-            </ChipOpcion>
-          ))}
-          <ChipOpcion activo={false} onClick={() => setCreandoCategoria(true)}>
-            <span className="text-primary">+ Nueva</span>
-          </ChipOpcion>
-        </div>
       </HojaInferior>
 
       <NuevaCategoriaSheet
