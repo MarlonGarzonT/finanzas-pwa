@@ -8,6 +8,8 @@ const TEXTO: Record<EstadoPush, string> = {
   cargando: 'Revisando si este teléfono puede recibir avisos…',
   encendido: 'Te llega un aviso en este teléfono el día después de la fecha acordada, y cada semana mientras no te paguen.',
   apagado: 'Recibe un aviso en este teléfono cuando alguien no te pague a tiempo.',
+  'sin-respuesta':
+    'El navegador no mostró el permiso o lo cerraste. Busca el ícono de notificaciones (campana) en la barra de direcciones, elige Permitir y vuelve a encenderlo.',
   'requiere-instalar': 'En iPhone, primero agrega la app a tu pantalla de inicio: Compartir → Agregar a inicio. Ábrela desde ahí y vuelve aquí.',
   bloqueado: 'Las notificaciones de esta app están bloqueadas. Actívalas en los ajustes del teléfono o del navegador.',
   'no-soportado': 'Este navegador no permite notificaciones.',
@@ -17,18 +19,19 @@ const TEXTO: Record<EstadoPush, string> = {
 
 export function AvisosPrestamos() {
   const { estado, ocupado, error, alternar } = useNotificacionesPush();
-  const controlable = estado === 'apagado' || estado === 'encendido';
+  const controlable = estado === 'apagado' || estado === 'encendido' || estado === 'sin-respuesta';
 
   return (
     <>
       <List strong inset className="mb-2">
         <ListItem
-          label={controlable}
           title="Avisarme si no me pagan"
           text={TEXTO[estado]}
           // Konsta corta el texto a 2 líneas; la instrucción de iPhone es más larga.
           contentClassName="[&_.line-clamp-2]:line-clamp-none"
           after={
+            // Sin `label` en la fila: el Toggle de Konsta ya es un <label> y
+            // anidarlos puede hacer que un toque cuente doble.
             <Toggle
               checked={estado === 'encendido'}
               onChange={alternar}

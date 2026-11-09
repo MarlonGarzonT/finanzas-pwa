@@ -20,11 +20,13 @@ Identifican a tu servidor ante los servicios de push. Se generan una sola vez:
 npx web-push generate-vapid-keys
 ```
 
-- La **Public Key** va en:
-  - `.env.local` → `VITE_VAPID_PUBLIC_KEY=...`
-  - GitHub → Settings → Secrets → Actions → `VAPID_PUBLIC_KEY`
+- La **Public Key** va en el código, en `CLAVE_PUBLICA_VAPID`
+  (`src/data/notificacionesPush.ts`). Es pública por diseño: cada navegador la
+  recibe al suscribirse.
 - La **Private Key** va **solo** en los secrets de la Edge Function (paso 3).
   Nunca en el frontend ni en el repositorio.
+- Si cambias una, cambia la otra: las suscripciones existentes dejan de servir
+  y cada dispositivo tiene que volver a activar los avisos.
 
 ## 3. Edge Function
 

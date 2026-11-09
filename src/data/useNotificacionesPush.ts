@@ -18,13 +18,18 @@ export function useNotificacionesPush(): NotificacionesPush {
 
   useEffect(() => {
     let vigente = true;
-    consultarPush()
-      .then(({ estado: actual, registro }) => {
-        if (!vigente) return;
-        registroRef.current = registro;
-        setEstado(actual);
-      })
-      .catch(() => vigente && setEstado('no-soportado'));
+    const consultar = () =>
+      consultarPush()
+        .then(({ estado: actual, registro }) => {
+          if (!vigente) return;
+          registroRef.current = registro;
+          setEstado(actual);
+        })
+        .catch(() => vigente && setEstado('no-soportado'));
+    consultar();
+    // En la primera visita el service worker termina de instalarse después
+    // de la consulta: cuando quede listo se vuelve a consultar, sin recargar.
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(consultar);
     return () => {
       vigente = false;
     };

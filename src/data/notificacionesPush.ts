@@ -1,11 +1,17 @@
 import * as db from '../db';
 
-// Clave pública VAPID (la privada vive solo en la Edge Function). Es pública
-// por diseño: identifica al servidor que envía los avisos.
-const CLAVE_PUBLICA_VAPID: string | undefined = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+// Clave pública VAPID. Es pública por diseño (cada navegador la recibe al
+// suscribirse), así que va en el código y no en un secret. Su pareja privada
+// vive solo en los secrets de la Edge Function avisar-prestamos-vencidos: si
+// se cambia una, hay que cambiar la otra.
+const CLAVE_PUBLICA_VAPID: string | undefined =
+  'BOr8aN92T66CdKggvy7DpxD-6anyUWzxA0lh6tZlT9NWFue54hWhnwJItzRpx16ZiPvr2Ow4BosnDIQfqmdPuv4';
 
 export type EstadoPush =
   | 'cargando'
+  // Se pidió el permiso pero el navegador no lo concedió ni lo bloqueó: cerró
+  // la ventana o (Edge, Chrome) la mostró en silencio en la barra de direcciones.
+  | 'sin-respuesta'
   | 'no-configurado'
   | 'no-soportado'
   | 'requiere-instalar'
@@ -71,7 +77,7 @@ export async function activarPush(registro: ServiceWorkerRegistration): Promise<
     });
   } catch (error) {
     // Rechazó el permiso (o lo tiene bloqueado): no es una falla de la app.
-    if (Notification.permission !== 'granted') return Notification.permission === 'denied' ? 'bloqueado' : 'apagado';
+    if (Notification.permission !== 'granted') return Notification.permission === 'denied' ? 'bloqueado' : 'sin-respuesta';
     throw error;
   }
   const { endpoint, keys } = suscripcion.toJSON();
