@@ -1,13 +1,14 @@
 import { Block, BlockTitle, Navbar, Page } from 'konsta/react';
 import { useMemo, useState } from 'react';
-import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
-import { AnilloAhorro } from '../components/AnilloAhorro';
+import { BalanceMes } from '../components/BalanceMes';
 import { BarraFijoVariable } from '../components/BarraFijoVariable';
 import { Cargando } from '../components/Cargando';
 import { ComparacionMes } from '../components/ComparacionMes';
 import { DonaCategorias } from '../components/DonaCategorias';
+import { GraficoMensual } from '../components/GraficoMensual';
 import { GraficoSemanal } from '../components/GraficoSemanal';
 import { SelectorMes } from '../components/SelectorMes';
+import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { Tipo } from '../types';
 import {
@@ -16,10 +17,13 @@ import {
   esMesActual,
   fijoVsVariable,
   gastoPorSemana,
+  ingresosEgresosPorMes,
   proyeccionFinDeMes,
-  tasaAhorro,
+  resumirMovimientos,
 } from '../utils/estadisticasMes';
-import { claveMes, claveMesDeFecha } from '../utils/fechas';
+import { capitalizarPrimera, claveMes, claveMesDeFecha, nombreMes } from '../utils/fechas';
+
+const MESES_EN_GRAFICO = 6;
 
 const TARJETA = 'rounded-3xl';
 
@@ -38,17 +42,18 @@ export function Reportes() {
     return transacciones.filter((t) => claveMes(t.fecha) === clave);
   }, [transacciones, mesSeleccionado]);
 
-  const { totalIngresos, totalEgresos } = useMemo(() => {
-    let ingresos = 0;
-    let egresos = 0;
-    for (const t of transaccionesDelMes) {
-      if (t.tipo === 'ingreso') ingresos += t.monto;
-      else egresos += t.monto;
-    }
-    return { totalIngresos: ingresos, totalEgresos: egresos };
-  }, [transaccionesDelMes]);
-
-  const ahorro = tasaAhorro(totalIngresos, totalEgresos);
+  const resumen = useMemo(() => resumirMovimientos(transaccionesDelMes), [transaccionesDelMes]);
+  const { ingresos: totalIngresos, egresos: totalEgresos } = resumen;
+  // La ventana del gráfico termina en el mes actual y no se mueve al tocar una
+  // columna (si se corriera, las columnas cambiarían bajo el dedo). Solo
+  // salta si se elige un mes fuera de ella, más viejo o futuro.
+  const ultimosMeses = useMemo(() => {
+    const hoy = new Date();
+    const mesesAtras =
+      (hoy.getFullYear() - mesSeleccionado.getFullYear()) * 12 + (hoy.getMonth() - mesSeleccionado.getMonth());
+    const dentroDeVentana = mesesAtras >= 0 && mesesAtras < MESES_EN_GRAFICO;
+    return ingresosEgresosPorMes(transacciones, dentroDeVentana ? hoy : mesSeleccionado, MESES_EN_GRAFICO);
+  }, [transacciones, mesSeleccionado]);
   const segmentosDona = useMemo(
     () => desglosePorCategoria(transaccionesDelMes, categoriaPorId, tipoDona),
     [transaccionesDelMes, categoriaPorId, tipoDona]
@@ -67,21 +72,26 @@ export function Reportes() {
         <Cargando />
       ) : transacciones.length === 0 ? (
         <Block className="text-center text-[17px] text-secundario">
-          Cuando registres movimientos, aquí verás tu ahorro, en qué gastas y cómo vas frente al mes pasado.
+          Cuando registres movimientos, aquí verás si gastas más de lo que entra, en qué gastas y cómo vas frente a los meses anteriores.
         </Block>
       ) : (
         // La key reinicia las animaciones de los gráficos al cambiar de mes.
         <div className="aparecer-suave" key={mesSeleccionado.getTime()}>
           <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
 
-          <div className="mt-4 grid grid-cols-2 gap-3 px-4">
-            <Block strong className="m-0 flex items-center justify-center rounded-3xl px-2 py-4">
-              <AnilloAhorro tasa={ahorro} />
-            </Block>
-            <Block strong className="m-0 flex flex-col justify-center rounded-3xl px-2 py-3">
-              <ComparacionMes comparacion={comparacion} proyeccion={proyeccion} />
-            </Block>
-          </div>
+          <BalanceMes
+            resumen={resumen}
+            periodo={capitalizarPrimera(nombreMes(mesSeleccionado))}
+            cantidad={transaccionesDelMes.length}
+          />
+          <Block strong inset className="mt-3 mb-0 rounded-3xl p-4">
+            <ComparacionMes comparacion={comparacion} proyeccion={proyeccion} />
+          </Block>
+
+          <BlockTitle>Últimos {MESES_EN_GRAFICO} meses</BlockTitle>
+          <Block strong inset className={TARJETA}>
+            <GraficoMensual datos={ultimosMeses} seleccionado={mesSeleccionado} onSeleccionar={setMesSeleccionado} />
+          </Block>
 
           <BlockTitle>Por categoría</BlockTitle>
           <Block strong inset className={TARJETA}>

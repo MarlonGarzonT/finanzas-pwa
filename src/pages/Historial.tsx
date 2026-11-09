@@ -8,6 +8,7 @@ import { IconoDescargar, IconoFiltro } from '../components/Iconos';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { useFinanzas } from '../data/FinanzasContext';
 import type { NuevaTransaccion, Transaccion } from '../types';
+import { resumirMovimientos } from '../utils/estadisticasMes';
 import { exportarTransaccionesExcel } from '../utils/exportarExcel';
 import {
   capitalizarPrimera,
@@ -55,10 +56,7 @@ export function Historial() {
     return Array.from(mapa.entries());
   }, [transaccionesFiltradas, filtros.orden]);
 
-  const totalFiltrado = useMemo(
-    () => transaccionesFiltradas.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0),
-    [transaccionesFiltradas]
-  );
+  const neto = useMemo(() => resumirMovimientos(transaccionesFiltradas).neto, [transaccionesFiltradas]);
 
   const filtrosActivos = contarFiltrosActivos(filtros);
   const hayMovimientos = !cargando && transacciones.length > 0;
@@ -224,33 +222,46 @@ export function Historial() {
         </Block>
       ) : (
         <div className="aparecer-suave">
+          {/* El balance a fondo (barras, estado, meses) vive en Reportes; aquí
+              basta el total de lo que se está viendo. */}
           <p className="mx-4 mt-3 mb-0 text-[15px] text-secundario cifras" aria-live="polite">
             {transaccionesFiltradas.length} movimiento{transaccionesFiltradas.length === 1 ? '' : 's'} ·{' '}
-            <span
-              className={`font-semibold ${totalFiltrado > 0 ? 'text-ingreso' : 'text-black dark:text-white'}`}
-            >
-              {formatearMontoConSigno(totalFiltrado)}
+            <span className={`font-semibold ${neto > 0 ? 'text-ingreso' : neto < 0 ? 'text-alerta' : ''}`}>
+              {formatearMontoConSigno(neto)}
             </span>
           </p>
-          {grupos.map(([mes, items]) => (
-            <section key={mes} aria-label={mes}>
-              <BlockTitle>{mes}</BlockTitle>
-              <List strong inset dividers>
-                {items.map((t) => {
-                  const categoria = categoriaPorId(t.categoriaId);
-                  return (
-                    <FilaMovimiento
-                      key={t.id}
-                      transaccion={t}
-                      categoria={categoria}
-                      onSeleccionar={setEditando}
-                      detalle={`${categoria?.nombre ?? 'Otros'} · ${formatearFechaCorta(t.fecha)} · Sem. ${t.semanaDelMes}`}
-                    />
-                  );
-                })}
-              </List>
-            </section>
-          ))}
+          {grupos.map(([mes, items]) => {
+            const netoMes = items.reduce((acc, t) => acc + (t.tipo === 'ingreso' ? t.monto : -t.monto), 0);
+            return (
+              <section key={mes} aria-label={mes}>
+                {/* Cada mes trae su balance a la derecha: al bajar se notan los meses en rojo. */}
+                <BlockTitle>
+                  <span>{mes}</span>
+                  <span
+                    className={`text-[15px] font-semibold cifras ${
+                      netoMes > 0 ? 'text-ingreso' : netoMes < 0 ? 'text-alerta' : 'text-secundario'
+                    }`}
+                  >
+                    {formatearMontoConSigno(netoMes)}
+                  </span>
+                </BlockTitle>
+                <List strong inset dividers>
+                  {items.map((t) => {
+                    const categoria = categoriaPorId(t.categoriaId);
+                    return (
+                      <FilaMovimiento
+                        key={t.id}
+                        transaccion={t}
+                        categoria={categoria}
+                        onSeleccionar={setEditando}
+                        detalle={`${categoria?.nombre ?? 'Otros'} · ${formatearFechaCorta(t.fecha)} · Sem. ${t.semanaDelMes}`}
+                      />
+                    );
+                  })}
+                </List>
+              </section>
+            );
+          })}
         </div>
       )}
 

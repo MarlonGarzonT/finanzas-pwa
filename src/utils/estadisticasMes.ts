@@ -1,5 +1,5 @@
 import type { Categoria, Transaccion } from '../types';
-import { claveMesDeFecha } from './fechas';
+import { claveMes, claveMesDeFecha } from './fechas';
 
 export interface SegmentoCategoria {
   categoriaId: string;
@@ -35,13 +35,6 @@ export function desglosePorCategoria(
       };
     })
     .sort((a, b) => b.monto - a.monto);
-}
-
-// % de los ingresos que quedó sin gastar. Puede ser negativo (se gastó más
-// de lo que entró) - se deja así, sin recortar, para no ocultar la señal.
-export function tasaAhorro(totalIngresos: number, totalEgresos: number): number {
-  if (totalIngresos <= 0) return 0;
-  return ((totalIngresos - totalEgresos) / totalIngresos) * 100;
 }
 
 export interface FijoVariable {
@@ -121,4 +114,65 @@ export function proyeccionFinDeMes(totalEgresosDelMes: number, mesSeleccionado: 
 export function esMesActual(mesSeleccionado: Date): boolean {
   const hoy = new Date();
   return mesSeleccionado.getFullYear() === hoy.getFullYear() && mesSeleccionado.getMonth() === hoy.getMonth();
+}
+
+export type EstadoGasto = 'bien' | 'atento' | 'excedido' | 'sin-ingresos' | 'sin-movimientos';
+
+export interface ResumenMovimientos {
+  ingresos: number;
+  egresos: number;
+  neto: number;
+  // Qué fracción de lo que entró ya se gastó (0.45 = 45%). null si no entró nada.
+  proporcionGastada: number | null;
+  estado: EstadoGasto;
+}
+
+// Umbral desde el que se avisa "Ojo": ya se fue la mayor parte de lo que entró.
+const UMBRAL_ATENCION = 0.8;
+
+export function resumirMovimientos(transacciones: Transaccion[]): ResumenMovimientos {
+  let ingresos = 0;
+  let egresos = 0;
+  for (const t of transacciones) {
+    if (t.tipo === 'ingreso') ingresos += t.monto;
+    else egresos += t.monto;
+  }
+  const proporcionGastada = ingresos > 0 ? egresos / ingresos : null;
+  let estado: EstadoGasto;
+  if (ingresos === 0 && egresos === 0) estado = 'sin-movimientos';
+  else if (proporcionGastada === null) estado = 'sin-ingresos';
+  else if (proporcionGastada > 1) estado = 'excedido';
+  else if (proporcionGastada >= UMBRAL_ATENCION) estado = 'atento';
+  else estado = 'bien';
+  return { ingresos, egresos, neto: ingresos - egresos, proporcionGastada, estado };
+}
+
+export interface MesIngresosEgresos {
+  mes: Date;
+  ingresos: number;
+  egresos: number;
+}
+
+// Entradas y salidas de los últimos `cantidad` meses, terminando en `mesFinal`
+// (incluido), del más viejo al más reciente. Los meses sin movimientos van en
+// cero para que el gráfico no salte huecos. claveMes (hora local) y no
+// fecha.slice(0, 7) (UTC): un gasto del último día a las 9 p. m. en Colombia
+// ya es el mes siguiente en UTC.
+export function ingresosEgresosPorMes(
+  transacciones: Transaccion[],
+  mesFinal: Date,
+  cantidad: number
+): MesIngresosEgresos[] {
+  const meses = Array.from({ length: cantidad }, (_, i) => {
+    const mes = new Date(mesFinal.getFullYear(), mesFinal.getMonth() - (cantidad - 1 - i), 1);
+    return { mes, clave: claveMesDeFecha(mes), ingresos: 0, egresos: 0 };
+  });
+  const porClave = new Map(meses.map((m) => [m.clave, m]));
+  for (const t of transacciones) {
+    const fila = porClave.get(claveMes(t.fecha));
+    if (!fila) continue;
+    if (t.tipo === 'ingreso') fila.ingresos += t.monto;
+    else fila.egresos += t.monto;
+  }
+  return meses.map(({ mes, ingresos, egresos }) => ({ mes, ingresos, egresos }));
 }

@@ -20,6 +20,8 @@
   --alerta-relleno: #f0563c;
   --texto-secundario: rgb(60 60 67 / 0.75);
   --pista-grafico: rgb(120 120 128 / 0.16);
+  /* Barra de "Salió": neutra, como el texto de los gastos (estilo Apple Card). */
+  --barra-neutra: rgb(60 60 67 / 0.55);
 
   /* Tonos solo para identidad de categorías y miembros: nunca dinero ni acento. */
   --categoria-azul: #0a84ff;
@@ -39,6 +41,7 @@
   --alerta-relleno: #ff7a63;
   --texto-secundario: rgb(235 235 245 / 0.6);
   --pista-grafico: rgb(120 120 128 / 0.32);
+  --barra-neutra: rgb(235 235 245 / 0.7);
 }
 
 @theme inline {
