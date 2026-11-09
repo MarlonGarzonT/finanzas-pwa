@@ -140,6 +140,14 @@ textarea {
   caret-color: var(--color-primary);
 }
 
+/* El BlockTitle de Konsta trae margen inferior negativo (-mb-2) pensado para
+   ir pegado a un Block o List suyo. Seguido de cualquier otra cosa (un
+   selector de vidrio, la cuadrícula de categorías, campos propios) el
+   título se montaba encima: ahí se le da un margen normal. */
+.k-block-title:not(:has(+ :is(.k-block, .k-block-header, .k-block-footer, .k-list, .k-table))) {
+  margin-bottom: 0.75rem;
+}
+
 /* Los segmentos de Konsta miden 34px; se llevan al mínimo táctil de 44px.
    (CSS sin capa: le gana a las utilidades de Tailwind sin !important.) */
 .k-segmented .k-button {
