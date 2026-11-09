@@ -19,7 +19,7 @@ export function formatearMonto(monto: number): string {
 // El signo (+/-) nunca depende solo del color: siempre acompaña al monto en texto.
 export function formatearMontoConSigno(monto: number): string {
   if (monto > 0) return `+${formatearMonto(monto)}`;
-  if (monto < 0) return `-${formatearMonto(Math.abs(monto))}`;
+  if (monto < 0) return `−${formatearMonto(Math.abs(monto))}`;
   return formatearMonto(monto);
 }
 
