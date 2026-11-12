@@ -1,6 +1,7 @@
 import type { Tipo } from '../types';
 import { formatearMonto } from '../utils/fechas';
 import { LineaApartes } from './LineaApartes';
+import { MontoAnimado } from './MontoAnimado';
 import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
 
 interface Props {
@@ -38,13 +39,12 @@ export function BalanceCard({
       <div className="flex flex-col items-center gap-0.5">
         <span className="text-[15px] font-medium text-secundario">Disponible</span>
         {/* Positivo va sin signo, como cualquier saldo; un negativo sí es una
-            alerta (se gastó más de lo que entró) y lleva signo y color. */}
+            alerta (se gastó más de lo que entró) y lleva signo y color. Los
+            dígitos ruedan al cambiar de mes o al registrar un movimiento. */}
         <p
           className={`m-0 text-[48px] leading-[1.1] font-bold tracking-[-0.03em] cifras ${negativo ? 'text-alerta' : ''}`}
         >
-          {negativo && <span className="sr-only">Negativo: </span>}
-          {negativo && <span aria-hidden="true">−</span>}
-          {formatearMonto(Math.abs(disponible))}
+          <MontoAnimado monto={disponible} signo={negativo ? '−' : ''} />
         </p>
         <LineaApartes ahorro={ahorro} prestado={prestado} devuelto={devuelto} className="mt-1 text-center" />
       </div>

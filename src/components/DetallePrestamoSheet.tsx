@@ -1,13 +1,25 @@
 import { Block, BlockTitle, Button, List, ListItem, Progressbar } from 'konsta/react';
-import { useState } from 'react';
+import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type { Transaccion } from '../types';
 import { formatearFechaCorta, formatearMonto } from '../utils/fechas';
 import { formatearDia, type EstadoPrestamo } from '../utils/prestamos';
 import { DialogoConfirmar } from './DialogoConfirmar';
 import { HojaInferior } from './HojaInferior';
 import { IconoPapelera } from './Iconos';
+import { MontoAnimado } from './MontoAnimado';
+import ClickSpark, { type ClickSparkHandle } from './reactbits/ClickSpark';
+
+export interface DetallePrestamoHandle {
+  // Chispas detrás del monto: el préstamo acaba de quedar saldado.
+  celebrarSaldado: () => void;
+}
+
+// Verdes del ingreso (DESIGN.md): la plata volvió. El naranja de logros es
+// solo para el perfil.
+const COLORES_SALDADO = ['#10b981', '#34d399', '#047857'];
 
 interface Props {
+  ref?: Ref<DetallePrestamoHandle>;
   abierto: boolean;
   prestamo: EstadoPrestamo | null;
   onCerrar: () => void;
@@ -27,7 +39,15 @@ function lineaVencimiento(p: EstadoPrestamo): { texto: string; clase: string } {
   return { texto: `${cuando} · ${atraso}`, clase: 'text-alerta' };
 }
 
-export function DetallePrestamoSheet({ abierto, prestamo, onCerrar, onAbonar, onEditar, onEliminar, onEliminarAbono }: Props) {
+export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbonar, onEditar, onEliminar, onEliminarAbono }: Props) {
+  const chispasRef = useRef<ClickSparkHandle>(null);
+  const montoRef = useRef<HTMLParagraphElement>(null);
+  useImperativeHandle(ref, () => ({
+    celebrarSaldado() {
+      const caja = montoRef.current?.getBoundingClientRect();
+      if (caja) chispasRef.current?.sparkAtClient(caja.left + caja.width / 2, caja.top + caja.height / 2);
+    },
+  }));
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
   const [abonoPorEliminar, setAbonoPorEliminar] = useState<Transaccion | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -75,9 +95,22 @@ export function DetallePrestamoSheet({ abierto, prestamo, onCerrar, onAbonar, on
           <>
             <Block className="my-2 flex flex-col items-center gap-1 text-center">
               <span className="text-[15px] font-medium text-secundario">{prestamo.pagado ? 'Te pagó' : 'Te debe'}</span>
-              <p className="m-0 text-[40px] leading-[1.1] font-bold tracking-[-0.03em] cifras">
-                {formatearMonto(prestamo.pagado ? prestamo.monto : prestamo.saldo)}
-              </p>
+              <ClickSpark
+                ref={chispasRef}
+                manual
+                layer="back"
+                sparkColor={COLORES_SALDADO}
+                sparkCount={14}
+                sparkRadius={100}
+                sparkSize={16}
+                sparkWidth={2.5}
+                duration={700}
+                randomness={0.4}
+              >
+                <p ref={montoRef} className="m-0 text-[40px] leading-[1.1] font-bold tracking-[-0.03em] cifras">
+                  <MontoAnimado monto={prestamo.pagado ? prestamo.monto : prestamo.saldo} />
+                </p>
+              </ClickSpark>
               <p className="m-0 text-[15px] text-secundario">
                 De <span className="cifras">{formatearMonto(prestamo.monto)}</span>
                 {prestamo.fechaPrestamo ? ` que le prestaste el ${formatearFechaCorta(prestamo.fechaPrestamo)}` : ''}

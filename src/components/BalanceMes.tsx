@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { EstadoGasto, ResumenMovimientos } from '../utils/estadisticasMes';
 import { formatearMonto } from '../utils/fechas';
 import { LineaApartes } from './LineaApartes';
-import { useContarHasta } from './useContarHasta';
+import { MontoAnimado } from './MontoAnimado';
 
 interface Props {
   resumen: ResumenMovimientos;
@@ -51,7 +51,6 @@ export function BalanceMes({ resumen, periodo, cantidad }: Props) {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const netoAnimado = useContarHasta(montado ? resumen.neto : 0);
   const apariencia = APARIENCIA[resumen.estado];
   const escala = Math.max(resumen.ingresos, resumen.egresos, 1);
   const positivo = resumen.neto > 0;
@@ -93,8 +92,7 @@ export function BalanceMes({ resumen, periodo, cantidad }: Props) {
         }`}
       >
         <span className="sr-only">Balance: </span>
-        {positivo ? '+' : negativo ? '−' : ''}
-        {formatearMonto(Math.abs(Math.round(netoAnimado)))}
+        <MontoAnimado monto={resumen.neto} signo={positivo ? '+' : negativo ? '−' : ''} intro />
       </p>
       <p className="m-0 mt-0.5 text-[15px] leading-snug text-secundario">{frase(resumen)}</p>
       {/* El ahorro y los préstamos no son gasto ni ingreso, pero sí mueven el
