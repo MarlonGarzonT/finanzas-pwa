@@ -1,21 +1,25 @@
 import { Fab, Navbar, Page } from 'konsta/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AbonoSheet } from '../components/AbonoSheet';
 import { AvisosPrestamos } from '../components/AvisosPrestamos';
 import { Cargando } from '../components/Cargando';
-import { DetallePrestamoSheet } from '../components/DetallePrestamoSheet';
+import { DetallePrestamoSheet, type DetallePrestamoHandle } from '../components/DetallePrestamoSheet';
 import { EditarPrestamoSheet } from '../components/EditarPrestamoSheet';
 import { IconoMas } from '../components/Iconos';
 import { ListaPrestamos } from '../components/ListaPrestamos';
+import { MontoAnimado } from '../components/MontoAnimado';
 import { PrestamosVacio } from '../components/PrestamosVacio';
 import type { EstadoNavegacionPrestamos } from '../components/useAbrirMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
 import { usePrestamos } from '../data/usePrestamos';
-import { formatearMonto } from '../utils/fechas';
 
 // Hoja abierta: el formulario (nuevo o edición) o el abono, encima del detalle.
 type Formulario = { tipo: 'nuevo' } | { tipo: 'editar' } | { tipo: 'abono' } | null;
+
+// Lo que tarda en bajar la hoja del abono: las chispas salen cuando ya se ve
+// el detalle, no detrás de la hoja que se está cerrando.
+const ESPERA_CIERRE_HOJA_MS = 450;
 
 export function Prestamos() {
   const { cargando, crearPrestamo, actualizarPrestamo, eliminarPrestamo, registrarAbono, eliminarMovimiento } = useFinanzas();
@@ -26,6 +30,7 @@ export function Prestamos() {
     () => (ubicacion.state as EstadoNavegacionPrestamos | null)?.prestamoId ?? null
   );
   const [formulario, setFormulario] = useState<Formulario>(null);
+  const detalleRef = useRef<DetallePrestamoHandle>(null);
 
   const seleccionado = seleccionadoId ? (porId(seleccionadoId) ?? null) : null;
   const hayPrestamos = pendientes.length + pagados.length > 0;
@@ -41,7 +46,7 @@ export function Prestamos() {
           <section className="flex flex-col items-center gap-0.5 px-4 pt-1 pb-2 text-center" aria-label="Lo que te deben">
             <span className="text-[15px] font-medium text-secundario">Te deben</span>
             <p className="m-0 text-[48px] leading-[1.1] font-bold tracking-[-0.03em] cifras">
-              {formatearMonto(resumen.pendiente)}
+              <MontoAnimado monto={resumen.pendiente} />
             </p>
             <p className="m-0 text-[15px] text-secundario">
               {resumen.pendientes === 0
@@ -79,6 +84,7 @@ export function Prestamos() {
       />
 
       <DetallePrestamoSheet
+        ref={detalleRef}
         abierto={seleccionado !== null}
         prestamo={seleccionado}
         onCerrar={() => setSeleccionadoId(null)}
@@ -107,7 +113,10 @@ export function Prestamos() {
         prestamo={seleccionado}
         onCerrar={() => setFormulario(null)}
         onGuardar={async (monto) => {
-          if (seleccionado) await registrarAbono(seleccionado, monto);
+          if (!seleccionado) return;
+          const saldaLaDeuda = monto >= seleccionado.saldo;
+          await registrarAbono(seleccionado, monto);
+          if (saldaLaDeuda) window.setTimeout(() => detalleRef.current?.celebrarSaldado(), ESPERA_CIERRE_HOJA_MS);
         }}
       />
     </Page>

@@ -126,6 +126,8 @@ Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redo
 - Transiciones de Konsta para hojas, alertas y pestañas (no se reemplazan).
 - Gráficos: crecen una vez al montar (700 ms, ease-out exponencial). Al cambiar de mes se reinician.
 - Contenido de pantalla: aparece con `aparecer-suave` (400 ms, `opacity` + `transform`).
+- Montos protagonistas (Disponible, "Te deben", saldo del préstamo, balance de Reportes): `MontoAnimado`, sobre el `Counter` de React Bits (`components/reactbits/`). Los dígitos ruedan al cambiar (mes, movimiento, abono), con resorte de 0.7 s y desvanecido corto (0.15em) para no invadir el rótulo de arriba. Sin desenfoque de movimiento. Solo Reportes gira al entrar (`intro`); donde el monto se mira a diario solo se anima al cambiar. El lector de pantalla oye el monto completo. Los montos chicos (listas, chips) no se animan.
+- Celebraciones con `ClickSpark` de React Bits en modo `manual`: nunca en cada toque, solo en logros. Préstamo saldado: líneas verdes del ingreso detrás del saldo, cuando baja la hoja del abono. Hito nuevo de antigüedad: estrellas en los tonos de `--logro` desde la medalla, una sola vez por hito (se recuerda en `localStorage`, `mi-cuadre:hito-celebrado`). El canvas no lee variables CSS: los colores van en hex.
 - `prefers-reduced-motion`: todas las animaciones y transiciones se reducen a ~0.
 
 ## Accesibilidad (piso)
