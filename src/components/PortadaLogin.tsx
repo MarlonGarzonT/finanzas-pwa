@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CLASE_TITULO_PORTADA } from './claseTituloPortada';
 import Aurora from './reactbits/Aurora';
 import SplitText from './reactbits/SplitText';
+import { useEsOscuro } from './useEsOscuro';
 
 // Portada del login: aurora con los verdes azulados del logo y el título que
 // entra letra por letra. Vive en su propio chunk (Login lo carga con lazy),
@@ -9,17 +10,6 @@ import SplitText from './reactbits/SplitText';
 
 // Del degradado del logo: azul petróleo, verde menta y vuelta al petróleo.
 const COLORES_AURORA = ['#16687c', '#43af9c', '#1f8a8c'];
-
-// Konsta marca el modo oscuro con la clase `dark` en <html> (utils/tema.ts).
-function suscribirTema(avisar: () => void) {
-  const observador = new MutationObserver(avisar);
-  observador.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  return () => observador.disconnect();
-}
-
-function useEsOscuro(): boolean {
-  return useSyncExternalStore(suscribirTema, () => document.documentElement.classList.contains('dark'));
-}
 
 function soportaWebgl2(): boolean {
   try {
