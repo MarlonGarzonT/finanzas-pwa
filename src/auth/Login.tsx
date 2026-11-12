@@ -1,10 +1,33 @@
 import { Block, Button, List, ListItem, Page, Toggle } from 'konsta/react';
-import { useState, type FormEvent } from 'react';
+import { lazy, Suspense, useState, type ComponentType, type FormEvent } from 'react';
 import { CampoTexto } from '../components/CampoTexto';
+import { CLASE_TITULO_PORTADA } from '../components/claseTituloPortada';
 import { IconoOjo, IconoOjoTachado } from '../components/Iconos';
 import { useAuth } from './AuthContext';
 
 type Modo = 'login' | 'registro';
+
+function TituloPlano({ texto, cargando = false }: { texto: string; cargando?: boolean }) {
+  return <h1 className={`${CLASE_TITULO_PORTADA} ${cargando ? 'invisible' : ''}`}>{texto}</h1>;
+}
+
+// La portada (aurora + título animado, con GSAP) va en su propio chunk: solo
+// lo descarga quien ve el login. Si no carga (sin conexión), queda el título
+// plano y sin fondo: el formulario funciona igual.
+const cargarPortada = () => import('../components/PortadaLogin');
+function SinFondo() {
+  return null;
+}
+const FondoAurora = lazy<ComponentType>(() =>
+  cargarPortada()
+    .then((m) => ({ default: m.FondoAurora }))
+    .catch(() => ({ default: SinFondo }))
+);
+const TituloAnimado = lazy(() =>
+  cargarPortada()
+    .then((m) => ({ default: m.TituloAnimado }))
+    .catch(() => ({ default: TituloPlano }))
+);
 
 const LONGITUD_MINIMA = 8;
 
@@ -139,16 +162,21 @@ export function Login() {
 
   return (
     <Page className="pt-safe pb-safe">
-      <div className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center py-8">
+      <Suspense fallback={null}>
+        <FondoAurora />
+      </Suspense>
+      <div className="relative mx-auto flex min-h-full w-full max-w-md flex-col justify-center py-8">
         <header className="flex flex-col items-center gap-3 px-6 text-center">
           <img
-            className="size-16 rounded-[18px]"
+            className="size-16 rounded-[18px] shadow-[0_8px_24px_-8px_rgb(0_0_0/0.35)]"
             src={`${import.meta.env.BASE_URL}icons/icon-192.png`}
             alt=""
             width={64}
             height={64}
           />
-          <h1 className="m-0 text-[28px] leading-tight font-bold tracking-tight">{textos.titulo}</h1>
+          <Suspense fallback={<TituloPlano texto={textos.titulo} cargando />}>
+            <TituloAnimado texto={textos.titulo} />
+          </Suspense>
           <p className="m-0 text-[15px] text-secundario">{textos.subtitulo}</p>
         </header>
 

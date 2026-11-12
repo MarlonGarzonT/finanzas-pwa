@@ -11,9 +11,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.3.5",
     "exceljs": "^4.4.0",
+    "gsap": "^3.15.1",
     "konsta": "^5.5.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
