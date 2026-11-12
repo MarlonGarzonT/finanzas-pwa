@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="es" data-modo="app" data-so="otro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Mi Cuadre" />
+    <link rel="canonical" href="https://micuadre-app.vercel.app/" />
+    <link rel="icon" type="image/png" href="/finanzas-pwa/icono.png" />
+    <title>Mi Cuadre se mudó</title>
+    <script>
+      // Página de mudanza: reemplaza a la app en el link viejo de GitHub Pages.
+      // En el navegador lleva directo a la dirección nueva, con la misma ruta
+      // (#/prestamos) y los parámetros (enlaces de correo de Supabase). En la
+      // app instalada no se puede saltar a otra app: se explica cómo
+      // instalarla de nuevo.
+      (function () {
+        var NUEVO = 'https://micuadre-app.vercel.app/';
+        var raiz = document.documentElement;
+        window.destinoMiCuadre = NUEVO + location.search + location.hash;
+
+        var ua = navigator.userAgent;
+        var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        raiz.setAttribute('data-so', ios ? 'ios' : /Android/.test(ua) ? 'android' : 'otro');
+
+        // Limpia lo que haya dejado la app vieja en este navegador.
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker
+            .getRegistrations()
+            .then(function (registros) {
+              registros.forEach(function (registro) {
+                registro.unregister();
+              });
+            })
+            .catch(function () {});
+        }
+        if (window.caches) {
+          caches
+            .keys()
+            .then(function (claves) {
+              claves.forEach(function (clave) {
+                caches.delete(clave);
+              });
+            })
+            .catch(function () {});
+        }
+
+        var instalada =
+          (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+        if (!instalada) {
+          raiz.setAttribute('data-modo', 'navegador');
+          location.replace(window.destinoMiCuadre);
+        }
+      })();
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=https://micuadre-app.vercel.app/" /></noscript>
+    <style>
+      :root {
+        --fondo: #f2f2f7;
+        --tarjeta: #ffffff;
+        --texto: #000000;
+        --secundario: rgb(60 60 67 / 0.75);
+        --separador: rgb(60 60 67 / 0.18);
+        --acento: #007aff;
+        --acento-suave: rgb(0 122 255 / 0.12);
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fondo: #000000;
+          --tarjeta: #1c1c1e;
+          --texto: #ffffff;
+          --secundario: rgb(235 235 245 / 0.6);
+          --separador: rgb(84 84 88 / 0.6);
+          --acento: #0a84ff;
+          --acento-suave: rgb(10 132 255 / 0.2);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        background: var(--fondo);
+        color: var(--texto);
+        font: 17px/1.35 -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
+      }
+      ::selection {
+        background: var(--acento-suave);
+      }
+      a,
+      button {
+        font: inherit;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      :focus-visible {
+        outline: 2px solid var(--acento);
+        outline-offset: 2px;
+      }
+
+      /* Solo una de las dos vistas está visible según dónde se abrió. */
+      html[data-modo='navegador'] #mudanza,
+      html[data-modo='app'] #redirigiendo {
+        display: none;
+      }
+
+      .mudanza {
+        display: flex;
+        min-height: 100dvh;
+        max-width: 480px;
+        margin: 0 auto;
+        flex-direction: column;
+        padding: calc(env(safe-area-inset-top) + 28px) calc(env(safe-area-inset-right) + 16px) 0
+          calc(env(safe-area-inset-left) + 16px);
+      }
+      .cabecera {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 0 8px;
+        text-align: center;
+      }
+      .icono {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+      }
+      h1 {
+        margin: 4px 0 0;
+        font-size: 28px;
+        line-height: 1.15;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .bajada {
+        margin: 0;
+        max-width: 32ch;
+        color: var(--secundario);
+        text-wrap: pretty;
+      }
+
+      .tarjeta {
+        background: var(--tarjeta);
+        border-radius: 26px;
+      }
+      .direccion {
+        display: flex;
+        min-height: 60px;
+        margin-top: 20px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 8px 8px 20px;
+      }
+      .direccion-texto {
+        min-width: 0;
+        white-space: nowrap;
+        font-weight: 600;
+        user-select: all;
+        -webkit-user-select: all;
+      }
+      .boton-copiar {
+        display: inline-flex;
+        min-width: 44px;
+        min-height: 44px;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 6px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0 14px;
+        background: var(--acento-suave);
+        color: var(--acento);
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 160ms ease-out;
+      }
+      .boton-copiar:active {
+        transform: scale(0.96);
+      }
+      /* En teléfonos angostos la dirección debe caber en una sola línea:
+         partida en el guion ("micuadre- / app") ya no se reconoce. */
+      @media (max-width: 359px) {
+        .direccion {
+          gap: 8px;
+          padding-left: 16px;
+        }
+        .direccion-texto {
+          font-size: 15px;
+        }
+      }
+
+      h2 {
+        margin: 28px 4px 8px;
+        font-size: 20px;
+        line-height: 1.2;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .pasos {
+        margin: 0;
+        padding: 4px 0;
+        list-style: none;
+      }
+      .paso {
+        display: flex;
+        gap: 14px;
+        padding: 12px 16px;
+      }
+      .numero {
+        display: flex;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--acento-suave);
+        color: var(--acento);
+        font-size: 15px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .paso-texto {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: 2px;
+        padding-top: 2px;
+      }
+      .paso + .paso .paso-texto {
+        /* Separador iOS: empieza donde empieza el texto, no en el borde. */
+        position: relative;
+      }
+      .paso + .paso .paso-texto::before {
+        position: absolute;
+        top: -14px;
+        right: -16px;
+        left: 0;
+        height: 0.5px;
+        background: var(--separador);
+        content: '';
+      }
+      .paso-titulo {
+        font-weight: 600;
+      }
+      .paso-detalle {
+        color: var(--secundario);
+        font-size: 15px;
+        text-wrap: pretty;
+      }
+      .nota {
+        margin: 12px 4px 0;
+        color: var(--secundario);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      /* La acción principal queda abajo, al alcance del pulgar. */
+      .acciones {
+        position: sticky;
+        bottom: 0;
+        margin-top: auto;
+        padding: 20px 0 calc(env(safe-area-inset-bottom) + 16px);
+        background: linear-gradient(to bottom, transparent, var(--fondo) 20px);
+      }
+      .boton-principal {
+        display: flex;
+        min-height: 50px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--acento);
+        color: #ffffff;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 160ms ease-out, opacity 160ms ease-out;
+      }
+      .boton-principal:active {
+        transform: scale(0.98);
+        opacity: 0.85;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boton-copiar,
+        .boton-principal {
+          transition: none;
+        }
+      }
+
+      .redirigiendo {
+        display: flex;
+        min-height: 100dvh;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 24px;
+        text-align: center;
+      }
+      .redirigiendo p {
+        margin: 0;
+        color: var(--secundario);
+      }
+      .redirigiendo a {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        color: var(--acento);
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .solo-lector {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      /* Textos según el sistema: solo se ve el del teléfono que abrió la página. */
+      [data-para] {
+        display: none;
+      }
+      html[data-so='ios'] [data-para='ios'],
+      html[data-so='android'] [data-para='android'],
+      html[data-so='otro'] [data-para='otro'] {
+        display: inline;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="mudanza" id="mudanza">
+      <header class="cabecera">
+        <img class="icono" src="/finanzas-pwa/icono.png" alt="" width="72" height="72" />
+        <h1>Mi Cuadre se mudó</h1>
+        <p class="bajada">Ahora vive en otra dirección y tus datos siguen intactos.</p>
+      </header>
+
+      <section class="tarjeta direccion" aria-label="Dirección nueva">
+        <span class="direccion-texto">micuadre-app.vercel.app</span>
+        <button type="button" class="boton-copiar" id="copiar">
+          <span id="copiar-texto">Copiar</span>
+        </button>
+      </section>
+      <p class="nota solo-lector" id="copiar-estado" role="status" aria-live="polite"></p>
+
+      <h2>Para seguir usándola</h2>
+      <ol class="tarjeta pasos">
+        <li class="paso">
+          <span class="numero" aria-hidden="true">1</span>
+          <span class="paso-texto">
+            <span class="paso-titulo">Abre la dirección nueva</span>
+            <span class="paso-detalle">
+              <span data-para="ios">Toca «Abrir Mi Cuadre» y se abre en Safari.</span>
+              <span data-para="android">Toca «Abrir Mi Cuadre» y se abre en Chrome.</span>
+              <span data-para="otro">Toca «Abrir Mi Cuadre» y se abre en tu navegador.</span>
+            </span>
+          </span>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">2</span>
+          <span class="paso-texto">
+            <span class="paso-titulo">Inicia sesión</span>
+            <span class="paso-detalle">Con el mismo correo o la cuenta de Google de siempre.</span>
+          </span>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">3</span>
+          <span class="paso-texto">
+            <span class="paso-titulo">Agrégala a tu pantalla de inicio</span>
+            <span class="paso-detalle">
+              <span data-para="ios">En Safari toca Compartir y luego «Agregar a inicio».</span>
+              <span data-para="android">En Chrome abre el menú de los tres puntos y toca «Instalar app».</span>
+              <span data-para="otro">Usa la opción «Instalar app» o «Agregar a pantalla de inicio» de tu navegador.</span>
+            </span>
+          </span>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">4</span>
+          <span class="paso-texto">
+            <span class="paso-titulo">Borra esta app vieja</span>
+            <span class="paso-detalle">
+              <span data-para="ios">Mantén presionado su ícono y elige «Eliminar app».</span>
+              <span data-para="android">Mantén presionado su ícono y elige «Desinstalar».</span>
+              <span data-para="otro">Quítala de tu pantalla de inicio para no confundirte.</span>
+            </span>
+          </span>
+        </li>
+      </ol>
+      <p class="nota">Si tenías encendidos los avisos de préstamos, actívalos otra vez en la pestaña Préstamos de la app nueva.</p>
+
+      <div class="acciones">
+        <a class="boton-principal" id="abrir" href="https://micuadre-app.vercel.app/" target="_blank" rel="noopener">Abrir Mi Cuadre</a>
+      </div>
+    </main>
+
+    <main class="redirigiendo" id="redirigiendo">
+      <img class="icono" src="/finanzas-pwa/icono.png" alt="" width="72" height="72" />
+      <p>Abriendo Mi Cuadre en su nueva dirección…</p>
+      <a id="ir-ahora" href="https://micuadre-app.vercel.app/">Ir ahora</a>
+    </main>
+
+    <script>
+      (function () {
+        var destino = window.destinoMiCuadre || 'https://micuadre-app.vercel.app/';
+        document.getElementById('abrir').href = destino;
+        document.getElementById('ir-ahora').href = destino;
+
+        var boton = document.getElementById('copiar');
+        var texto = document.getElementById('copiar-texto');
+        var estado = document.getElementById('copiar-estado');
+        var direccion = 'https://micuadre-app.vercel.app';
+        var reinicio;
+
+        // Al copiar basta con que el botón diga "Copiado" (el mensaje queda
+        // para el lector de pantalla); si falla, el mensaje se ve porque dice
+        // qué hacer en su lugar.
+        function avisar(mensaje, etiqueta, visible) {
+          texto.textContent = etiqueta;
+          estado.textContent = mensaje;
+          estado.classList.toggle('solo-lector', !visible);
+          clearTimeout(reinicio);
+          reinicio = setTimeout(
+            function () {
+              texto.textContent = 'Copiar';
+              estado.textContent = '';
+              estado.classList.add('solo-lector');
+            },
+            visible ? 6000 : 2500
+          );
+        }
+
+        function copiarConSeleccion() {
+          var campo = document.createElement('textarea');
+          campo.value = direccion;
+          campo.setAttribute('readonly', '');
+          campo.style.position = 'fixed';
+          campo.style.opacity = '0';
+          document.body.appendChild(campo);
+          campo.select();
+          var copiado = false;
+          try {
+            copiado = document.execCommand('copy');
+          } catch (error) {
+            copiado = false;
+          }
+          document.body.removeChild(campo);
+          return copiado;
+        }
+
+        boton.addEventListener('click', function () {
+          var listo = function () {
+            avisar('Link copiado. Pégalo en tu navegador.', 'Copiado', false);
+          };
+          var fallo = function () {
+            if (copiarConSeleccion()) listo();
+            else avisar('No se pudo copiar. Mantén presionada la dirección para copiarla.', 'Copiar', true);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(direccion).then(listo, fallo);
+          } else {
+            fallo();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

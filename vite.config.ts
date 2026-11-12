@@ -4,16 +4,11 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // Versión visible en el Perfil, para saber qué build tiene cada teléfono al
-// dar soporte: fecha del build y, en GitHub Actions, el commit corto.
+// dar soporte: fecha del build y, en Vercel, el commit corto.
 const fechaBuild = new Date().toISOString().slice(0, 10);
-const commit = process.env.GITHUB_SHA?.slice(0, 7);
-
-// Ruta donde se publica la app. En el hosting principal va en la raíz (link
-// corto); GitHub Pages la sirve en /finanzas-pwa/ y la fija su workflow.
-const base = process.env.BASE_PATH ?? '/';
+const commit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
 
 export default defineConfig({
-  base,
   define: {
     __VERSION_APP__: JSON.stringify(commit ? `${fechaBuild} (${commit})` : `${fechaBuild} (local)`),
   },
@@ -39,8 +34,8 @@ export default defineConfig({
         theme_color: '#f2f2f7',
         background_color: '#f2f2f7',
         display: 'standalone',
-        start_url: base,
-        scope: base,
+        start_url: '/',
+        scope: '/',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },

@@ -14,7 +14,7 @@ Progressive Web App (PWA) para el registro y control de ingresos y egresos perso
 - [Configuración del backend (Supabase)](#configuración-del-backend-supabase)
 - [Instalación y desarrollo local](#instalación-y-desarrollo-local)
 - [Variables de entorno](#variables-de-entorno)
-- [Despliegue en GitHub Pages](#despliegue-en-github-pages)
+- [Despliegue](#despliegue)
 - [Instalación en dispositivos móviles](#instalación-en-dispositivos-móviles)
 - [Seguridad](#seguridad)
 - [Scripts disponibles](#scripts-disponibles)
@@ -58,7 +58,7 @@ Cada usuario autenticado tiene sus propios datos, almacenados en una base de dat
 | Exportación a Excel | `exceljs`, cargado en un chunk separado solo al exportar (no afecta la carga inicial) |
 | Progresive Web App | `vite-plugin-pwa` (manifest y service worker en modo `prompt`, con aviso de actualización) |
 | Estilos | Tailwind CSS v4 con tokens propios (`src/index.css`); sistema documentado en `DESIGN.md` |
-| Hosting / CI-CD | GitHub Pages, desplegado mediante GitHub Actions |
+| Hosting / CI-CD | Vercel, desplegado con cada push a `main` (el link viejo de GitHub Pages muestra la página de mudanza) |
 
 La aplicación es una SPA (Single Page Application) estática: no existe un servidor propio. Toda la persistencia y autenticación se delegan a Supabase, consumido directamente desde el navegador mediante su cliente JavaScript y protegido por políticas de seguridad a nivel de fila.
 
@@ -113,8 +113,9 @@ finanzas-pwa/
     icons/                 Íconos de la PWA en distintos tamaños
   supabase/
     schema.sql             Definición de tablas y políticas de seguridad
+  mudanza/                 Página de mudanza publicada en el link viejo (GitHub Pages)
   .github/workflows/
-    deploy.yml             Flujo de integración y despliegue continuo a GitHub Pages
+    deploy.yml             Publica la página de mudanza (mudanza/) en el link viejo de GitHub Pages
   vite.config.ts           Configuración de Vite y del plugin de PWA
 ```
 
@@ -158,16 +159,19 @@ La consola indicará la URL local (por defecto `http://localhost:5173`). Al abri
 
 Estas variables se leen en tiempo de build por Vite y quedan embebidas en el bundle final del cliente, como corresponde a una aplicación estática sin backend propio. No debe utilizarse la clave `secret`/`service_role` en ningún archivo de este proyecto.
 
-## Despliegue en GitHub Pages
+## Despliegue
 
-El repositorio incluye un flujo de GitHub Actions ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) que construye y publica la aplicación automáticamente en cada `push` a la rama `main`.
+La aplicación se publica en **Vercel**, en [micuadre-app.vercel.app](https://micuadre-app.vercel.app), con cada `push` a la rama `main` (proyecto `micuadre`, conectado a este repositorio). Vercel detecta Vite y publica `dist/`. Las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` se configuran en **Settings → Environment Variables** del proyecto.
 
-1. En el repositorio de GitHub, ir a **Settings → Pages** y establecer el origen (**Source**) en **GitHub Actions**.
-2. En **Settings → Secrets and variables → Actions**, registrar dos secretos:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-3. Confirmar que `base` en `vite.config.ts`, y `start_url` / `scope` en la configuración del manifest de la PWA, coincidan con el nombre del repositorio (`/finanzas-pwa/` en este caso). Si el repositorio se renombra, estos valores deben actualizarse.
-4. Realizar un `push` a `main`. El flujo compila el proyecto y publica el contenido de `dist/` en GitHub Pages.
+### El link viejo (GitHub Pages)
+
+Antes la app vivía en `marlongarzont.github.io/finanzas-pwa`. Ese link ya no publica la app: el flujo [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) publica solo la carpeta [`mudanza/`](mudanza/), que:
+
+- en el navegador lleva directo a la dirección nueva, con la misma ruta (`#/prestamos`) y los parámetros de los enlaces de correo;
+- en la app instalada muestra la pantalla "Mi Cuadre se mudó", con los pasos para instalarla de nuevo;
+- reemplaza el Service Worker viejo (`mudanza/sw.js`) para que las apps que ya estaban abiertas no sigan mostrando su copia guardada.
+
+En Supabase, **Authentication → URL Configuration** debe tener `https://micuadre-app.vercel.app` como **Site URL** y `https://micuadre-app.vercel.app/**` en **Redirect URLs**.
 
 ## Instalación en dispositivos móviles
 

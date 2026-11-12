@@ -1,8 +1,15 @@
-name: Deploy a GitHub Pages
+name: Página de mudanza en GitHub Pages
 
+# La app se publica en Vercel (micuadre-app.vercel.app) con cada push a main.
+# El link viejo de GitHub Pages ya no publica la app: solo la página de
+# mudanza (carpeta mudanza/), que lleva a la dirección nueva y reemplaza el
+# Service Worker viejo para que las apps instaladas no sigan con su copia.
 on:
   push:
     branches: [main]
+    paths:
+      - 'mudanza/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 permissions:
@@ -19,19 +26,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-        env:
-          BASE_PATH: /finanzas-pwa/
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      # Cualquier ruta vieja (marcadores, enlaces de correo) también lleva a
+      # la página de mudanza.
+      - run: cp mudanza/index.html mudanza/404.html
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: mudanza
 
   deploy:
     needs: build
