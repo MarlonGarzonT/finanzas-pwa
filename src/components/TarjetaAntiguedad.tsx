@@ -47,7 +47,7 @@ export function TarjetaAntiguedad({ antiguedad, desde }: Props) {
 
       <div className="relative px-5 pt-4 pb-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="m-0 text-[15px] font-semibold text-secundario">Llevas en Mis Finanzas</h2>
+          <h2 className="m-0 text-[15px] font-semibold text-secundario">Llevas en Mi Cuadre</h2>
           {hitoAlcanzado ? (
             <Chip
               colors={COLORES_LOGRO}

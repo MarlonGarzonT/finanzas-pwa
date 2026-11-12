@@ -148,7 +148,7 @@ export async function exportarTransaccionesExcel(
 
   // ================= Workbook =================
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Mis Finanzas';
+  workbook.creator = 'Mi Cuadre';
   workbook.created = new Date();
 
   // ---------------- Hoja "Resumen" ----------------
@@ -159,7 +159,7 @@ export async function exportarTransaccionesExcel(
 
   resumen.mergeCells('A1:F1');
   const celdaTitulo = resumen.getCell('A1');
-  celdaTitulo.value = 'Mis Finanzas — Reporte de movimientos';
+  celdaTitulo.value = 'Mi Cuadre — Reporte de movimientos';
   celdaTitulo.font = { name: FUENTE, size: 18, bold: true, color: { argb: ARGB_BLANCO } };
   celdaTitulo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ARGB_MARCA } };
   celdaTitulo.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };

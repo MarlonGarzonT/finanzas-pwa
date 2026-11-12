@@ -1,4 +1,4 @@
-# Mis Finanzas
+# Mi Cuadre
 
 Progressive Web App (PWA) para el registro y control de ingresos y egresos personales. Permite capturar movimientos de dinero en pocos segundos, visualizar el balance disponible y el comportamiento mensual del gasto, y consultar un historial completo y editable de todas las transacciones. La interfaz sigue el sistema de diseño de iOS y está pensada para uso móvil, con soporte de instalación como aplicación nativa.
 

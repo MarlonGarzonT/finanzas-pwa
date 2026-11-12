@@ -11,7 +11,7 @@ self.addEventListener('push', (evento) => {
     datos = { cuerpo: evento.data ? evento.data.text() : '' };
   }
   evento.waitUntil(
-    self.registration.showNotification(datos.titulo || 'Mis Finanzas', {
+    self.registration.showNotification(datos.titulo || 'Mi Cuadre', {
       body: datos.cuerpo || '',
       icon: 'icons/icon-192.png',
       // La misma etiqueta reemplaza el aviso anterior en vez de apilarlos.

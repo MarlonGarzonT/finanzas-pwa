@@ -181,7 +181,7 @@ export function Perfil() {
           )}
 
           <p className="m-0 mt-8 text-center text-[13px] text-secundario cifras">
-            Mis Finanzas · versión {__VERSION_APP__}
+            Mi Cuadre · versión {__VERSION_APP__}
           </p>
         </>
       )}

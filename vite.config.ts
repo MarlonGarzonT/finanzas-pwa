@@ -8,8 +8,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 const fechaBuild = new Date().toISOString().slice(0, 10);
 const commit = process.env.GITHUB_SHA?.slice(0, 7);
 
+// Ruta donde se publica la app. En el hosting principal va en la raíz (link
+// corto); GitHub Pages la sirve en /finanzas-pwa/ y la fija su workflow.
+const base = process.env.BASE_PATH ?? '/';
+
 export default defineConfig({
-  base: '/finanzas-pwa/',
+  base,
   define: {
     __VERSION_APP__: JSON.stringify(commit ? `${fechaBuild} (${commit})` : `${fechaBuild} (local)`),
   },
@@ -29,14 +33,14 @@ export default defineConfig({
         importScripts: ['sw-transicion.js', 'sw-push.js'],
       },
       manifest: {
-        name: 'Mis Finanzas',
-        short_name: 'Finanzas',
+        name: 'Mi Cuadre',
+        short_name: 'Mi Cuadre',
         description: 'Registra tus entradas y salidas de dinero al día.',
         theme_color: '#f2f2f7',
         background_color: '#f2f2f7',
         display: 'standalone',
-        start_url: '/finanzas-pwa/',
-        scope: '/finanzas-pwa/',
+        start_url: base,
+        scope: base,
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
