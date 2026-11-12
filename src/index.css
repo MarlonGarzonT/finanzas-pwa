@@ -200,6 +200,29 @@ textarea {
   animation: aparecer-suave 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Gráfica de la brecha (Reportes): las curvas se descubren de izquierda a
+   derecha, como si se dibujaran. Solo transform: el marco entra desde la
+   izquierda y su contenido se mueve al revés, así el dibujo no se desplaza. */
+@keyframes revelar-marco {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes revelar-contenido {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.revelar-marco {
+  animation: revelar-marco 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.revelar-marco > .revelar-contenido {
+  animation: revelar-contenido 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
 /* Marca ✓ de la categoría elegida (SelectorCategoria): aparece con un rebote
    corto para confirmar el toque. */
 @keyframes seleccion-pop {
