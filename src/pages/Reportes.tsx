@@ -2,6 +2,7 @@ import { Block, BlockTitle, Navbar, Page } from 'konsta/react';
 import { useMemo, useState } from 'react';
 import { BalanceMes } from '../components/BalanceMes';
 import { BarraFijoVariable } from '../components/BarraFijoVariable';
+import { BrechaHistorica } from '../components/BrechaHistorica';
 import { Cargando } from '../components/Cargando';
 import { ComparacionMes } from '../components/ComparacionMes';
 import { DonaCategorias } from '../components/DonaCategorias';
@@ -20,6 +21,7 @@ import {
   proyeccionFinDeMes,
 } from '../utils/estadisticasMes';
 import { capitalizarPrimera, nombreMes } from '../utils/fechas';
+import { historialAcumulado } from '../utils/historialAcumulado';
 
 const MESES_EN_GRAFICO = 6;
 
@@ -52,6 +54,7 @@ export function Reportes() {
     () => compararConMesAnterior(transacciones, mesSeleccionado, categoriaPorId, new Date(), gastosAnuales),
     [transacciones, mesSeleccionado, categoriaPorId, gastosAnuales]
   );
+  const historial = useMemo(() => historialAcumulado(transacciones, categoriaPorId), [transacciones, categoriaPorId]);
   const proyeccion = contable.gastos > 0 ? proyeccionFinDeMes(transaccionesDelMes, categoriaPorId, mesSeleccionado) : null;
 
   return (
@@ -65,7 +68,8 @@ export function Reportes() {
           Cuando registres movimientos, aquí verás si gastas más de lo que entra, en qué gastas y cómo vas frente a los meses anteriores.
         </Block>
       ) : (
-        // La key reinicia las animaciones de los gráficos al cambiar de mes.
+        <>
+        {/* La key reinicia las animaciones de los gráficos al cambiar de mes. */}
         <div className="aparecer-suave" key={mesSeleccionado.getTime()}>
           <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
 
@@ -100,8 +104,17 @@ export function Reportes() {
           <Block strong inset className={TARJETA}>
             <BarraFijoVariable {...fijoVariable} />
           </Block>
-
         </div>
+
+        {/* Todo el historial: no depende del mes elegido, por eso va fuera
+            del bloque que se reinicia al cambiar de mes. */}
+        {historial.puntos.length > 0 && (
+          <>
+            <BlockTitle>Desde que empezaste</BlockTitle>
+            <BrechaHistorica historial={historial} />
+          </>
+        )}
+        </>
       )}
     </Page>
   );
