@@ -1,8 +1,8 @@
 import { Block, Button, List, ListItem, Page, Toggle } from 'konsta/react';
 import { lazy, Suspense, useState, useSyncExternalStore, type ComponentType, type FormEvent } from 'react';
-import { CampoTexto } from '../components/CampoTexto';
+import { CampoPortada } from '../components/CampoPortada';
 import { CLASE_TITULO_PORTADA } from '../components/claseTituloPortada';
-import { IconoOjo, IconoOjoTachado } from '../components/Iconos';
+import { IconoCandado, IconoCorreo, IconoOjo, IconoOjoTachado } from '../components/Iconos';
 import ClickSpark from '../components/reactbits/ClickSpark';
 import { useAuth } from './AuthContext';
 
@@ -187,7 +187,7 @@ export function Login() {
   const botonOjo = (
     <button
       type="button"
-      className="-mr-2 flex size-11 shrink-0 items-center justify-center text-secundario"
+      className="flex size-11 shrink-0 items-center justify-center rounded-full text-secundario"
       onClick={() => setMostrarPassword((v) => !v)}
       aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
       aria-pressed={mostrarPassword}
@@ -235,24 +235,24 @@ export function Login() {
         </div>
 
         <form onSubmit={manejarEnvio}>
-          <List strong inset className="mt-4 mb-2">
-            <CampoTexto
+          <div className="mt-4 mb-2 flex flex-col gap-3 px-4">
+            <CampoPortada
               etiqueta="Correo electrónico"
+              icono={<IconoCorreo className="size-5" />}
               type="email"
               inputMode="email"
               autoComplete="email"
-              autoCapitalize="off"
               enterKeyHint="next"
               placeholder="tu@correo.com"
               valor={email}
               onCambiar={setEmail}
               required
             />
-            <CampoTexto
+            <CampoPortada
               etiqueta="Contraseña"
+              icono={<IconoCandado className="size-5" />}
               type={mostrarPassword ? 'text' : 'password'}
               autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
-              autoCapitalize="off"
               enterKeyHint={modo === 'login' ? 'go' : 'next'}
               placeholder={`Mínimo ${LONGITUD_MINIMA} caracteres`}
               valor={password}
@@ -261,11 +261,11 @@ export function Login() {
               accion={botonOjo}
             />
             {modo === 'registro' && (
-              <CampoTexto
+              <CampoPortada
                 etiqueta="Confirmar contraseña"
+                icono={<IconoCandado className="size-5" />}
                 type={mostrarPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                autoCapitalize="off"
                 enterKeyHint="go"
                 placeholder="Repite la contraseña"
                 valor={confirmarPassword}
@@ -273,6 +273,8 @@ export function Login() {
                 required
               />
             )}
+          </div>
+          <List strong inset className={modo === 'registro' ? 'mt-3 mb-2' : 'hidden'}>
             {modo === 'registro' && (
               <ListItem
                 label

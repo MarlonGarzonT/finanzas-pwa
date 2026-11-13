@@ -111,6 +111,15 @@ export function IconoCorreo(props: PropsIcono) {
   );
 }
 
+export function IconoCandado(props: PropsIcono) {
+  return (
+    <Trazo {...props}>
+      <rect x="5" y="10.5" width="14" height="10" rx="3" />
+      <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+    </Trazo>
+  );
+}
+
 export function IconoLlave(props: PropsIcono) {
   return (
     <Trazo {...props}>
