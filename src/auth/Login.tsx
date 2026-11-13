@@ -1,8 +1,9 @@
 import { Block, Button, List, ListItem, Page, Toggle } from 'konsta/react';
-import { lazy, Suspense, useState, type ComponentType, type FormEvent } from 'react';
-import { CampoTexto } from '../components/CampoTexto';
+import { lazy, Suspense, useState, useSyncExternalStore, type ComponentType, type FormEvent } from 'react';
+import { CampoPortada } from '../components/CampoPortada';
 import { CLASE_TITULO_PORTADA } from '../components/claseTituloPortada';
-import { IconoOjo, IconoOjoTachado } from '../components/Iconos';
+import { IconoCandado, IconoCorreo, IconoOjo, IconoOjoTachado } from '../components/Iconos';
+import ClickSpark from '../components/reactbits/ClickSpark';
 import { useAuth } from './AuthContext';
 
 type Modo = 'login' | 'registro';
@@ -23,6 +24,42 @@ const FondoAurora = lazy<ComponentType>(() =>
     .then((m) => ({ default: m.FondoAurora }))
     .catch(() => ({ default: SinFondo }))
 );
+function LogoPlano({ src }: { src: string }) {
+  return <img className="m-1 size-16 rounded-[18px] shadow-[0_8px_24px_-8px_rgb(0_0_0/0.35)]" src={src} alt="" width={64} height={64} />;
+}
+const LogoConAnillo = lazy(() =>
+  cargarPortada()
+    .then((m) => ({ default: m.LogoConAnillo }))
+    .catch(() => ({ default: LogoPlano }))
+);
+function LemaPlano() {
+  return <p className="m-0 text-[17px] text-secundario">Cuadra tus gastos, ingresos y préstamos.</p>;
+}
+const LemaAnimado = lazy<ComponentType>(() =>
+  cargarPortada()
+    .then((m) => ({ default: m.LemaAnimado }))
+    .catch(() => ({ default: LemaPlano }))
+);
+const VitrinaProducto = lazy<ComponentType>(() =>
+  cargarPortada()
+    .then((m) => ({ default: m.VitrinaProducto }))
+    .catch(() => ({ default: SinFondo }))
+);
+
+// En pantallas anchas el login va a dos columnas, con la vitrina de marca al
+// lado. Se decide en JS (no solo con CSS) para no montar dos auroras a la vez.
+const consultaEscritorio = window.matchMedia('(min-width: 1024px)');
+function suscribirEscritorio(avisar: () => void) {
+  consultaEscritorio.addEventListener('change', avisar);
+  return () => consultaEscritorio.removeEventListener('change', avisar);
+}
+function useEsEscritorio(): boolean {
+  return useSyncExternalStore(suscribirEscritorio, () => consultaEscritorio.matches);
+}
+
+// Chispas al tocar los botones principales: verdes azulados del logo.
+const COLORES_CHISPA = ['#43af9c', '#16687c', '#7ee0c4'];
+
 const TituloAnimado = lazy(() =>
   cargarPortada()
     .then((m) => ({ default: m.TituloAnimado }))
@@ -31,15 +68,13 @@ const TituloAnimado = lazy(() =>
 
 const LONGITUD_MINIMA = 8;
 
-const TEXTOS: Record<Modo, { titulo: string; subtitulo: string; cta: string }> = {
+const TEXTOS: Record<Modo, { titulo: string; cta: string }> = {
   login: {
     titulo: 'Bienvenido de nuevo',
-    subtitulo: 'Inicia sesión para seguir controlando tus finanzas.',
     cta: 'Iniciar sesión',
   },
   registro: {
     titulo: 'Crea tu cuenta',
-    subtitulo: 'Regístrate con tu correo para empezar a controlar tus finanzas.',
     cta: 'Crear cuenta',
   },
 };
@@ -51,6 +86,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [confirmarPassword, setConfirmarPassword] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
+  const escritorio = useEsEscritorio();
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [enviandoGoogle, setEnviandoGoogle] = useState(false);
@@ -151,7 +187,7 @@ export function Login() {
   const botonOjo = (
     <button
       type="button"
-      className="-mr-2 flex size-11 shrink-0 items-center justify-center text-secundario"
+      className="flex size-11 shrink-0 items-center justify-center rounded-full text-secundario"
       onClick={() => setMostrarPassword((v) => !v)}
       aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
       aria-pressed={mostrarPassword}
@@ -162,22 +198,28 @@ export function Login() {
 
   return (
     <Page className="pt-safe pb-safe">
-      <Suspense fallback={null}>
-        <FondoAurora />
-      </Suspense>
-      <div className="relative mx-auto flex min-h-full w-full max-w-md flex-col justify-center py-8">
+      {!escritorio && (
+        <Suspense fallback={null}>
+          <FondoAurora />
+        </Suspense>
+      )}
+      <div className="relative mx-auto flex min-h-full w-full max-w-md flex-col justify-center py-8 lg:max-w-6xl lg:flex-row lg:items-stretch lg:justify-center lg:gap-10 lg:p-6">
+        {escritorio && (
+          <Suspense fallback={<div className="flex-1" />}>
+            <VitrinaProducto />
+          </Suspense>
+        )}
+        <div className="flex flex-col justify-center lg:w-[440px] lg:shrink-0">
         <header className="flex flex-col items-center gap-3 px-6 text-center">
-          <img
-            className="size-16 rounded-[18px] shadow-[0_8px_24px_-8px_rgb(0_0_0/0.35)]"
-            src={`${import.meta.env.BASE_URL}icons/icon-192.png`}
-            alt=""
-            width={64}
-            height={64}
-          />
+          <Suspense fallback={<LogoPlano src={`${import.meta.env.BASE_URL}icons/icon-192.png`} />}>
+            <LogoConAnillo src={`${import.meta.env.BASE_URL}icons/icon-192.png`} />
+          </Suspense>
           <Suspense fallback={<TituloPlano texto={textos.titulo} cargando />}>
             <TituloAnimado texto={textos.titulo} />
           </Suspense>
-          <p className="m-0 text-[15px] text-secundario">{textos.subtitulo}</p>
+          <Suspense fallback={<LemaPlano />}>
+            <LemaAnimado />
+          </Suspense>
         </header>
 
         <Block className="my-6">
@@ -193,24 +235,24 @@ export function Login() {
         </div>
 
         <form onSubmit={manejarEnvio}>
-          <List strong inset className="mt-4 mb-2">
-            <CampoTexto
+          <div className="mt-4 mb-2 flex flex-col gap-3 px-4">
+            <CampoPortada
               etiqueta="Correo electrónico"
+              icono={<IconoCorreo className="size-5" />}
               type="email"
               inputMode="email"
               autoComplete="email"
-              autoCapitalize="off"
               enterKeyHint="next"
               placeholder="tu@correo.com"
               valor={email}
               onCambiar={setEmail}
               required
             />
-            <CampoTexto
+            <CampoPortada
               etiqueta="Contraseña"
+              icono={<IconoCandado className="size-5" />}
               type={mostrarPassword ? 'text' : 'password'}
               autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
-              autoCapitalize="off"
               enterKeyHint={modo === 'login' ? 'go' : 'next'}
               placeholder={`Mínimo ${LONGITUD_MINIMA} caracteres`}
               valor={password}
@@ -219,11 +261,11 @@ export function Login() {
               accion={botonOjo}
             />
             {modo === 'registro' && (
-              <CampoTexto
+              <CampoPortada
                 etiqueta="Confirmar contraseña"
+                icono={<IconoCandado className="size-5" />}
                 type={mostrarPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                autoCapitalize="off"
                 enterKeyHint="go"
                 placeholder="Repite la contraseña"
                 valor={confirmarPassword}
@@ -231,6 +273,8 @@ export function Login() {
                 required
               />
             )}
+          </div>
+          <List strong inset className={modo === 'registro' ? 'mt-3 mb-2' : 'hidden'}>
             {modo === 'registro' && (
               <ListItem
                 label
@@ -265,9 +309,11 @@ export function Login() {
                 {mensajeExito}
               </p>
             )}
-            <Button large rounded type="submit" disabled={enviando}>
-              {enviando ? 'Un momento…' : textos.cta}
-            </Button>
+            <ClickSpark sparkColor={COLORES_CHISPA} sparkCount={10} sparkRadius={34} sparkSize={12} duration={520}>
+              <Button large rounded type="submit" disabled={enviando}>
+                {enviando ? 'Un momento…' : textos.cta}
+              </Button>
+            </ClickSpark>
           </Block>
         </form>
 
@@ -277,6 +323,7 @@ export function Login() {
             {modo === 'login' ? 'Crear cuenta' : 'Iniciar sesión'}
           </Button>
         </p>
+        </div>
       </div>
     </Page>
   );
