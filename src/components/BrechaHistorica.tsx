@@ -129,6 +129,18 @@ export function BrechaHistorica({ historial }: Props) {
 
   return (
     <Block strong inset className="mt-2 rounded-3xl p-4">
+      {/* Título del módulo: la frase de Morgan Housel, centrada y arriba de todo. */}
+      <figure className="m-0 mb-6 text-center">
+        <blockquote className="m-0 text-[26px] leading-[1.15] font-bold tracking-[-0.02em] text-balance">
+          <GradientText colors={oscuro ? COLORES_CITA.oscuro : COLORES_CITA.claro} animationSpeed={7} glow={oscuro ? 0.25 : 0}>
+            El ahorro es la brecha entre tu ego y tus ingresos
+          </GradientText>
+        </blockquote>
+        <figcaption className="mt-2 text-[13px] font-medium">
+          <ShinyText text="Morgan Housel · La psicología del dinero" color={oscuro ? 'rgb(235 235 245 / 0.62)' : 'rgb(60 60 67 / 0.78)'} shineColor={oscuro ? '#ffffff' : '#0b6b66'} speed={4} delay={2} />
+        </figcaption>
+      </figure>
+
       <BlockHeader className="m-0! mb-1! px-0! text-[15px] font-semibold">{brecha < 0 ? 'Te ha faltado' : 'Te ha quedado'}</BlockHeader>
       <p
         className={`m-0 text-[44px] leading-[1.05] font-bold tracking-[-0.03em] cifras ${
@@ -230,17 +242,6 @@ export function BrechaHistorica({ historial }: Props) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-
-      <figure className="m-0 mt-3 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <blockquote className="m-0 text-[21px] leading-snug font-bold tracking-[-0.01em] text-balance">
-          <GradientText colors={oscuro ? COLORES_CITA.oscuro : COLORES_CITA.claro} animationSpeed={7} glow={oscuro ? 0.25 : 0}>
-            «El ahorro es la brecha entre tu ego y tus ingresos».
-          </GradientText>
-        </blockquote>
-        <figcaption className="mt-2 text-[13px] font-medium">
-          <ShinyText text="Morgan Housel · La psicología del dinero" color={oscuro ? 'rgb(235 235 245 / 0.62)' : 'rgb(60 60 67 / 0.78)'} shineColor={oscuro ? '#ffffff' : '#0b6b66'} speed={4} delay={2} />
-        </figcaption>
-      </figure>
     </Block>
   );
 }
