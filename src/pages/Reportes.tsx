@@ -69,8 +69,13 @@ export function Reportes() {
         </Block>
       ) : (
         <>
+        {/* Lo principal de Reportes: todo el historial, sin depender del mes
+            elegido (por eso va fuera del bloque que se reinicia al cambiarlo). */}
+        {historial.puntos.length > 0 && <BrechaHistorica historial={historial} />}
+
         {/* La key reinicia las animaciones de los gráficos al cambiar de mes. */}
         <div className="aparecer-suave" key={mesSeleccionado.getTime()}>
+          <BlockTitle className="mt-6">Mes a mes</BlockTitle>
           <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
 
           <BalanceMes
@@ -106,14 +111,6 @@ export function Reportes() {
           </Block>
         </div>
 
-        {/* Todo el historial: no depende del mes elegido, por eso va fuera
-            del bloque que se reinicia al cambiar de mes. */}
-        {historial.puntos.length > 0 && (
-          <>
-            <BlockTitle>Desde que empezaste</BlockTitle>
-            <BrechaHistorica historial={historial} />
-          </>
-        )}
         </>
       )}
     </Page>

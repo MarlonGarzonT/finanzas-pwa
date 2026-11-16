@@ -1,5 +1,6 @@
 import { Block } from 'konsta/react';
-import { useEffect, useId, useRef, useState, type PointerEvent } from 'react';
+import { useId, useMemo, useState } from 'react';
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import type { HistorialAcumulado } from '../utils/historialAcumulado';
 import { capitalizarPrimera, formatearMonto, nombreMes } from '../utils/fechas';
 import { MontoAnimado } from './MontoAnimado';
@@ -8,15 +9,20 @@ interface Props {
   historial: HistorialAcumulado;
 }
 
-// Lienzo de la gráfica en unidades propias; el SVG se estira al ancho de la
-// tarjeta (los trazos no se deforman: vector-effect).
-const ANCHO = 320;
-const ALTO = 150;
-const MARGEN_SUPERIOR = 10;
+interface PuntoGrafica {
+  // Primer día del mes; el origen (cero) no tiene mes.
+  mes: Date | null;
+  etiqueta: string;
+  ingresos: number;
+  gastos: number;
+}
+
+const VERDE = 'var(--color-ingreso-relleno)';
+const ROJO = 'var(--color-alerta-relleno)';
 
 function mesCorto(fecha: Date): string {
   const mes = fecha.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
-  return `${mes} ${fecha.getFullYear()}`;
+  return `${mes} ${String(fecha.getFullYear()).slice(2)}`;
 }
 
 function fraseBrecha({ brecha, tasa, ingresos }: HistorialAcumulado): string {
@@ -28,222 +34,167 @@ function fraseBrecha({ brecha, tasa, ingresos }: HistorialAcumulado): string {
   return `De cada $100 que entraron, te quedaron $${deCada100}.`;
 }
 
-// Todo el historial del usuario en una sola imagen: lo que ha entrado y lo que
-// ha salido, acumulado mes a mes desde el primer movimiento. Las dos curvas
-// arrancan juntas en cero y el espacio que se abre entre ellas es la brecha
-// de la frase de Morgan Housel: lo que no se gastó. Al pasar el dedo se lee
-// cómo iba la brecha en cada mes.
+// Con "reducir movimiento" las curvas aparecen ya dibujadas.
+function prefiereMenosMovimiento(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Todo el historial del usuario en una sola imagen, y lo primero de Reportes:
+// lo que ha entrado (verde) y lo que ha salido (rojo), acumulado mes a mes
+// desde el primer movimiento. Las curvas arrancan juntas en cero y el espacio
+// entre ellas es la brecha de la frase de Morgan Housel. Gráfica con Recharts;
+// la leyenda son tres fichas con ícono, signo y monto, que al tocar la gráfica
+// pasan a mostrar los valores de ese mes.
 export function BrechaHistorica({ historial }: Props) {
   const { puntos, ingresos, gastos, brecha } = historial;
-  const [indiceActivo, setIndiceActivo] = useState<number | null>(null);
-  const graficaRef = useRef<HTMLDivElement>(null);
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const [indiceActivo, setIndiceActivo] = useState<number | null>(null);
+  const [sinMovimiento] = useState(prefiereMenosMovimiento);
 
-  // La tarjeta queda al final de Reportes: las curvas se dibujan la primera
-  // vez que entra en pantalla, no al cargar la página (nadie lo vería).
-  const [vista, setVista] = useState(() => typeof IntersectionObserver === 'undefined');
-  const hayPuntos = historial.puntos.length > 0;
-  useEffect(() => {
-    const grafica = graficaRef.current;
-    if (!grafica || vista) return;
-    const observador = new IntersectionObserver(
-      (entradas) => {
-        if (!entradas.some((entrada) => entrada.isIntersecting)) return;
-        setVista(true);
-        observador.disconnect();
-      },
-      { threshold: 0.35 }
-    );
-    observador.observe(grafica);
-    return () => observador.disconnect();
-  }, [vista, hayPuntos]);
+  // Un punto de origen en cero antes del primer mes: las curvas nacen juntas.
+  const datos = useMemo<PuntoGrafica[]>(
+    () => [
+      { mes: null, etiqueta: '', ingresos: 0, gastos: 0 },
+      ...puntos.map((p) => ({ mes: p.mes, etiqueta: mesCorto(p.mes), ingresos: p.ingresos, gastos: p.gastos })),
+    ],
+    [puntos]
+  );
 
   if (puntos.length === 0) return null;
 
-  // Un punto de origen en cero antes del primer mes: las curvas nacen juntas.
-  const serie = [{ ingresos: 0, gastos: 0 }, ...puntos];
-  const pasos = serie.length - 1;
-  const maximo = Math.max(ingresos, gastos, 1);
-  const x = (i: number) => (i / pasos) * ANCHO;
-  const y = (valor: number) => ALTO - (valor / maximo) * (ALTO - MARGEN_SUPERIOR);
-  const linea = (campo: 'ingresos' | 'gastos') => serie.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(2)} ${y(p[campo]).toFixed(2)}`).join(' ');
-  const lineaIngresos = linea('ingresos');
-  const lineaGastos = linea('gastos');
-  const bajo = (trazo: string) => `${trazo} L${ANCHO} ${ALTO} L0 ${ALTO} Z`;
-  // Banda entre las dos curvas: ingresos de ida y gastos de vuelta.
-  const banda = `${lineaIngresos} ${[...serie].reverse().map((p, i) => `L${x(pasos - i).toFixed(2)} ${y(p.gastos).toFixed(2)}`).join(' ')} Z`;
-
-  const activo = indiceActivo === null ? null : puntos[indiceActivo];
+  const activo = indiceActivo !== null && indiceActivo > 0 ? datos[indiceActivo] : null;
   const mostrado = activo ?? { ingresos, gastos };
   const brechaMostrada = mostrado.ingresos - mostrado.gastos;
-
-  function seguirDedo(evento: PointerEvent<HTMLDivElement>) {
-    const caja = graficaRef.current?.getBoundingClientRect();
-    if (!caja || caja.width === 0) return;
-    const fraccion = (evento.clientX - caja.left) / caja.width;
-    // El origen (paso 0) no es un mes: el primer mes es el paso 1.
-    const paso = Math.min(pasos, Math.max(1, Math.round(fraccion * pasos)));
-    setIndiceActivo(paso - 1);
-  }
-
   const primerMes = puntos[0].mes;
-  const ultimoMes = puntos[puntos.length - 1].mes;
   const periodo =
-    puntos.length === 1
-      ? capitalizarPrimera(nombreMes(primerMes))
-      : `Desde ${nombreMes(primerMes)} · ${puntos.length} meses`;
-  const xActivo = indiceActivo === null ? null : x(indiceActivo + 1);
+    puntos.length === 1 ? capitalizarPrimera(nombreMes(primerMes)) : `Desde ${nombreMes(primerMes)} · ${puntos.length} meses`;
 
   return (
-    <Block strong inset className="rounded-3xl p-4">
+    <Block strong inset className="mt-2 rounded-3xl p-4">
       <span className="block text-[13px] font-medium text-secundario">{periodo}</span>
+      <p className="m-0 mt-1 text-[13px] font-medium text-secundario">{brecha < 0 ? 'Te ha faltado' : 'Te ha quedado'}</p>
       <p
-        className={`m-0 mt-1 text-[34px] leading-tight font-bold tracking-[-0.02em] cifras ${
+        className={`m-0 text-[44px] leading-[1.05] font-bold tracking-[-0.03em] cifras ${
           brecha > 0 ? 'text-ingreso' : brecha < 0 ? 'text-alerta' : ''
         }`}
       >
-        <span className="sr-only">{brecha < 0 ? 'Te ha faltado: ' : 'Te ha quedado: '}</span>
         <MontoAnimado monto={brecha} signo={brecha > 0 ? '+' : brecha < 0 ? '−' : ''} intro />
       </p>
-      <p className="m-0 mt-0.5 text-[15px] leading-snug text-secundario">{fraseBrecha(historial)}</p>
+      <p className="m-0 mt-1 text-[15px] leading-snug text-secundario">{fraseBrecha(historial)}</p>
+
+      {/* Fichas: qué es cada curva, de un vistazo. Con el dedo sobre la gráfica
+          muestran el mes tocado. */}
+      <div className="mt-4 grid grid-cols-2 gap-2" aria-hidden="true">
+        <div className="rounded-2xl bg-ingreso-relleno/12 px-3 py-2.5">
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-ingreso">
+            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 19V5.5M6.5 11 12 5.5l5.5 5.5" />
+            </svg>
+            Entró
+          </span>
+          <span className="mt-0.5 block text-[19px] leading-tight font-bold text-ingreso cifras">+{formatearMonto(mostrado.ingresos)}</span>
+        </div>
+        <div className="rounded-2xl bg-alerta-relleno/12 px-3 py-2.5">
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-alerta">
+            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v13.5M6.5 13l5.5 5.5 5.5-5.5" />
+            </svg>
+            Salió
+          </span>
+          <span className="mt-0.5 block text-[19px] leading-tight font-bold text-alerta cifras">−{formatearMonto(mostrado.gastos)}</span>
+        </div>
+      </div>
+      <p className="m-0 mt-2 h-5 text-[13px] text-secundario" aria-hidden="true">
+        {activo?.mes ? (
+          <>
+            Hasta {nombreMes(activo.mes)}:{' '}
+            <span className={`font-semibold cifras ${brechaMostrada < 0 ? 'text-alerta' : 'text-ingreso'}`}>
+              {brechaMostrada < 0 ? 'faltaron' : 'quedaron'} {formatearMonto(Math.abs(brechaMostrada))}
+            </span>
+          </>
+        ) : (
+          'Toca la gráfica para ver cada mes'
+        )}
+      </p>
 
       <div
-        ref={graficaRef}
-        className="relative mt-4 touch-pan-y text-black select-none dark:text-white"
-        onPointerDown={seguirDedo}
-        onPointerMove={seguirDedo}
-        onPointerLeave={() => setIndiceActivo(null)}
-        onPointerUp={(evento) => evento.pointerType !== 'mouse' && setIndiceActivo(null)}
-        onPointerCancel={() => setIndiceActivo(null)}
+        className="-mx-1 mt-1 h-64 touch-pan-y select-none"
         role="img"
         aria-label={`Desde ${nombreMes(primerMes)} han entrado ${formatearMonto(ingresos)} y han salido ${formatearMonto(gastos)}. ${fraseBrecha(historial)}`}
       >
-        <div className={`overflow-hidden ${vista ? 'revelar-marco' : '-translate-x-full'}`}>
-          <svg
-            className="revelar-contenido block h-40 w-full overflow-visible"
-            viewBox={`0 0 ${ANCHO} ${ALTO}`}
-            preserveAspectRatio="none"
-            aria-hidden="true"
-            focusable="false"
+        <ResponsiveContainer width="100%" height="100%" debounce={50}>
+          <AreaChart
+            data={datos}
+            margin={{ top: 14, right: 12, bottom: 0, left: 12 }}
+            onMouseMove={(estado) => {
+              const indice = estado.activeTooltipIndex;
+              setIndiceActivo(typeof indice === 'number' ? indice : Number(indice ?? NaN) || null);
+            }}
+            onMouseLeave={() => setIndiceActivo(null)}
+            accessibilityLayer={false}
           >
             <defs>
-              <linearGradient id={`${id}-banda-verde`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-ingreso-relleno)" stopOpacity="0.42" />
-                <stop offset="100%" stopColor="var(--color-ingreso-relleno)" stopOpacity="0.06" />
+              <linearGradient id={`${id}-verde`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={VERDE} stopOpacity={0.5} />
+                <stop offset="100%" stopColor={VERDE} stopOpacity={0.02} />
               </linearGradient>
-              <linearGradient id={`${id}-banda-coral`} x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0%" stopColor="var(--color-alerta-relleno)" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="var(--color-alerta-relleno)" stopOpacity="0.06" />
+              <linearGradient id={`${id}-rojo`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={ROJO} stopOpacity={0.2} />
+                <stop offset="100%" stopColor={ROJO} stopOpacity={0.02} />
               </linearGradient>
-              <clipPath id={`${id}-bajo-ingresos`}>
-                <path d={bajo(lineaIngresos)} />
-              </clipPath>
-              <clipPath id={`${id}-bajo-gastos`}>
-                <path d={bajo(lineaGastos)} />
-              </clipPath>
+              <filter id={`${id}-brillo`} x="-5%" y="-30%" width="110%" height="160%">
+                <feGaussianBlur stdDeviation="4" result="difuso" />
+                <feMerge>
+                  <feMergeNode in="difuso" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
-            {/* La brecha: verde donde lo que entró va por encima de lo que
-                salió; coral en los tramos donde se gastó más de lo que entró. */}
-            <path d={banda} clipPath={`url(#${id}-bajo-ingresos)`} fill={`url(#${id}-banda-verde)`} />
-            <path d={banda} clipPath={`url(#${id}-bajo-gastos)`} fill={`url(#${id}-banda-coral)`} />
-            <line x1="0" y1={ALTO} x2={ANCHO} y2={ALTO} stroke="currentColor" strokeOpacity="0.14" vectorEffect="non-scaling-stroke" />
-            <path
-              d={lineaGastos}
-              fill="none"
-              stroke="currentColor"
-              strokeOpacity="0.8"
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
+            <XAxis
+              dataKey="etiqueta"
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+              minTickGap={36}
+              tick={{ fontSize: 12, fill: 'var(--texto-secundario)' }}
+              tickMargin={8}
             />
-            <path
-              d={lineaIngresos}
-              fill="none"
-              stroke="var(--color-ingreso-relleno)"
-              strokeWidth="7"
-              strokeOpacity="0.16"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
+            <Tooltip
+              content={() => null}
+              cursor={{ stroke: 'currentColor', strokeOpacity: 0.3, strokeWidth: 1, strokeDasharray: '3 3' }}
+              isAnimationActive={false}
             />
-            <path
-              d={lineaIngresos}
-              fill="none"
-              stroke="var(--color-ingreso-relleno)"
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
+            <Area
+              type="monotone"
+              dataKey="gastos"
+              stroke={ROJO}
+              strokeWidth={2.5}
+              fill={`url(#${id}-rojo)`}
+              dot={false}
+              activeDot={{ r: 5, fill: ROJO, stroke: 'var(--color-white, #fff)', strokeWidth: 2 }}
+              isAnimationActive={!sinMovimiento}
+              animationDuration={1100}
+              animationEasing="ease-out"
             />
-          </svg>
-        </div>
-
-        {/* Punta de la curva: un punto con un aro que late (solo opacity y
-            transform, apagado con "reducir movimiento"). */}
-        {!activo && vista && (
-          <span
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: '100%', top: `${(y(serie[serie.length - 1].ingresos) / ALTO) * 100}%` }}
-            aria-hidden="true"
-          >
-            <span className="absolute inset-0 -m-1.5 animate-ping rounded-full bg-ingreso-relleno opacity-40 motion-reduce:hidden" />
-            <span className="relative block size-2.5 rounded-full bg-ingreso-relleno ring-2 ring-white dark:ring-[#1c1c1e]" />
-          </span>
-        )}
-
-        {/* Mira del mes tocado: línea y un punto por serie, con aro del color
-            de la tarjeta para separarlos de las curvas. */}
-        {activo && xActivo !== null && (
-          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-            <span className="absolute top-0 bottom-0 w-px bg-current opacity-25" style={{ left: `${(xActivo / ANCHO) * 100}%` }} />
-            {[
-              { valor: activo.gastos, clase: 'bg-current' },
-              { valor: activo.ingresos, clase: 'bg-ingreso-relleno' },
-            ].map((punto) => (
-              <span
-                key={punto.clase}
-                className={`absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white dark:ring-[#1c1c1e] ${punto.clase}`}
-                style={{ left: `${(xActivo / ANCHO) * 100}%`, top: `${(y(punto.valor) / ALTO) * 100}%` }}
-              />
-            ))}
-          </div>
-        )}
+            <Area
+              type="monotone"
+              dataKey="ingresos"
+              stroke={VERDE}
+              strokeWidth={3}
+              fill={`url(#${id}-verde)`}
+              dot={false}
+              activeDot={{ r: 5, fill: VERDE, stroke: 'var(--color-white, #fff)', strokeWidth: 2 }}
+              isAnimationActive={!sinMovimiento}
+              animationDuration={1100}
+              animationBegin={150}
+              animationEasing="ease-out"
+              style={{ filter: `url(#${id}-brillo)` }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
 
-      <div className="mt-1.5 flex justify-between text-[12px] text-secundario" aria-hidden="true">
-        <span>{mesCorto(primerMes)}</span>
-        {puntos.length > 1 && <span>{mesCorto(ultimoMes)}</span>}
-      </div>
-
-      {/* Leyenda con los totales; al tocar la gráfica muestra los de ese mes. */}
-      <div className="mt-3 flex flex-col gap-1.5 text-[15px]" aria-hidden="true">
-        <span className="text-[13px] font-medium text-secundario">
-          {activo ? `Hasta ${nombreMes(activo.mes)}` : 'En total'}
-          {activo && (
-            <span className="cifras">
-              {' · '}
-              {brechaMostrada < 0 ? 'faltaron' : 'quedaron'} {formatearMonto(Math.abs(brechaMostrada))}
-            </span>
-          )}
-        </span>
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2">
-            <span className="h-[3px] w-4 rounded-full bg-ingreso-relleno" />
-            Entró
-          </span>
-          <span className="font-semibold text-ingreso cifras">+{formatearMonto(mostrado.ingresos)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2">
-            <span className="h-[3px] w-4 rounded-full bg-black/80 dark:bg-white/80" />
-            Salió
-          </span>
-          <span className="font-semibold cifras">−{formatearMonto(mostrado.gastos)}</span>
-        </div>
-      </div>
-
-      <figure className="m-0 mt-4 border-t border-black/[0.06] pt-4 dark:border-white/10">
+      <figure className="m-0 mt-3 border-t border-black/[0.06] pt-4 dark:border-white/10">
         <blockquote className="m-0 text-[17px] leading-snug font-semibold text-balance">
           «El ahorro es la brecha entre tu ego y tus ingresos».
         </blockquote>
