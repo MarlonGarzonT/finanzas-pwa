@@ -1,9 +1,13 @@
-import { Block } from 'konsta/react';
+import { Block, BlockHeader } from 'konsta/react';
 import { useId, useMemo, useState } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import type { HistorialAcumulado } from '../utils/historialAcumulado';
 import { capitalizarPrimera, formatearMonto, nombreMes } from '../utils/fechas';
 import { MontoAnimado } from './MontoAnimado';
+import BorderGlow from './reactbits/BorderGlow';
+import GradientText from './reactbits/GradientText';
+import ShinyText from './reactbits/ShinyText';
+import { useEsOscuro } from './useEsOscuro';
 
 interface Props {
   historial: HistorialAcumulado;
@@ -34,6 +38,59 @@ function fraseBrecha({ brecha, tasa, ingresos }: HistorialAcumulado): string {
   return `De cada $100 que entraron, te quedaron $${deCada100}.`;
 }
 
+// Colores de las fichas: HSL del verde y el rojo de dinero, y el fondo
+// teñido por tema (BorderGlow pide el fondo como color sólido).
+const FICHAS = {
+  entro: {
+    glow: '160 80 42',
+    colores: ['#10b981', '#34d399', '#43af9c'],
+    fondoClaro: '#e8f8f1',
+    fondoOscuro: '#10261f',
+  },
+  salio: {
+    glow: '8 85 60',
+    colores: ['#f0563c', '#ff8d78', '#ff6b4a'],
+    fondoClaro: '#fdecea',
+    fondoOscuro: '#2c1612',
+  },
+};
+
+function Ficha({ tipo, monto, oscuro }: { tipo: 'entro' | 'salio'; monto: number; oscuro: boolean }) {
+  const ficha = FICHAS[tipo];
+  const esEntro = tipo === 'entro';
+  return (
+    <BorderGlow
+      backgroundColor={oscuro ? ficha.fondoOscuro : ficha.fondoClaro}
+      glowColor={ficha.glow}
+      colors={ficha.colores}
+      borderRadius={20}
+      glowRadius={34}
+      fillOpacity={0.35}
+      animated
+      className="min-w-0"
+    >
+      <div className={`px-3.5 py-3 ${esEntro ? 'text-ingreso' : 'text-alerta'}`}>
+        <span className="flex items-center gap-1.5 text-[13px] font-semibold">
+          <span className={`flex size-5 items-center justify-center rounded-full ${esEntro ? 'bg-ingreso-relleno/20' : 'bg-alerta-relleno/20'}`}>
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d={esEntro ? 'M12 19V5.5M6.5 11 12 5.5l5.5 5.5' : 'M12 5v13.5M6.5 13l5.5 5.5 5.5-5.5'} />
+            </svg>
+          </span>
+          {esEntro ? 'Entró' : 'Salió'}
+        </span>
+        <span className="mt-1 block text-[21px] leading-tight font-bold tracking-[-0.02em] cifras">
+          <MontoAnimado monto={monto} signo={esEntro ? '+' : '−'} />
+        </span>
+      </div>
+    </BorderGlow>
+  );
+}
+
+const COLORES_CITA = {
+  claro: ['#16687c', '#10b981', '#43af9c'],
+  oscuro: ['#7ee0c4', '#34d399', '#43af9c'],
+};
+
 // Con "reducir movimiento" las curvas aparecen ya dibujadas.
 function prefiereMenosMovimiento(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -50,6 +107,7 @@ export function BrechaHistorica({ historial }: Props) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [indiceActivo, setIndiceActivo] = useState<number | null>(null);
   const [sinMovimiento] = useState(prefiereMenosMovimiento);
+  const oscuro = useEsOscuro();
 
   // Un punto de origen en cero antes del primer mes: las curvas nacen juntas.
   const datos = useMemo<PuntoGrafica[]>(
@@ -71,57 +129,36 @@ export function BrechaHistorica({ historial }: Props) {
 
   return (
     <Block strong inset className="mt-2 rounded-3xl p-4">
-      <span className="block text-[13px] font-medium text-secundario">{periodo}</span>
-      <p className="m-0 mt-1 text-[13px] font-medium text-secundario">{brecha < 0 ? 'Te ha faltado' : 'Te ha quedado'}</p>
+      <BlockHeader className="m-0! mb-1! px-0! text-[15px] font-semibold">{brecha < 0 ? 'Te ha faltado' : 'Te ha quedado'}</BlockHeader>
       <p
         className={`m-0 text-[44px] leading-[1.05] font-bold tracking-[-0.03em] cifras ${
           brecha > 0 ? 'text-ingreso' : brecha < 0 ? 'text-alerta' : ''
         }`}
       >
+        <span className="sr-only">{periodo}: </span>
         <MontoAnimado monto={brecha} signo={brecha > 0 ? '+' : brecha < 0 ? '−' : ''} intro />
       </p>
-      <p className="m-0 mt-1 text-[15px] leading-snug text-secundario">{fraseBrecha(historial)}</p>
 
-      {/* Fichas: qué es cada curva, de un vistazo. Con el dedo sobre la gráfica
-          muestran el mes tocado. */}
-      <div className="mt-4 grid grid-cols-2 gap-2" aria-hidden="true">
-        <div className="rounded-2xl bg-ingreso-relleno/12 px-3 py-2.5">
-          <span className="flex items-center gap-1.5 text-[13px] font-medium text-ingreso">
-            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19V5.5M6.5 11 12 5.5l5.5 5.5" />
-            </svg>
-            Entró
-          </span>
-          <span className="mt-0.5 block text-[19px] leading-tight font-bold text-ingreso cifras">+{formatearMonto(mostrado.ingresos)}</span>
-        </div>
-        <div className="rounded-2xl bg-alerta-relleno/12 px-3 py-2.5">
-          <span className="flex items-center gap-1.5 text-[13px] font-medium text-alerta">
-            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v13.5M6.5 13l5.5 5.5 5.5-5.5" />
-            </svg>
-            Salió
-          </span>
-          <span className="mt-0.5 block text-[19px] leading-tight font-bold text-alerta cifras">−{formatearMonto(mostrado.gastos)}</span>
-        </div>
+      {/* Qué es cada curva, de un vistazo. Con el dedo sobre la gráfica pasan
+          a mostrar el mes tocado. */}
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <Ficha tipo="entro" monto={mostrado.ingresos} oscuro={oscuro} />
+        <Ficha tipo="salio" monto={mostrado.gastos} oscuro={oscuro} />
       </div>
-      <p className="m-0 mt-2 h-5 text-[13px] text-secundario" aria-hidden="true">
-        {activo?.mes ? (
-          <>
-            Hasta {nombreMes(activo.mes)}:{' '}
-            <span className={`font-semibold cifras ${brechaMostrada < 0 ? 'text-alerta' : 'text-ingreso'}`}>
-              {brechaMostrada < 0 ? 'faltaron' : 'quedaron'} {formatearMonto(Math.abs(brechaMostrada))}
-            </span>
-          </>
-        ) : (
-          'Toca la gráfica para ver cada mes'
-        )}
-      </p>
 
       <div
-        className="-mx-1 mt-1 h-64 touch-pan-y select-none"
+        className="relative -mx-1 mt-2 h-64 touch-pan-y select-none"
         role="img"
         aria-label={`Desde ${nombreMes(primerMes)} han entrado ${formatearMonto(ingresos)} y han salido ${formatearMonto(gastos)}. ${fraseBrecha(historial)}`}
       >
+        {activo?.mes && (
+          <span
+            className="pointer-events-none absolute top-0 left-2 z-10 rounded-full bg-black/[0.06] px-2.5 py-1 text-[12px] font-semibold text-secundario backdrop-blur-sm dark:bg-white/10"
+            aria-hidden="true"
+          >
+            Hasta {nombreMes(activo.mes)} · {brechaMostrada < 0 ? 'faltaron' : 'quedaron'} {formatearMonto(Math.abs(brechaMostrada))}
+          </span>
+        )}
         <ResponsiveContainer width="100%" height="100%" debounce={50}>
           <AreaChart
             data={datos}
@@ -195,10 +232,14 @@ export function BrechaHistorica({ historial }: Props) {
       </div>
 
       <figure className="m-0 mt-3 border-t border-black/[0.06] pt-4 dark:border-white/10">
-        <blockquote className="m-0 text-[17px] leading-snug font-semibold text-balance">
-          «El ahorro es la brecha entre tu ego y tus ingresos».
+        <blockquote className="m-0 text-[21px] leading-snug font-bold tracking-[-0.01em] text-balance">
+          <GradientText colors={oscuro ? COLORES_CITA.oscuro : COLORES_CITA.claro} animationSpeed={7} glow={oscuro ? 0.25 : 0}>
+            «El ahorro es la brecha entre tu ego y tus ingresos».
+          </GradientText>
         </blockquote>
-        <figcaption className="mt-1.5 text-[13px] text-secundario">Morgan Housel, La psicología del dinero</figcaption>
+        <figcaption className="mt-2 text-[13px] font-medium">
+          <ShinyText text="Morgan Housel · La psicología del dinero" color={oscuro ? 'rgb(235 235 245 / 0.62)' : 'rgb(60 60 67 / 0.78)'} shineColor={oscuro ? '#ffffff' : '#0b6b66'} speed={4} delay={2} />
+        </figcaption>
       </figure>
     </Block>
   );
