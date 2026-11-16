@@ -7,6 +7,7 @@ import ShinyText from './reactbits/ShinyText';
 import SplitText from './reactbits/SplitText';
 import StarBorder from './reactbits/StarBorder';
 import TextType from './reactbits/TextType';
+import { soportaWebgl2 } from '../utils/soportaWebgl2';
 import { useEsOscuro } from './useEsOscuro';
 
 // Portada del login: aurora con los verdes azulados del logo y el título que
@@ -15,16 +16,6 @@ import { useEsOscuro } from './useEsOscuro';
 
 // Del degradado del logo: azul petróleo, verde menta y vuelta al petróleo.
 const COLORES_AURORA = ['#16687c', '#43af9c', '#1f8a8c'];
-
-function soportaWebgl2(): boolean {
-  try {
-    const contexto = document.createElement('canvas').getContext('webgl2');
-    contexto?.getExtension('WEBGL_lose_context')?.loseContext();
-    return contexto !== null;
-  } catch {
-    return false;
-  }
-}
 
 // Respaldo sin WebGL: el mismo par de verdes del logo en degradados quietos.
 const RESPALDO =
