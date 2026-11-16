@@ -134,6 +134,15 @@ Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redo
 - Celebraciones con `ClickSpark` de React Bits en modo `manual`: nunca en cada toque, solo en logros. Préstamo saldado: líneas verdes del ingreso detrás del saldo, cuando baja la hoja del abono. Hito nuevo de antigüedad: estrellas en los tonos de `--logro` desde la medalla, una sola vez por hito (se recuerda en `localStorage`, `mi-cuadre:hito-celebrado`). El canvas no lee variables CSS: los colores van en hex.
 - `prefers-reduced-motion`: todas las animaciones y transiciones se reducen a ~0.
 
+### Rendimiento (pensado para teléfonos viejos)
+
+- **Datos con copia local** (`data/cacheLocal`, en `FinanzasContext`): lo último que se vio se guarda en el teléfono (por usuario, con versión). Al abrir la app se muestra al instante y se actualiza por detrás, sin spinner. Una copia de menos de 2 minutos no se vuelve a pedir; al volver a la app tras ~5 minutos se actualiza sola. Los cambios (crear, editar, borrar) actualizan la copia con una pausa de 0,8 s. Cerrar sesión la borra (no al ver "sin sesión": al abrir, la sesión tarda un instante en recuperarse). Si el almacenamiento falla, la app sigue pidiendo todo cada vez. La primera página de movimientos pide el total para no hacer una consulta de más.
+- **Lo importante primero:** `useMontajeDiferido` pinta ya el título, el monto y las fichas, y monta un par de cuadros después lo pesado (fondo WebGL, gráfica y las tarjetas de más abajo de Reportes). Quien lo usa reserva el alto para que nada salte.
+- **Fondo animado barato** (`FondoVidrio`): se dibuja a 0,6 de resolución, 30 cuadros por segundo y 2 capas (el tope `maxFps` se agregó a Aurora). Mide su fluidez al arrancar y, bajo 40 fps, se queda quieto con un degradado; también se queda quieto sin WebGL2, con ahorro de datos y con "reducir movimiento". Sin `blur` CSS sobre el canvas.
+- **Efectos sin bucle de JavaScript:** el título de la brecha usa un degradado CSS fijo y el autor va en texto plano; el brillo de la curva es una línea más ancha y translúcida (no un filtro SVG de desenfoque). Las curvas se animan solo la primera vez por sesión.
+- **Cálculos guardados:** el historial acumulado se guarda por lista de movimientos (`historialEnCache`) y la tarjeta es `memo`: volver a Reportes o cambiar de mes no la recalcula ni la redibuja.
+- **Código a tiempo:** Reportes (la pestaña más pesada, con Recharts) se descarga en segundo plano cuando la app está en reposo, salvo con ahorro de datos.
+
 ## Accesibilidad (piso)
 
 - Contraste AA en texto y placeholders (placeholders al 55% en claro, 50% en oscuro; el "0" del monto al 45% por ser texto grande).

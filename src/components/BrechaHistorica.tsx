@@ -1,13 +1,12 @@
 import { BlockHeader, Glass } from 'konsta/react';
-import { useId, useMemo, useState } from 'react';
+import { memo, useEffect, useId, useMemo, useState } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, useYAxisScale, XAxis, YAxis } from 'recharts';
 import type { HistorialAcumulado } from '../utils/historialAcumulado';
 import { formatearMonto, nombreMes } from '../utils/fechas';
 import { FondoVidrio } from './FondoVidrio';
 import { MontoAnimado } from './MontoAnimado';
 import BorderGlow from './reactbits/BorderGlow';
-import GradientText from './reactbits/GradientText';
-import ShinyText from './reactbits/ShinyText';
+import { useMontajeDiferido } from './useMontajeDiferido';
 
 interface Props {
   historial: HistorialAcumulado;
@@ -26,7 +25,8 @@ interface PuntoGrafica {
 // necesita un fondo vivo detrás, y el texto va siempre en blanco.
 const VERDE = '#31d494';
 const CORAL = '#ff7080';
-const COLORES_TITULO = ['#ffffff', '#c9f7e2', '#c3d4f7'];
+// Degradado fijo del título (CSS puro): un degradado animado en JS repinta el texto en cada cuadro.
+const DEGRADADO_TITULO = 'linear-gradient(100deg, #ffffff 0%, #c9f7e2 45%, #c3d4f7 100%)';
 
 const FICHAS = {
   entro: { glow: '158 66 52', colores: [VERDE, '#7ee0c4', '#217b56'], fondo: '#0e2a24', texto: '#4ee0a8' },
@@ -47,6 +47,11 @@ function fraseBrecha({ brecha, tasa, ingresos }: HistorialAcumulado): string {
   return `De cada $100 que entraron, te quedaron $${deCada100}.`;
 }
 
+// La animación de las curvas corre en JavaScript (Recharts) y cuesta cuadros:
+// solo se hace la primera vez por sesión; al volver a Reportes aparecen ya
+// dibujadas, que además es lo que se espera de algo que ya se vio.
+let curvasYaAnimadas = false;
+
 // Con "reducir movimiento" las curvas aparecen ya dibujadas.
 function prefiereMenosMovimiento(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -56,11 +61,27 @@ function Ficha({ tipo, monto }: { tipo: 'entro' | 'salio'; monto: number }) {
   const ficha = FICHAS[tipo];
   const esEntro = tipo === 'entro';
   return (
-    <BorderGlow backgroundColor={ficha.fondo} glowColor={ficha.glow} colors={ficha.colores} borderRadius={20} glowRadius={34} fillOpacity={0.35} animated className="min-w-0">
+    <BorderGlow
+      backgroundColor={ficha.fondo}
+      glowColor={ficha.glow}
+      colors={ficha.colores}
+      borderRadius={20}
+      glowRadius={34}
+      fillOpacity={0.35}
+      className="min-w-0"
+    >
       <div className="px-3.5 py-3" style={{ color: ficha.texto }}>
         <span className="flex items-center gap-1.5 text-[13px] font-semibold">
           <span className="flex size-5 items-center justify-center rounded-full" style={{ background: `${ficha.texto}33` }}>
-            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="size-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d={esEntro ? 'M12 19V5.5M6.5 11 12 5.5l5.5 5.5' : 'M12 5v13.5M6.5 13l5.5 5.5 5.5-5.5'} />
             </svg>
           </span>
@@ -118,11 +139,20 @@ function FlechaBrecha({ punto, etiqueta }: { punto: PuntoGrafica; etiqueta: stri
 // espacio entre ellas, marcado con una flecha, es la brecha de la frase de
 // Morgan Housel. Fondo animado (Aurora), panel de vidrio (Glass de Konsta),
 // gráfica con Recharts y fichas con BorderGlow.
-export function BrechaHistorica({ historial }: Props) {
+export const BrechaHistorica = memo(function BrechaHistorica({ historial }: Props) {
   const { puntos, ingresos, gastos, brecha } = historial;
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const [indiceActivo, setIndiceActivo] = useState<number | null>(null);
-  const [sinMovimiento] = useState(prefiereMenosMovimiento);
+  const [sinMovimiento] = useState(() => prefiereMenosMovimiento() || curvasYaAnimadas);
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      curvasYaAnimadas = true;
+    }, 2000);
+    return () => window.clearTimeout(id);
+  }, []);
+  // Lo pesado (fondo con WebGL y gráfica) se monta justo después del primer
+  // cuadro: el título, el monto y las fichas aparecen ya.
+  const listo = useMontajeDiferido();
 
   // Un punto de origen en cero antes del primer mes: las curvas nacen juntas.
   const datos = useMemo<PuntoGrafica[]>(
@@ -130,7 +160,7 @@ export function BrechaHistorica({ historial }: Props) {
       { mes: null, etiqueta: '', ingresos: 0, gastos: 0 },
       ...puntos.map((p) => ({ mes: p.mes, etiqueta: mesCorto(p.mes), ingresos: p.ingresos, gastos: p.gastos })),
     ],
-    [puntos]
+    [puntos],
   );
 
   if (puntos.length === 0) return null;
@@ -140,29 +170,40 @@ export function BrechaHistorica({ historial }: Props) {
   const brechaMostrada = mostrado.ingresos - mostrado.gastos;
   const primerMes = puntos[0].mes;
   // La flecha va donde la brecha es mayor (ahí se ve mejor), o sigue al dedo.
-  const indiceMayorBrecha = datos.reduce((mejor, p, i) => (Math.abs(p.ingresos - p.gastos) > Math.abs(datos[mejor].ingresos - datos[mejor].gastos) ? i : mejor), 1);
+  const indiceMayorBrecha = datos.reduce(
+    (mejor, p, i) => (Math.abs(p.ingresos - p.gastos) > Math.abs(datos[mejor].ingresos - datos[mejor].gastos) ? i : mejor),
+    1,
+  );
   const indiceFlecha = indiceActivo !== null && indiceActivo > 0 ? indiceActivo : Math.max(1, indiceMayorBrecha);
   const etiquetaFlecha = brechaMostrada < 0 ? 'Lo que faltó' : 'Tu ahorro';
 
   return (
-    <section className="dark relative mx-4 mt-2 overflow-hidden rounded-[32px] p-4 text-white" aria-label="Ingresos y gastos de toda tu vida en Mi Cuadre">
-      <FondoVidrio />
+    <section
+      className="dark relative mx-4 mt-2 overflow-hidden rounded-[32px] p-4 text-white"
+      aria-label="Ingresos y gastos de toda tu vida en Mi Cuadre"
+    >
+      {listo && <FondoVidrio />}
 
       <div className="relative">
         {/* Título del módulo: la frase de Morgan Housel, centrada y arriba de todo. */}
         <figure className="m-0 mt-1 mb-6 text-center">
           <blockquote className="m-0 text-[26px] leading-[1.15] font-bold tracking-[-0.02em] text-balance">
-            <GradientText colors={COLORES_TITULO} animationSpeed={7} glow={0.25}>
+            <span className="bg-clip-text text-transparent" style={{ backgroundImage: DEGRADADO_TITULO }}>
               El ahorro es la brecha entre tu ego y tus ingresos
-            </GradientText>
+            </span>
           </blockquote>
           <figcaption className="mt-2 text-[13px] font-medium">
-            <ShinyText text="Morgan Housel · La psicología del dinero" color="rgb(255 255 255 / 0.68)" shineColor="#ffffff" speed={4} delay={2} />
+            <span className="text-white/70">Morgan Housel · La psicología del dinero</span>
           </figcaption>
         </figure>
 
-        <BlockHeader className="m-0! mb-1! px-0! text-[15px] font-semibold text-white/75">{brecha < 0 ? 'Te ha faltado' : 'Te ha quedado'}</BlockHeader>
-        <p className="m-0 text-[44px] leading-[1.05] font-bold tracking-[-0.03em] cifras" style={{ color: brecha < 0 ? '#ff8c99' : '#4ee0a8' }}>
+        <BlockHeader className="m-0! mb-1! px-0! text-[15px] font-semibold text-white/75">
+          {brecha < 0 ? 'Te ha faltado' : 'Te ha quedado'}
+        </BlockHeader>
+        <p
+          className="m-0 text-[44px] leading-[1.05] font-bold tracking-[-0.03em] cifras"
+          style={{ color: brecha < 0 ? '#ff8c99' : '#4ee0a8' }}
+        >
           <span className="sr-only">{primerMes ? `Desde ${nombreMes(primerMes)}: ` : ''}</span>
           <MontoAnimado monto={brecha} signo={brecha > 0 ? '+' : brecha < 0 ? '−' : ''} intro />
         </p>
@@ -203,80 +244,111 @@ export function BrechaHistorica({ historial }: Props) {
                 Hasta {nombreMes(activo.mes)} · {brechaMostrada < 0 ? 'faltaron' : 'quedaron'} {formatearMonto(Math.abs(brechaMostrada))}
               </span>
             )}
-            <ResponsiveContainer width="100%" height="100%" debounce={50}>
-              <AreaChart
-                data={datos}
-                margin={{ top: 40, right: 10, bottom: 4, left: 2 }}
-                onMouseMove={(estado) => {
-                  const indice = estado.activeTooltipIndex;
-                  setIndiceActivo(typeof indice === 'number' ? indice : Number(indice ?? NaN) || null);
-                }}
-                onMouseLeave={() => setIndiceActivo(null)}
-                accessibilityLayer={false}
-              >
-                <defs>
-                  <linearGradient id={`${id}-verde`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={VERDE} stopOpacity={0.55} />
-                    <stop offset="100%" stopColor={VERDE} stopOpacity={0.04} />
-                  </linearGradient>
-                  <filter id={`${id}-brillo`} x="-5%" y="-30%" width="110%" height="160%">
-                    <feGaussianBlur stdDeviation="4" result="difuso" />
-                    <feMerge>
-                      <feMergeNode in="difuso" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
-                <YAxis
-                  tick={false}
-                  tickLine={false}
-                  axisLine={{ stroke: 'rgb(255 255 255 / 0.6)', strokeWidth: 1.5 }}
-                  width={30}
-                  label={{ value: 'Dinero', angle: -90, position: 'insideLeft', fill: 'rgb(255 255 255 / 0.75)', fontSize: 12, fontWeight: 600, style: { textAnchor: 'middle' } }}
-                />
-                <XAxis
-                  dataKey="etiqueta"
-                  tick={false}
-                  tickLine={false}
-                  axisLine={{ stroke: 'rgb(255 255 255 / 0.6)', strokeWidth: 1.5 }}
-                  height={28}
-                  label={{ value: 'Tiempo', position: 'insideBottomRight', fill: 'rgb(255 255 255 / 0.75)', fontSize: 12, fontWeight: 600, offset: -2 }}
-                />
-                <Tooltip content={() => null} cursor={{ stroke: '#fff', strokeOpacity: 0.35, strokeWidth: 1, strokeDasharray: '3 3' }} isAnimationActive={false} />
-                <Area
-                  type="monotone"
-                  dataKey="ingresos"
-                  stroke={VERDE}
-                  strokeWidth={4}
-                  strokeLinecap="round"
-                  fill={`url(#${id}-verde)`}
-                  dot={false}
-                  activeDot={{ r: 5.5, fill: VERDE, stroke: '#fff', strokeWidth: 2 }}
-                  isAnimationActive={!sinMovimiento}
-                  animationDuration={1200}
-                  animationEasing="ease-out"
-                  style={{ filter: `url(#${id}-brillo)` }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="gastos"
-                  stroke={CORAL}
-                  strokeWidth={4}
-                  strokeLinecap="round"
-                  fill="none"
-                  dot={false}
-                  activeDot={{ r: 5.5, fill: CORAL, stroke: '#fff', strokeWidth: 2 }}
-                  isAnimationActive={!sinMovimiento}
-                  animationDuration={1200}
-                  animationBegin={150}
-                  animationEasing="ease-out"
-                />
-                <FlechaBrecha punto={datos[indiceFlecha]} etiqueta={etiquetaFlecha} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {listo && (
+              <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                <AreaChart
+                  data={datos}
+                  margin={{ top: 40, right: 10, bottom: 4, left: 2 }}
+                  onMouseMove={(estado) => {
+                    const indice = estado.activeTooltipIndex;
+                    setIndiceActivo(typeof indice === 'number' ? indice : Number(indice ?? NaN) || null);
+                  }}
+                  onMouseLeave={() => setIndiceActivo(null)}
+                  accessibilityLayer={false}
+                >
+                  <defs>
+                    <linearGradient id={`${id}-verde`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={VERDE} stopOpacity={0.55} />
+                      <stop offset="100%" stopColor={VERDE} stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <YAxis
+                    tick={false}
+                    tickLine={false}
+                    axisLine={{ stroke: 'rgb(255 255 255 / 0.6)', strokeWidth: 1.5 }}
+                    width={30}
+                    label={{
+                      value: 'Dinero',
+                      angle: -90,
+                      position: 'insideLeft',
+                      fill: 'rgb(255 255 255 / 0.75)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      style: { textAnchor: 'middle' },
+                    }}
+                  />
+                  <XAxis
+                    dataKey="etiqueta"
+                    tick={false}
+                    tickLine={false}
+                    axisLine={{ stroke: 'rgb(255 255 255 / 0.6)', strokeWidth: 1.5 }}
+                    height={28}
+                    label={{
+                      value: 'Tiempo',
+                      position: 'insideBottomRight',
+                      fill: 'rgb(255 255 255 / 0.75)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      offset: -2,
+                    }}
+                  />
+                  <Tooltip
+                    content={() => null}
+                    cursor={{ stroke: '#fff', strokeOpacity: 0.35, strokeWidth: 1, strokeDasharray: '3 3' }}
+                    isAnimationActive={false}
+                  />
+                  {/* Brillo de la curva de ingresos: la misma línea más ancha y
+                    translúcida; un filtro de desenfoque SVG sobre una línea que
+                    se anima obliga a repintarlo en cada cuadro. */}
+                  <Area
+                    type="monotone"
+                    dataKey="ingresos"
+                    stroke={VERDE}
+                    strokeOpacity={0.22}
+                    strokeWidth={11}
+                    strokeLinecap="round"
+                    fill="none"
+                    dot={false}
+                    activeDot={false}
+                    legendType="none"
+                    isAnimationActive={!sinMovimiento}
+                    animationDuration={1200}
+                    animationEasing="ease-out"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="ingresos"
+                    stroke={VERDE}
+                    strokeWidth={4}
+                    strokeLinecap="round"
+                    fill={`url(#${id}-verde)`}
+                    dot={false}
+                    activeDot={{ r: 5.5, fill: VERDE, stroke: '#fff', strokeWidth: 2 }}
+                    isAnimationActive={!sinMovimiento}
+                    animationDuration={1200}
+                    animationEasing="ease-out"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="gastos"
+                    stroke={CORAL}
+                    strokeWidth={4}
+                    strokeLinecap="round"
+                    fill="none"
+                    dot={false}
+                    activeDot={{ r: 5.5, fill: CORAL, stroke: '#fff', strokeWidth: 2 }}
+                    isAnimationActive={!sinMovimiento}
+                    animationDuration={1200}
+                    animationBegin={150}
+                    animationEasing="ease-out"
+                  />
+                  <FlechaBrecha punto={datos[indiceFlecha]} etiqueta={etiquetaFlecha} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </Glass>
       </div>
     </section>
   );
-}
+});

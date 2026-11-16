@@ -8,6 +8,7 @@ import { ComparacionMes } from '../components/ComparacionMes';
 import { DonaCategorias } from '../components/DonaCategorias';
 import { GraficoMensual } from '../components/GraficoMensual';
 import { SelectorMes } from '../components/SelectorMes';
+import { useMontajeDiferido } from '../components/useMontajeDiferido';
 import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import { useFinanzas } from '../data/FinanzasContext';
 import { useResumenMes } from '../data/useResumenMes';
@@ -21,14 +22,17 @@ import {
   proyeccionFinDeMes,
 } from '../utils/estadisticasMes';
 import { capitalizarPrimera, nombreMes } from '../utils/fechas';
-import { historialAcumulado } from '../utils/historialAcumulado';
+import { historialEnCache } from '../utils/historialAcumulado';
 
 const MESES_EN_GRAFICO = 6;
 
 const TARJETA = 'rounded-3xl';
 
 export function Reportes() {
-  const { transacciones, gastosAnuales, cargando } = useFinanzas();
+  const { transacciones, categorias, gastosAnuales, cargando } = useFinanzas();
+  // Lo principal (la brecha) se pinta primero; las tarjetas de más abajo se
+  // montan un par de cuadros después, para que entrar a Reportes no se sienta lento.
+  const resto = useMontajeDiferido();
   const [mesSeleccionado, setMesSeleccionado] = useState(() => new Date());
   const [tipoDona, setTipoDona] = useState<Tipo>('egreso');
 
@@ -54,7 +58,7 @@ export function Reportes() {
     () => compararConMesAnterior(transacciones, mesSeleccionado, categoriaPorId, new Date(), gastosAnuales),
     [transacciones, mesSeleccionado, categoriaPorId, gastosAnuales]
   );
-  const historial = useMemo(() => historialAcumulado(transacciones, categoriaPorId), [transacciones, categoriaPorId]);
+  const historial = useMemo(() => historialEnCache(transacciones, categorias), [transacciones, categorias]);
   const proyeccion = contable.gastos > 0 ? proyeccionFinDeMes(transaccionesDelMes, categoriaPorId, mesSeleccionado) : null;
 
   return (
@@ -74,6 +78,7 @@ export function Reportes() {
         {historial.puntos.length > 0 && <BrechaHistorica historial={historial} />}
 
         {/* La key reinicia las animaciones de los gráficos al cambiar de mes. */}
+        {resto && (
         <div className="aparecer-suave" key={mesSeleccionado.getTime()}>
           <BlockTitle className="mt-6">Mes a mes</BlockTitle>
           <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
@@ -110,7 +115,7 @@ export function Reportes() {
             <BarraFijoVariable {...fijoVariable} />
           </Block>
         </div>
-
+        )}
         </>
       )}
     </Page>

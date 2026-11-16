@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js';
 import { quitarPushDeEsteDispositivo } from '../data/notificacionesPush';
 import { supabase } from '../supabaseClient';
+import { borrarCache } from '../data/cacheLocal';
 
 interface AuthContextValue {
   session: Session | null;
@@ -100,6 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Antes de salir, mientras la sesión todavía sirve para borrar la fila.
     await quitarPushDeEsteDispositivo();
     await supabase.auth.signOut();
+    // No queda ningún dato financiero en el teléfono. Se borra aquí y no al
+    // ver "sin sesión": al abrir la app esa sesión tarda un instante en
+    // recuperarse y borraría la copia en cada arranque.
+    borrarCache();
   }
 
   return (
