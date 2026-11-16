@@ -127,6 +127,14 @@ export function BrechaHistorica({ historial }: Props) {
             focusable="false"
           >
             <defs>
+              <linearGradient id={`${id}-banda-verde`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-ingreso-relleno)" stopOpacity="0.42" />
+                <stop offset="100%" stopColor="var(--color-ingreso-relleno)" stopOpacity="0.06" />
+              </linearGradient>
+              <linearGradient id={`${id}-banda-coral`} x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor="var(--color-alerta-relleno)" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="var(--color-alerta-relleno)" stopOpacity="0.06" />
+              </linearGradient>
               <clipPath id={`${id}-bajo-ingresos`}>
                 <path d={bajo(lineaIngresos)} />
               </clipPath>
@@ -136,8 +144,8 @@ export function BrechaHistorica({ historial }: Props) {
             </defs>
             {/* La brecha: verde donde lo que entró va por encima de lo que
                 salió; coral en los tramos donde se gastó más de lo que entró. */}
-            <path d={banda} clipPath={`url(#${id}-bajo-ingresos)`} fill="var(--color-ingreso-relleno)" opacity="0.2" />
-            <path d={banda} clipPath={`url(#${id}-bajo-gastos)`} fill="var(--color-alerta-relleno)" opacity="0.22" />
+            <path d={banda} clipPath={`url(#${id}-bajo-ingresos)`} fill={`url(#${id}-banda-verde)`} />
+            <path d={banda} clipPath={`url(#${id}-bajo-gastos)`} fill={`url(#${id}-banda-coral)`} />
             <line x1="0" y1={ALTO} x2={ANCHO} y2={ALTO} stroke="currentColor" strokeOpacity="0.14" vectorEffect="non-scaling-stroke" />
             <path
               d={lineaGastos}
@@ -153,6 +161,16 @@ export function BrechaHistorica({ historial }: Props) {
               d={lineaIngresos}
               fill="none"
               stroke="var(--color-ingreso-relleno)"
+              strokeWidth="7"
+              strokeOpacity="0.16"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+            <path
+              d={lineaIngresos}
+              fill="none"
+              stroke="var(--color-ingreso-relleno)"
               strokeWidth="2.5"
               strokeLinejoin="round"
               strokeLinecap="round"
@@ -160,6 +178,19 @@ export function BrechaHistorica({ historial }: Props) {
             />
           </svg>
         </div>
+
+        {/* Punta de la curva: un punto con un aro que late (solo opacity y
+            transform, apagado con "reducir movimiento"). */}
+        {!activo && vista && (
+          <span
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: '100%', top: `${(y(serie[serie.length - 1].ingresos) / ALTO) * 100}%` }}
+            aria-hidden="true"
+          >
+            <span className="absolute inset-0 -m-1.5 animate-ping rounded-full bg-ingreso-relleno opacity-40 motion-reduce:hidden" />
+            <span className="relative block size-2.5 rounded-full bg-ingreso-relleno ring-2 ring-white dark:ring-[#1c1c1e]" />
+          </span>
+        )}
 
         {/* Mira del mes tocado: línea y un punto por serie, con aro del color
             de la tarjeta para separarlos de las curvas. */}

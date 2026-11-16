@@ -256,6 +256,12 @@ export function VitrinaProducto() {
         <p className="m-0 max-w-[36ch] text-[17px] leading-snug text-white/75">
           Registra lo que entra y lo que sale, y mira de un vistazo cuánto te queda.
         </p>
+        <figure className="m-0 mt-2 max-w-[38ch] border-t border-white/15 pt-5">
+          <blockquote className="m-0 text-[19px] leading-snug font-semibold text-balance">
+            «El ahorro es la brecha entre tu ego y tus ingresos».
+          </blockquote>
+          <figcaption className="mt-2 text-[13px] text-white/60">Morgan Housel</figcaption>
+        </figure>
       </div>
 
       <div className="relative">

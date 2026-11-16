@@ -323,6 +323,13 @@ export function Login() {
             {modo === 'login' ? 'Crear cuenta' : 'Iniciar sesión'}
           </Button>
         </p>
+        {/* En escritorio la cita va en la vitrina de al lado. */}
+        <figure className="m-0 mt-6 px-8 text-center lg:hidden">
+          <blockquote className="m-0 text-[15px] leading-snug font-medium text-balance">
+            «El ahorro es la brecha entre tu ego y tus ingresos».
+          </blockquote>
+          <figcaption className="mt-1 text-[13px] text-secundario">Morgan Housel</figcaption>
+        </figure>
         </div>
       </div>
     </Page>
