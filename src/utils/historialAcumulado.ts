@@ -1,6 +1,6 @@
 import type { Categoria, Transaccion } from '../types';
 import { clasificar, esGasto, esIngreso } from './contabilidad';
-import { claveMes, claveMesDeFecha, sumarMeses } from './fechas';
+import { claveMesDeFecha, sumarMeses } from './fechas';
 
 export interface PuntoHistorial {
   // Primer día del mes al que corresponde el punto.
@@ -37,9 +37,11 @@ export function historialAcumulado(
     const clase = clasificar(t, categoriaPorId(t.categoriaId));
     const ingreso = esIngreso(clase);
     if (!ingreso && !esGasto(clase)) continue;
+    // Una sola lectura de la fecha por movimiento (con miles de movimientos
+    // cada new Date cuenta, sobre todo en un teléfono modesto).
     const fecha = new Date(t.fecha);
     if (!primera || fecha < primera) primera = fecha;
-    const clave = claveMes(t.fecha);
+    const clave = claveMesDeFecha(fecha);
     const fila = porMes.get(clave) ?? { ingresos: 0, gastos: 0 };
     if (ingreso) fila.ingresos += t.monto;
     else fila.gastos += t.monto;
@@ -65,4 +67,18 @@ export function historialAcumulado(
     puntos.push({ mes, ingresos, gastos });
   }
   return { puntos, ingresos, gastos, brecha: ingresos - gastos, tasa: ingresos > 0 ? (ingresos - gastos) / ingresos : null };
+}
+
+// El historial solo cambia cuando cambian los movimientos o las categorías:
+// se guarda el último resultado por cada lista de movimientos (WeakMap, así no
+// retiene memoria de listas viejas) y volver a Reportes no lo recalcula.
+const resultadosPorMovimientos = new WeakMap<Transaccion[], { categorias: Categoria[]; historial: HistorialAcumulado }>();
+
+export function historialEnCache(transacciones: Transaccion[], categorias: Categoria[]): HistorialAcumulado {
+  const guardado = resultadosPorMovimientos.get(transacciones);
+  if (guardado && guardado.categorias === categorias) return guardado.historial;
+  const porId = new Map(categorias.map((c) => [c.id, c]));
+  const historial = historialAcumulado(transacciones, (id) => porId.get(id));
+  resultadosPorMovimientos.set(transacciones, { categorias, historial });
+  return historial;
 }

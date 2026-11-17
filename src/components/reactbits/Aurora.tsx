@@ -25,6 +25,7 @@ export interface AuroraProps {
   lightMode?: boolean;
   paused?: boolean;
   dpr?: number;
+  maxFps?: number;
   className?: string;
   style?: CSSProperties;
 }
@@ -47,6 +48,7 @@ type Settings = {
   lightMode: boolean;
   paused: boolean;
   dpr?: number;
+  maxFps?: number;
 };
 
 type Program = { program: WebGLProgram; uniforms: Record<string, WebGLUniformLocation | null> };
@@ -283,6 +285,7 @@ const Aurora = ({
   lightMode = false,
   paused = false,
   dpr,
+  maxFps,
   className = '',
   style,
 }: AuroraProps) => {
@@ -308,6 +311,7 @@ const Aurora = ({
     lightMode,
     paused,
     dpr,
+    maxFps,
   };
   const settingsRef = useRef(settings);
   useLayoutEffect(() => {
@@ -401,6 +405,13 @@ const Aurora = ({
       raf = 0;
       if (!visible || document.hidden) return;
       const s = settingsRef.current;
+      // Tope de cuadros por segundo (cambio para Mi Cuadre): el fondo se mueve
+      // despacio y no gana nada a 60-120 fps, pero en un teléfono viejo cada
+      // cuadro compite con el resto de la pantalla.
+      if (s.maxFps && last && now - last < 1000 / s.maxFps - 2) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const dt = last ? clamp((now - last) / 1000, 0.0005, 0.05) : 1 / 60;
       last = now;
       if (s.paused) {

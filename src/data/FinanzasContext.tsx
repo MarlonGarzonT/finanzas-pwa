@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import * as db from '../db';
+import { edadCache, FRESCURA_MS, guardarTextoCache, marcarCacheAlDia, leerCache, leerTextoCache, serializar } from './cacheLocal';
 import { conMovimientos } from '../utils/ordenMovimientos';
 import type {
   CambiosCategoria,
@@ -46,9 +47,27 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
   const [cargando, setCargando] = useState(true);
 
-  const cargarTodo = useCallback(async () => {
+  // Último texto guardado/recibido: sirve para no volver a pintar (ni a
+  // escribir) cuando el servidor devuelve exactamente lo que ya se veía.
+  const textoVigente = useRef<string | null>(null);
+
+  const cargarTodo = useCallback(async (forzar = false) => {
     if (!userId) return;
-    setCargando(true);
+    // Con copia local la app se muestra ya y la actualización va por detrás,
+    // sin spinner; sin copia (primera vez) se espera a los datos.
+    const copia = leerCache(userId);
+    if (copia) {
+      textoVigente.current = leerTextoCache(userId);
+      setCategorias(copia.categorias);
+      setTransacciones(copia.transacciones);
+      setGastosAnuales(copia.gastosAnuales);
+      setPrestamos(copia.prestamos);
+      setCargando(false);
+      // Copia de hace instantes: no hay nada nuevo que pedir.
+      if (!forzar && edadCache(userId) < FRESCURA_MS) return;
+    } else {
+      setCargando(true);
+    }
     try {
       const [cats, trans, anuales, prest] = await Promise.all([
         db.obtenerCategorias(userId),
@@ -56,10 +75,21 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         db.obtenerGastosAnuales(),
         db.obtenerPrestamos(),
       ]);
-      setCategorias(cats);
-      setTransacciones(trans);
-      setGastosAnuales(anuales);
-      setPrestamos(prest);
+      const texto = serializar({ categorias: cats, transacciones: trans, gastosAnuales: anuales, prestamos: prest });
+      if (texto !== textoVigente.current) {
+        textoVigente.current = texto;
+        setCategorias(cats);
+        setTransacciones(trans);
+        setGastosAnuales(anuales);
+        setPrestamos(prest);
+        guardarTextoCache(userId, texto);
+      } else {
+        marcarCacheAlDia(userId);
+      }
+    } catch (error) {
+      // Sin red pero con copia: se sigue con lo guardado. Sin copia, el
+      // error llega a quien lo muestre, como antes.
+      if (!copia) throw error;
     } finally {
       setCargando(false);
     }
@@ -68,6 +98,30 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (userId) cargarTodo();
   }, [userId, cargarTodo]);
+
+  // Al volver a la app después de un rato (el usuario también la usa desde
+  // otro equipo) se actualiza en segundo plano; con la copia reciente no se pide nada.
+  useEffect(() => {
+    if (!userId) return;
+    const alVolver = () => {
+      if (document.visibilityState === 'visible' && edadCache(userId) >= FRESCURA_MS * 2.5) void cargarTodo(true);
+    };
+    document.addEventListener('visibilitychange', alVolver);
+    return () => document.removeEventListener('visibilitychange', alVolver);
+  }, [userId, cargarTodo]);
+
+  // Cada cambio (crear, editar, borrar) actualiza la copia local, con una
+  // pausa para agrupar varios cambios seguidos en una sola escritura.
+  useEffect(() => {
+    if (!userId || cargando) return;
+    const id = window.setTimeout(() => {
+      const texto = serializar({ categorias, transacciones, gastosAnuales, prestamos });
+      if (texto === textoVigente.current) return;
+      textoVigente.current = texto;
+      guardarTextoCache(userId, texto);
+    }, 800);
+    return () => window.clearTimeout(id);
+  }, [userId, cargando, categorias, transacciones, gastosAnuales, prestamos]);
 
   async function crearMovimiento(datos: NuevaTransaccion, fecha: Date) {
     if (!userId) return;

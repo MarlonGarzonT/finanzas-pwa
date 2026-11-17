@@ -147,16 +147,22 @@ const FILAS_POR_PAGINA = 1000;
 
 export async function obtenerTransacciones(): Promise<Transaccion[]> {
   const filas: FilaTransaccion[] = [];
+  // La primera página pide además el total: así se sabe cuándo parar sin una
+  // consulta extra que solo confirme que ya no hay más (y sigue funcionando
+  // si el servidor devuelve menos filas que las pedidas).
+  let total: number | null = null;
   for (;;) {
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('transacciones')
-      .select(COLUMNAS_TRANSACCION)
+      .select(COLUMNAS_TRANSACCION, total === null ? { count: 'exact' } : undefined)
       .order('fecha', { ascending: false })
       .order('id', { ascending: false })
       .range(filas.length, filas.length + FILAS_POR_PAGINA - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
     filas.push(...data);
+    if (total === null) total = count;
+    if (total !== null && filas.length >= total) break;
   }
   return filas.map(mapTransaccion);
 }
