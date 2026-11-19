@@ -6,11 +6,15 @@ interface Props {
   tono?: Tipo;
   autoFocus?: boolean;
   etiqueta?: string;
+  // "next" cuando el monto es un paso de un flujo (el teclado muestra "Siguiente").
+  enterKeyHint?: 'done' | 'next';
+  // Enter en el teclado: en un flujo por pasos avanza al siguiente.
+  onEnter?: () => void;
 }
 
 // El monto es el protagonista de cada formulario de dinero: grande, centrado
 // y con teclado numérico. Guarda solo dígitos y muestra separador de miles.
-export function CampoMonto({ valor, onCambiar, tono, autoFocus, etiqueta = 'Monto' }: Props) {
+export function CampoMonto({ valor, onCambiar, tono, autoFocus, etiqueta = 'Monto', enterKeyHint = 'done', onEnter }: Props) {
   // Estilo Apple Card: solo el ingreso lleva color; el gasto se escribe en el
   // color normal del texto (su signo − ya dice que sale).
   const color = tono === 'ingreso' ? 'text-ingreso' : '';
@@ -27,7 +31,13 @@ export function CampoMonto({ valor, onCambiar, tono, autoFocus, etiqueta = 'Mont
           como en la calculadora de iOS, en vez de flotar a un lado. */}
       <input
         inputMode="numeric"
-        enterKeyHint="done"
+        enterKeyHint={enterKeyHint}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && onEnter) {
+            e.preventDefault();
+            onEnter();
+          }
+        }}
         autoComplete="off"
         placeholder="0"
         value={texto}

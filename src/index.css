@@ -236,6 +236,46 @@ textarea {
   animation: seleccion-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* Pasos del formulario de movimientos (PasosDeslizantes): transición "push" de
+   iOS. El paso actual ocupa espacio; los demás salen del flujo, quietos y
+   ocultos (visibility se conmuta al final de la transición para no cortar la
+   salida). Solo transform y opacity. */
+.paso-deslizante {
+  transition:
+    transform 380ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 260ms ease-out,
+    visibility 380ms linear;
+}
+
+.paso-deslizante[data-estado='actual'] {
+  position: relative;
+  opacity: 1;
+  transform: none;
+  /* Visible desde el primer cuadro: así se le puede dar foco al llegar. */
+  transition-duration: 380ms, 260ms, 0s;
+}
+
+.paso-deslizante:not([data-estado='actual']) {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.paso-deslizante[data-estado='anterior'] {
+  transform: translateX(-28%);
+}
+
+.paso-deslizante[data-estado='siguiente'] {
+  transform: translateX(100%);
+}
+
+.progreso-paso {
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* Flecha de la tarjeta de exportar: baja como si cayera en la bandeja y
    descansa; el ciclo de 2.8s invita a tocar sin distraer. */
 @keyframes exportar-flecha {

@@ -12,6 +12,8 @@ interface Props {
   autoCapitalize?: 'off' | 'sentences' | 'words' | 'characters';
   enterKeyHint?: 'done' | 'next' | 'go' | 'search' | 'send';
   autoFocus?: boolean;
+  // Enter en el teclado (ej. guardar al terminar la descripción).
+  onEnter?: () => void;
   required?: boolean;
   // Solo para type="date": día mínimo, 'AAAA-MM-DD'.
   min?: string;
@@ -33,6 +35,7 @@ export function CampoTexto({
   autoCapitalize = 'sentences',
   enterKeyHint = 'done',
   autoFocus,
+  onEnter,
   required,
   min,
   accion,
@@ -48,6 +51,12 @@ export function CampoTexto({
             type={type}
             value={valor}
             onChange={(e) => onCambiar(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && onEnter) {
+                e.preventDefault();
+                onEnter();
+              }
+            }}
             placeholder={placeholder}
             inputMode={inputMode}
             autoComplete={autoComplete}
