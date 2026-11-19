@@ -48,7 +48,7 @@ export function AbonoSheet({ abierto, prestamo, onCerrar, onGuardar }: Props) {
   return (
     <HojaInferior
       abierto={abierto}
-      titulo={prestamo ? `Abono de ${prestamo.persona}` : 'Abono'}
+      titulo={prestamo ? `Pago de ${prestamo.persona}` : 'Pago'}
       onCerrar={onCerrar}
       cierreBloqueado={guardando}
       cabecera={
@@ -64,7 +64,7 @@ export function AbonoSheet({ abierto, prestamo, onCerrar, onGuardar }: Props) {
             </p>
           )}
           <Button large rounded onClick={manejarGuardar} disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar abono'}
+            {guardando ? 'Guardando…' : 'Guardar pago'}
           </Button>
         </>
       }
@@ -74,7 +74,7 @@ export function AbonoSheet({ abierto, prestamo, onCerrar, onGuardar }: Props) {
           {/* Dice en palabras qué pasa con el saldo, en vez de marcar un chip. */}
           {montoNum > 0 && montoNum < saldo ? (
             <>
-              Abono parcial: quedaría debiendo <span className="font-semibold cifras">{formatearMonto(saldo - montoNum)}</span>.
+              Pago parcial: quedaría debiendo <span className="font-semibold cifras">{formatearMonto(saldo - montoNum)}</span>.
             </>
           ) : (
             <>
@@ -83,11 +83,16 @@ export function AbonoSheet({ abierto, prestamo, onCerrar, onGuardar }: Props) {
           )}{' '}
           Lo que te pague vuelve a tu Disponible de este mes.
         </p>
-        {montoNum !== saldo && (
-          <ChipOpcion activo={false} onClick={() => setMonto(String(Math.round(saldo)))}>
+        <div className="flex gap-2">
+          <ChipOpcion activo={montoNum === saldo} onClick={() => setMonto(String(Math.round(saldo)))}>
             Me pagó todo
           </ChipOpcion>
-        )}
+          {saldo >= 2 && (
+            <ChipOpcion activo={montoNum === Math.round(saldo / 2)} onClick={() => setMonto(String(Math.round(saldo / 2)))}>
+              La mitad
+            </ChipOpcion>
+          )}
+        </div>
       </Block>
     </HojaInferior>
   );

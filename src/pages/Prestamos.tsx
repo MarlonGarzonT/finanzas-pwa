@@ -3,21 +3,25 @@ import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AbonoSheet } from '../components/AbonoSheet';
 import { AvisosPrestamos } from '../components/AvisosPrestamos';
+import { CabeceraPrestamos } from '../components/CabeceraPrestamos';
 import { Cargando } from '../components/Cargando';
 import { DetallePrestamoSheet, type DetallePrestamoHandle } from '../components/DetallePrestamoSheet';
 import { EditarPrestamoSheet } from '../components/EditarPrestamoSheet';
 import { IconoMas } from '../components/Iconos';
 import { ListaPrestamos } from '../components/ListaPrestamos';
-import { MontoAnimado } from '../components/MontoAnimado';
+import { NuevoPrestamoSheet } from '../components/NuevoPrestamoSheet';
 import { PrestamosVacio } from '../components/PrestamosVacio';
+import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
+import type { EstadoPrestamo } from '../utils/prestamos';
 import type { EstadoNavegacionPrestamos } from '../components/useAbrirMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
 import { usePrestamos } from '../data/usePrestamos';
 
-// Hoja abierta: el formulario (nuevo o edición) o el abono, encima del detalle.
-type Formulario = { tipo: 'nuevo' } | { tipo: 'editar' } | { tipo: 'abono' } | null;
+// Hoja abierta encima de la lista: préstamo nuevo, edición o pago.
+type Formulario = 'nuevo' | 'editar' | 'pago' | null;
+type Vista = 'por-cobrar' | 'pagados';
 
-// Lo que tarda en bajar la hoja del abono: las chispas salen cuando ya se ve
+// Lo que tarda en bajar la hoja del pago: las chispas salen cuando ya se ve
 // el detalle, no detrás de la hoja que se está cerrando.
 const ESPERA_CIERRE_HOJA_MS = 450;
 
@@ -26,14 +30,31 @@ export function Prestamos() {
   const { pendientes, pagados, resumen, porId } = usePrestamos();
   const ubicacion = useLocation();
   // Si se llegó tocando un movimiento de préstamo, se abre ese préstamo.
-  const [seleccionadoId, setSeleccionadoId] = useState<string | null>(
-    () => (ubicacion.state as EstadoNavegacionPrestamos | null)?.prestamoId ?? null
-  );
+  const idInicial = (ubicacion.state as EstadoNavegacionPrestamos | null)?.prestamoId ?? null;
+  // Préstamo sobre el que trabajan las hojas, y si su detalle está a la vista
+  // (el pago rápido de la tarjeta usa el préstamo sin abrir el detalle).
+  const [activoId, setActivoId] = useState<string | null>(idInicial);
+  const [detalleAbierto, setDetalleAbierto] = useState(idInicial !== null);
   const [formulario, setFormulario] = useState<Formulario>(null);
+  const [filtro, setFiltro] = useState<Vista>('por-cobrar');
   const detalleRef = useRef<DetallePrestamoHandle>(null);
 
-  const seleccionado = seleccionadoId ? (porId(seleccionadoId) ?? null) : null;
+  const activo = activoId ? (porId(activoId) ?? null) : null;
   const hayPrestamos = pendientes.length + pagados.length > 0;
+  // Sin pagados no hay nada que filtrar: el selector solo aparece cuando sirve.
+  const vista: Vista = pagados.length > 0 ? filtro : 'por-cobrar';
+  const visibles = vista === 'por-cobrar' ? pendientes : pagados;
+
+  function abrirDetalle(p: EstadoPrestamo) {
+    setActivoId(p.id);
+    setDetalleAbierto(true);
+  }
+
+  function pagoRapido(p: EstadoPrestamo) {
+    setActivoId(p.id);
+    setDetalleAbierto(false);
+    setFormulario('pago');
+  }
 
   return (
     <Page className="pagina-con-fab">
@@ -43,31 +64,38 @@ export function Prestamos() {
         <Cargando />
       ) : (
         <div className="aparecer-suave">
-          <section className="flex flex-col items-center gap-0.5 px-4 pt-1 pb-2 text-center" aria-label="Lo que te deben">
-            <span className="text-[15px] font-medium text-secundario">Te deben</span>
-            <p className="m-0 text-[48px] leading-[1.1] font-bold tracking-[-0.03em] cifras">
-              <MontoAnimado monto={resumen.pendiente} />
-            </p>
-            <p className="m-0 text-[15px] text-secundario">
-              {resumen.pendientes === 0
-                ? 'Nadie te debe plata.'
-                : `${resumen.pendientes} ${resumen.pendientes === 1 ? 'préstamo' : 'préstamos'} sin pagar`}
-              {resumen.vencidos > 0 && (
-                <span className="font-medium text-alerta">
-                  {' · '}
-                  {resumen.vencidos} {resumen.vencidos === 1 ? 'vencido' : 'vencidos'}
-                </span>
-              )}
-            </p>
-          </section>
-
           {hayPrestamos ? (
             <>
-              <ListaPrestamos titulo="Por cobrar" prestamos={pendientes} onSeleccionar={(p) => setSeleccionadoId(p.id)} />
-              <ListaPrestamos titulo="Pagados" prestamos={pagados} onSeleccionar={(p) => setSeleccionadoId(p.id)} />
+              <CabeceraPrestamos resumen={resumen} />
+
+              {pagados.length > 0 && (
+                <div className="px-4 pb-4">
+                  <SelectorVidrio>
+                    <OpcionSelector active={vista === 'por-cobrar'} onClick={() => setFiltro('por-cobrar')}>
+                      Por cobrar · {pendientes.length}
+                    </OpcionSelector>
+                    <OpcionSelector active={vista === 'pagados'} onClick={() => setFiltro('pagados')}>
+                      Pagados · {pagados.length}
+                    </OpcionSelector>
+                  </SelectorVidrio>
+                </div>
+              )}
+
+              {visibles.length > 0 ? (
+                <ListaPrestamos
+                  etiqueta={vista === 'por-cobrar' ? 'Préstamos por cobrar' : 'Préstamos pagados'}
+                  prestamos={visibles}
+                  onAbrir={abrirDetalle}
+                  onRegistrarPago={pagoRapido}
+                />
+              ) : (
+                <p className="m-0 px-8 py-6 text-center text-[15px] text-secundario">
+                  Todos tus préstamos están pagados. Cuando prestes de nuevo, aparecerá aquí.
+                </p>
+              )}
             </>
           ) : (
-            <PrestamosVacio onAgregar={() => setFormulario({ tipo: 'nuevo' })} />
+            <PrestamosVacio onAgregar={() => setFormulario('nuevo')} />
           )}
 
           <div className="mt-8">
@@ -76,47 +104,51 @@ export function Prestamos() {
         </div>
       )}
 
+      {/* Con texto, no solo "+": en esta pestaña el botón dice qué hace. */}
       <Fab
-        className="fab-sobre-pestanas fixed right-4 z-20 size-14"
-        icon={<IconoMas className="size-7" />}
-        onClick={() => setFormulario({ tipo: 'nuevo' })}
+        className="fab-sobre-pestanas fixed right-4 z-20 h-14 normal-case"
+        icon={<IconoMas className="size-6" />}
+        text="Nuevo préstamo"
+        onClick={() => setFormulario('nuevo')}
         aria-label="Nuevo préstamo"
       />
 
       <DetallePrestamoSheet
         ref={detalleRef}
-        abierto={seleccionado !== null}
-        prestamo={seleccionado}
-        onCerrar={() => setSeleccionadoId(null)}
-        onAbonar={() => setFormulario({ tipo: 'abono' })}
-        onEditar={() => setFormulario({ tipo: 'editar' })}
+        abierto={detalleAbierto && activo !== null}
+        prestamo={activo}
+        onCerrar={() => setDetalleAbierto(false)}
+        onAbonar={() => setFormulario('pago')}
+        onEditar={() => setFormulario('editar')}
         onEliminar={async () => {
-          if (!seleccionado) return;
-          await eliminarPrestamo(seleccionado.id);
-          setSeleccionadoId(null);
+          if (!activo) return;
+          await eliminarPrestamo(activo.id);
+          setDetalleAbierto(false);
+          setActivoId(null);
         }}
         onEliminarAbono={(abono) => eliminarMovimiento(abono.id)}
       />
 
+      <NuevoPrestamoSheet abierto={formulario === 'nuevo'} onCerrar={() => setFormulario(null)} onGuardar={crearPrestamo} />
+
       <EditarPrestamoSheet
-        abierto={formulario?.tipo === 'nuevo' || formulario?.tipo === 'editar'}
-        prestamo={formulario?.tipo === 'editar' ? seleccionado : null}
+        abierto={formulario === 'editar'}
+        prestamo={activo}
         onCerrar={() => setFormulario(null)}
         onGuardar={async (datos) => {
-          if (formulario?.tipo === 'editar' && seleccionado) await actualizarPrestamo(seleccionado.id, datos);
-          else await crearPrestamo(datos);
+          if (activo) await actualizarPrestamo(activo.id, datos);
         }}
       />
 
       <AbonoSheet
-        abierto={formulario?.tipo === 'abono'}
-        prestamo={seleccionado}
+        abierto={formulario === 'pago'}
+        prestamo={activo}
         onCerrar={() => setFormulario(null)}
         onGuardar={async (monto) => {
-          if (!seleccionado) return;
-          const saldaLaDeuda = monto >= seleccionado.saldo;
-          await registrarAbono(seleccionado, monto);
-          if (saldaLaDeuda) window.setTimeout(() => detalleRef.current?.celebrarSaldado(), ESPERA_CIERRE_HOJA_MS);
+          if (!activo) return;
+          const saldaLaDeuda = monto >= activo.saldo;
+          await registrarAbono(activo, monto);
+          if (saldaLaDeuda && detalleAbierto) window.setTimeout(() => detalleRef.current?.celebrarSaldado(), ESPERA_CIERRE_HOJA_MS);
         }}
       />
     </Page>

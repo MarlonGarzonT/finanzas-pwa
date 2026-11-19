@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Prestamo } from '../types';
 import { resumirMes } from './contabilidad';
 import { fechaConHora, fechaDesdeISO, fechaLocalISO } from './fechas';
-import { estadosPrestamos, resumirPrestamos } from './prestamos';
+import { describirVencimiento, estadosPrestamos, fechaDePlazo, iniciales, personasFrecuentes, resumirPrestamos } from './prestamos';
 import { buscador, categoria, movimiento } from './pruebasDatos';
 
 const NUEVE_NOV = new Date(2026, 10, 9, 21);
@@ -59,7 +59,7 @@ describe('estadosPrestamos', () => {
 
   it('resume lo que te deben', () => {
     const estados = estadosPrestamos([aJuan, aAna], [salidaJuan, salidaAna], NUEVE_NOV);
-    expect(resumirPrestamos(estados)).toEqual({ pendiente: 300_000, pendientes: 2, vencidos: 1 });
+    expect(resumirPrestamos(estados)).toEqual({ pendiente: 300_000, pendientes: 2, vencidos: 1, prestadoPendientes: 300_000, devueltoPendientes: 0 });
   });
 });
 
@@ -79,5 +79,56 @@ describe('préstamos en el Disponible', () => {
     const alCobrar = resumirMes([sueldo, salida, abono], porId);
     expect(alCobrar.ingresos).toBe(2_500_000);
     expect(alCobrar.disponible).toBe(2_500_000);
+  });
+});
+
+describe('describirVencimiento', () => {
+  const salida = (id: string) => movimiento(new Date(2026, 9, 20), 100_000, '', 'egreso', id);
+  const prestamoCon = (fechaDevolucion: string): Prestamo => ({ id: 'p9', persona: 'Luis', monto: 100_000, fechaDevolucion, nota: null });
+  const texto = (fechaDevolucion: string) => {
+    const [estado] = estadosPrestamos([prestamoCon(fechaDevolucion)], [salida('p9')], NUEVE_NOV);
+    return describirVencimiento(estado, NUEVE_NOV);
+  };
+
+  it('dice hoy, mañana y en N días con tono "pronto"', () => {
+    expect(texto('2026-11-09')).toEqual({ texto: 'Te paga hoy', tono: 'pronto' });
+    expect(texto('2026-11-10')).toEqual({ texto: 'Te paga mañana', tono: 'pronto' });
+    expect(texto('2026-11-14')).toEqual({ texto: 'Te paga en 5 días', tono: 'pronto' });
+  });
+
+  it('a más de una semana da la fecha con tono tranquilo', () => {
+    expect(texto('2026-11-30')).toEqual({ texto: 'Te paga el 30 de nov', tono: 'tranquilo' });
+  });
+
+  it('pasada la fecha cuenta los días de atraso', () => {
+    expect(texto('2026-11-08')).toEqual({ texto: 'Venció ayer', tono: 'vencido' });
+    expect(texto('2026-11-05')).toEqual({ texto: 'Venció hace 4 días', tono: 'vencido' });
+  });
+});
+
+describe('plazos y nombres', () => {
+  it('fechaDePlazo suma días y meses calendario', () => {
+    expect(fechaDePlazo('semana', NUEVE_NOV)).toBe('2026-11-16');
+    expect(fechaDePlazo('quincena', NUEVE_NOV)).toBe('2026-11-24');
+    expect(fechaDePlazo('mes', NUEVE_NOV)).toBe('2026-12-09');
+  });
+
+  it('1 mes desde el 31-ene cae el último día de febrero, no en marzo', () => {
+    expect(fechaDePlazo('mes', new Date(2026, 0, 31))).toBe('2026-02-28');
+  });
+
+  it('iniciales toma hasta dos palabras', () => {
+    expect(iniciales('juan pérez gómez')).toBe('JP');
+    expect(iniciales('  ana ')).toBe('A');
+    expect(iniciales('')).toBe('?');
+  });
+
+  it('personasFrecuentes pone primero a quien más se le ha prestado, sin repetir', () => {
+    const nombres = personasFrecuentes([
+      { ...aJuan, id: 'a', persona: 'Juan' },
+      { ...aAna, id: 'b', persona: 'Ana' },
+      { ...aAna, id: 'c', persona: 'ana' },
+    ]);
+    expect(nombres).toEqual(['Ana', 'Juan']);
   });
 });
