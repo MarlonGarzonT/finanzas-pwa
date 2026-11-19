@@ -96,6 +96,7 @@ Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redo
 - **Acción principal:** `Fab` de 56px, abajo a la derecha, sobre la barra de pestañas (al alcance del pulgar).
 - **Menús de acciones:** `Actions` (hoja de acciones iOS), nunca menús flotantes propios.
 - **Destructivo:** `DialogoConfirmar` (alerta iOS) antes de eliminar.
+- **Movimiento nuevo por pasos:** la hoja "Nuevo movimiento" se llena en tres pasos (1 Salida/Entrada + monto, 2 categoría, 3 descripción + fecha con atajos Hoy/Ayer), con una barra de progreso de tres segmentos bajo el título y "‹ Atrás" en lugar de "Cancelar" a partir del paso 2 (se cierra con el asa o tocando fuera). Cada paso lleva un título corto (¿Cuánto fue? / ¿En qué se fue? o ¿De dónde vino? / Ponle nombre y fecha). Elegir una categoría avanza solo tras 260 ms (el aro y el ✓ alcanzan a verse); "Continuar" sirve para aceptar la preseleccionada. El último paso repite lo elegido (`ResumenMovimiento`: categoría y monto, cada uno vuelve a su paso). El teclado se cierra al salir del monto y la descripción se enfoca al llegar al paso 3. **Editar** un movimiento existente no usa pasos: muestra monto, categoría, descripción y fecha a la vez. La lógica vive en `useFormularioMovimiento`.
 - **Formularios:** `HojaInferior` → cabecera con asa, "Cancelar" a la izquierda y título centrado; campos en `List strong inset` con `CampoTexto`; acción principal `Button large rounded` anclada abajo.
 
 ## Componentes propios
@@ -128,6 +129,7 @@ Set propio en `src/components/Iconos.tsx`: grilla 24px, trazo 1.8, extremos redo
 ## Movimiento
 
 - Transiciones de Konsta para hojas, alertas y pestañas (no se reemplazan).
+- **Flujo por pasos** (`PasosDeslizantes`, "Nuevo movimiento"): transición *push* de iOS. El paso que entra llega desde la derecha y el que sale se retira un 28 % a la izquierda y se desvanece; al volver atrás, al revés. 380 ms con `cubic-bezier(0.32, 0.72, 0, 1)` (la curva de la navegación de iOS) y 260 ms de opacidad; las barras de progreso se llenan con `scaleX` y la misma curva. Solo `transform` y `opacity`. Los pasos quedan montados (no se pierde lo escrito) pero los inactivos van `inert` y ocultos.
 - Gráficos: crecen una vez al montar (700 ms, ease-out exponencial). Al cambiar de mes se reinician.
 - Contenido de pantalla: aparece con `aparecer-suave` (400 ms, `opacity` + `transform`).
 - Montos protagonistas (Disponible, "Te deben", saldo del préstamo, balance de Reportes): `MontoAnimado`, sobre el `Counter` de React Bits (`components/reactbits/`). Los dígitos ruedan al cambiar (mes, movimiento, abono), con resorte de 0.7 s y desvanecido corto (0.15em) para no invadir el rótulo de arriba. Sin desenfoque de movimiento. Solo Reportes gira al entrar (`intro`); donde el monto se mira a diario solo se anima al cambiar. El lector de pantalla oye el monto completo. Los montos chicos (listas, chips) no se animan.

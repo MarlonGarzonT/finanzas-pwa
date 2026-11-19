@@ -1,15 +1,18 @@
 import { BlockTitle, Button, List } from 'konsta/react';
-import { useEffect, useState } from 'react';
-import { useCategoriasPorUso } from '../data/useCategoriasPorUso';
-import type { Categoria, NuevaTransaccion, Tipo, Transaccion } from '../types';
-import { fechaEnMesSeleccionado, fechaLocalISO } from '../utils/fechas';
+import { useEffect, useState, type ReactNode } from 'react';
+import type { Categoria, Tipo, Transaccion } from '../types';
+import { fechaLocalISO, formatearMonto } from '../utils/fechas';
 import { CampoMonto } from './CampoMonto';
 import { CampoTexto } from './CampoTexto';
+import { ChipOpcion } from './ChipOpcion';
 import { DialogoConfirmar } from './DialogoConfirmar';
 import { HojaInferior } from './HojaInferior';
 import { NuevaCategoriaSheet } from './NuevaCategoriaSheet';
+import { PasosDeslizantes, ProgresoPasos } from './PasosDeslizantes';
+import { ResumenMovimiento } from './ResumenMovimiento';
 import { SelectorCategoria } from './SelectorCategoria';
 import { OpcionSelector, SelectorVidrio } from './SelectorVidrio';
+import { PASOS_MOVIMIENTO, useFormularioMovimiento, type DatosMovimiento } from './useFormularioMovimiento';
 
 interface Props {
   abierto: boolean;
@@ -20,11 +23,23 @@ interface Props {
   mesSeleccionado: Date;
   onCerrar: () => void;
   // `dia`: 'AAAA-MM-DD' elegido en el formulario; la hora la pone quien guarda.
-  onGuardar: (datos: NuevaTransaccion & { dia: string }) => Promise<void>;
+  onGuardar: (datos: DatosMovimiento) => Promise<void>;
   onEliminar?: () => Promise<void>;
   onCrearCategoria: (nombre: string, tipo: Tipo) => Promise<Categoria>;
 }
 
+function Encabezado({ children, derecha }: { children: ReactNode; derecha?: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 px-4 pb-3">
+      <h3 className="m-0 text-[22px] leading-tight font-bold tracking-tight">{children}</h3>
+      {derecha}
+    </div>
+  );
+}
+
+// Un movimiento nuevo se registra en tres pasos (monto → categoría → detalle)
+// que se deslizan como en iOS; editar uno existente muestra todo a la vez,
+// porque ahí se cambia un solo dato y los pasos estorbarían.
 export function NuevoMovimientoSheet({
   abierto,
   categorias,
@@ -35,149 +50,229 @@ export function NuevoMovimientoSheet({
   onEliminar,
   onCrearCategoria,
 }: Props) {
-  const [tipo, setTipo] = useState<Tipo>('egreso');
-  const [monto, setMonto] = useState('');
-  const [item, setItem] = useState('');
-  const [categoriaId, setCategoriaId] = useState('');
-  const [dia, setDia] = useState('');
+  const f = useFormularioMovimiento({ abierto, categorias, transaccion, mesSeleccionado, onGuardar });
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const gastosPorUso = useCategoriasPorUso(categorias, 'egreso');
-  const ingresosPorUso = useCategoriasPorUso(categorias, 'ingreso');
-  // La preseleccionada es la más usada del tipo, no la primera alfabética.
-  const masUsada = (t: Tipo) => (t === 'egreso' ? gastosPorUso : ingresosPorUso)[0]?.id ?? '';
+  // El modo se recuerda mientras la hoja se anima al cerrar: el padre limpia
+  // `transaccion` al cerrar y el título no debe cambiar a mitad de la salida.
+  const [editando, setEditando] = useState(Boolean(transaccion));
+  if (abierto && editando !== Boolean(transaccion)) setEditando(Boolean(transaccion));
+  // Cerrar la hoja cierra también la de "Nueva categoría".
+  if (!abierto && creandoCategoria) setCreandoCategoria(false);
+  const ultimoPaso = f.paso === PASOS_MOVIMIENTO.length - 1;
 
+  // Al llegar al último paso el cursor ya está en la descripción. Se hace al
+  // montar el paso (no con autoFocus) porque los pasos están montados desde el
+  // inicio y el primer campo en enfocarse debe ser el monto.
   useEffect(() => {
-    if (!abierto) return;
-    if (transaccion) {
-      setTipo(transaccion.tipo);
-      setMonto(String(Math.round(transaccion.monto)));
-      setItem(transaccion.item);
-      setCategoriaId(transaccion.categoriaId);
-      setDia(fechaLocalISO(new Date(transaccion.fecha)));
-    } else {
-      setTipo('egreso');
-      setMonto('');
-      setItem('');
-      setCategoriaId(masUsada('egreso'));
-      // Hoy si se está viendo el mes actual; en otro mes, el mismo número de
-      // día (o el último, si no existe). Queda a la vista para cambiarlo.
-      setDia(fechaLocalISO(fechaEnMesSeleccionado(mesSeleccionado)));
-    }
-    setCreandoCategoria(false);
-    setGuardando(false);
-    setError(null);
-    // Sin `categorias` en las dependencias: crear una categoría con la hoja
-    // abierta no debe borrar el monto ni la descripción ya escritos.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al abrir/cambiar de transacción
-  }, [abierto, transaccion]);
-
-  function manejarCambiarTipo(nuevoTipo: Tipo) {
-    setTipo(nuevoTipo);
-    setCategoriaId(masUsada(nuevoTipo));
-  }
+    if (!abierto || editando || !ultimoPaso) return;
+    document
+      .querySelector<HTMLInputElement>('.paso-deslizante[data-estado="actual"] input[type="text"]')
+      ?.focus({ preventScroll: true });
+  }, [abierto, editando, ultimoPaso]);
 
   async function manejarCrearCategoria(nombre: string) {
-    const nueva = await onCrearCategoria(nombre, tipo);
-    setCategoriaId(nueva.id);
+    const nueva = await onCrearCategoria(nombre, f.tipo);
+    f.elegirCategoria(nueva.id, !editando);
     setCreandoCategoria(false);
   }
 
-  async function manejarGuardar() {
-    const montoNum = Number(monto);
-    if (!montoNum || montoNum <= 0) return setError('Ingresa un monto mayor a cero.');
-    if (!item.trim()) return setError('Escribe qué fue el movimiento.');
-    if (!categoriaId) return setError('Elige una categoría.');
-    if (!dia) return setError('Elige la fecha del movimiento.');
-    setError(null);
-    setGuardando(true);
-    try {
-      await onGuardar({ item: item.trim(), categoriaId, tipo, monto: montoNum, dia });
-    } catch {
-      setError('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
-    } finally {
-      setGuardando(false);
-    }
+  // Tocar Salida/Entrada le quita el foco al monto y cierra el teclado:
+  // al registrar uno nuevo se le devuelve, para seguir escribiendo.
+  function cambiarTipo(tipo: Tipo) {
+    f.cambiarTipo(tipo);
+    if (editando) return;
+    document.querySelector<HTMLInputElement>('[role="dialog"] input[inputmode="numeric"]')?.focus({ preventScroll: true });
   }
 
   async function manejarEliminar() {
     if (!onEliminar) return;
     setConfirmandoEliminar(false);
-    setGuardando(true);
-    try {
-      await onEliminar();
-    } catch {
-      setError('No se pudo eliminar. Intenta de nuevo.');
-    } finally {
-      setGuardando(false);
-    }
+    await f.eliminar(onEliminar);
   }
+
+  function continuar() {
+    if (f.paso === 0 && !f.montoValido) return;
+    f.irAlPaso(f.paso + 1);
+  }
+
+  const categoria = categorias.find((c) => c.id === f.categoriaId);
+  const montoNumero = Number(f.monto);
+  const hoy = fechaLocalISO(new Date());
+  const ayerFecha = new Date();
+  ayerFecha.setDate(ayerFecha.getDate() - 1);
+  const ayer = fechaLocalISO(ayerFecha);
+
+  const selectorTipo = (
+    <SelectorVidrio>
+      <OpcionSelector active={f.tipo === 'egreso'} onClick={() => cambiarTipo('egreso')}>
+        Salida
+      </OpcionSelector>
+      <OpcionSelector active={f.tipo === 'ingreso'} onClick={() => cambiarTipo('ingreso')}>
+        Entrada
+      </OpcionSelector>
+    </SelectorVidrio>
+  );
+
+  const campoMonto = (
+    <CampoMonto
+      valor={f.monto}
+      onCambiar={f.setMonto}
+      tono={f.tipo}
+      autoFocus={!editando}
+      enterKeyHint={editando ? 'done' : 'next'}
+      onEnter={editando ? undefined : continuar}
+    />
+  );
+
+  const selectorCategoria = (
+    <SelectorCategoria
+      categorias={f.categoriasDelTipo}
+      estaElegida={(id) => id === f.categoriaId}
+      onElegir={(id) => f.elegirCategoria(id, !editando)}
+      onNueva={() => setCreandoCategoria(true)}
+    />
+  );
+
+  const camposDetalle = (
+    <List strong inset className="mt-5 mb-3">
+      <CampoTexto
+        etiqueta="Descripción"
+        valor={f.item}
+        onCambiar={f.setItem}
+        placeholder="Almuerzo, Uber, Salario…"
+        enterKeyHint={editando ? 'done' : 'go'}
+        onEnter={editando ? undefined : f.guardar}
+      />
+      {/* La fecha decide en qué mes cuenta el movimiento: se puede registrar
+          hoy algo que pasó otro día (el gasto del 31 de octubre anotado el 9). */}
+      <CampoTexto etiqueta="Fecha" type="date" valor={f.dia} onCambiar={f.setDia} />
+    </List>
+  );
+
+  const atajosFecha = (
+    <div className="flex gap-2 px-4">
+      <ChipOpcion activo={f.dia === hoy} onClick={() => f.setDia(hoy)}>
+        Hoy
+      </ChipOpcion>
+      <ChipOpcion activo={f.dia === ayer} onClick={() => f.setDia(ayer)}>
+        Ayer
+      </ChipOpcion>
+    </div>
+  );
+
+  const mensajeError = f.error && (
+    <p className="m-0 text-center text-[15px] text-alerta" role="alert">
+      {f.error}
+    </p>
+  );
+
+  const botonEliminar = editando && onEliminar && (
+    <Button large rounded clear className="text-alerta" onClick={() => setConfirmandoEliminar(true)} disabled={f.guardando}>
+      Eliminar movimiento
+    </Button>
+  );
+
+  const pasos = [
+    {
+      clave: 'monto',
+      titulo: 'Monto',
+      contenido: (
+        <div className="pb-2">
+          <Encabezado>¿Cuánto fue?</Encabezado>
+          <div className="px-4">{selectorTipo}</div>
+          <div className="px-4 pt-5">{campoMonto}</div>
+        </div>
+      ),
+    },
+    {
+      clave: 'categoria',
+      titulo: 'Categoría',
+      contenido: (
+        <div className="pb-2">
+          <Encabezado
+            derecha={
+              <span className={`text-[17px] font-semibold cifras ${f.tipo === 'ingreso' ? 'text-ingreso' : 'text-secundario'}`}>
+                {f.tipo === 'ingreso' ? '+' : '−'}
+                {formatearMonto(montoNumero)}
+              </span>
+            }
+          >
+            {f.tipo === 'egreso' ? '¿En qué se fue?' : '¿De dónde vino?'}
+          </Encabezado>
+          {selectorCategoria}
+        </div>
+      ),
+    },
+    {
+      clave: 'detalle',
+      titulo: 'Detalle',
+      contenido: (
+        <div className="pb-2">
+          <Encabezado>Ponle nombre y fecha</Encabezado>
+          <ResumenMovimiento
+            tipo={f.tipo}
+            monto={montoNumero}
+            categoria={categoria}
+            onCambiarCategoria={() => f.irAlPaso(1)}
+            onCambiarMonto={() => f.irAlPaso(0)}
+          />
+          {camposDetalle}
+          {atajosFecha}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
       <HojaInferior
         abierto={abierto}
-        titulo={transaccion ? 'Editar movimiento' : 'Nuevo movimiento'}
+        titulo={editando ? 'Editar movimiento' : 'Nuevo movimiento'}
         onCerrar={onCerrar}
-        cierreBloqueado={guardando}
+        cierreBloqueado={f.guardando}
+        onAtras={!editando && f.paso > 0 ? () => f.irAlPaso(f.paso - 1) : undefined}
+        reiniciarScroll={f.paso}
         cabecera={
-          <div className="flex flex-col gap-3 px-4 pb-3">
-            <SelectorVidrio>
-              <OpcionSelector
-                active={tipo === 'egreso'}
-                onClick={() => manejarCambiarTipo('egreso')}
-              >
-                Salida
-              </OpcionSelector>
-              <OpcionSelector
-                active={tipo === 'ingreso'}
-                onClick={() => manejarCambiarTipo('ingreso')}
-              >
-                Entrada
-              </OpcionSelector>
-            </SelectorVidrio>
-            <CampoMonto valor={monto} onCambiar={setMonto} tono={tipo} autoFocus={!transaccion} />
-          </div>
+          editando ? (
+            <div className="flex flex-col gap-3 px-4 pb-3">
+              {selectorTipo}
+              {campoMonto}
+            </div>
+          ) : (
+            <ProgresoPasos paso={f.paso} etiquetas={PASOS_MOVIMIENTO} />
+          )
         }
         pie={
           <>
-            {error && (
-              <p className="m-0 text-center text-[15px] text-alerta" role="alert">
-                {error}
-              </p>
-            )}
-            <Button large rounded onClick={manejarGuardar} disabled={guardando}>
-              {guardando ? 'Guardando…' : 'Guardar'}
+            {mensajeError}
+            <Button
+              large
+              rounded
+              onClick={editando || ultimoPaso ? f.guardar : continuar}
+              disabled={f.guardando || (!editando && f.paso === 0 && !f.montoValido)}
+            >
+              {f.guardando ? 'Guardando…' : editando || ultimoPaso ? 'Guardar' : 'Continuar'}
             </Button>
-            {transaccion && onEliminar && (
-              <Button large rounded clear className="text-alerta" onClick={() => setConfirmandoEliminar(true)} disabled={guardando}>
-                Eliminar movimiento
-              </Button>
-            )}
+            {botonEliminar}
           </>
         }
       >
-        <BlockTitle className="mt-2">Categoría</BlockTitle>
-        <SelectorCategoria
-          categorias={tipo === 'egreso' ? gastosPorUso : ingresosPorUso}
-          estaElegida={(id) => id === categoriaId}
-          onElegir={setCategoriaId}
-          onNueva={() => setCreandoCategoria(true)}
-        />
-
-        <List strong inset className="mt-5 mb-2">
-          <CampoTexto etiqueta="Descripción" valor={item} onCambiar={setItem} placeholder="Almuerzo, Uber, Salario…" />
-          {/* La fecha decide en qué mes cuenta el movimiento: se puede registrar
-              hoy algo que pasó otro día (el gasto del 31 de octubre anotado el 9). */}
-          <CampoTexto etiqueta="Fecha" type="date" valor={dia} onCambiar={setDia} />
-        </List>
+        {editando ? (
+          <>
+            <BlockTitle className="mt-2">Categoría</BlockTitle>
+            {selectorCategoria}
+            {camposDetalle}
+            {atajosFecha}
+          </>
+        ) : (
+          <PasosDeslizantes paso={f.paso} pasos={pasos} />
+        )}
       </HojaInferior>
 
       <NuevaCategoriaSheet
         abierto={creandoCategoria}
-        tipo={tipo}
+        tipo={f.tipo}
         onCerrar={() => setCreandoCategoria(false)}
         onCrear={manejarCrearCategoria}
       />

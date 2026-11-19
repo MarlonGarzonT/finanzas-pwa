@@ -1,6 +1,7 @@
 import { Link, Sheet } from 'konsta/react';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { IconoChevronIzquierda } from './Iconos';
 import { useBloqueoDeFondo, useGestosHoja } from './useComportamientoSheet';
 
 interface Props {
@@ -15,6 +16,12 @@ interface Props {
   pie?: ReactNode;
   textoCerrar?: string;
   cierreBloqueado?: boolean;
+  // En un flujo por pasos: el botón de la izquierda pasa a ser "‹ Atrás" y
+  // vuelve al paso anterior en vez de cerrar (se cierra con el asa o tocando
+  // fuera). Sin esto, el botón es "Cancelar".
+  onAtras?: () => void;
+  // Cambia cuando el flujo cambia de paso: el contenido vuelve arriba.
+  reiniciarScroll?: unknown;
 }
 
 interface Contenido {
@@ -39,7 +46,10 @@ export function HojaInferior({
   pie,
   textoCerrar = 'Cancelar',
   cierreBloqueado = false,
+  onAtras,
+  reiniciarScroll,
 }: Props) {
+  const contenedorRef = useRef<HTMLDivElement>(null);
   const idTitulo = useId();
   const [montada, setMontada] = useState(abierto);
   const [visible, setVisible] = useState(false);
@@ -83,6 +93,10 @@ export function HojaInferior({
   }, [abierto]);
 
   useEffect(() => {
+    contenedorRef.current?.scrollTo({ top: 0 });
+  }, [reiniciarScroll]);
+
+  useEffect(() => {
     if (!abierto) return;
     function alPresionarTecla(e: KeyboardEvent) {
       if (e.key === 'Escape') cerrar();
@@ -107,6 +121,7 @@ export function HojaInferior({
       aria-labelledby={idTitulo}
     >
       <div
+        ref={contenedorRef}
         className="flex flex-col overflow-y-auto overscroll-contain"
         style={{ maxHeight: gestos.alturaMaxima ?? '92dvh' }}
         onFocusCapture={gestos.onFocusCaptureHoja}
@@ -126,10 +141,17 @@ export function HojaInferior({
             <Link
               component="button"
               linkProps={{ type: 'button', disabled: cierreBloqueado }}
-              className="min-h-11 justify-self-start px-2 text-[17px] disabled:opacity-40"
-              onClick={cerrar}
+              className="min-h-11 items-center justify-self-start px-2 text-[17px] disabled:opacity-40"
+              onClick={onAtras ?? cerrar}
             >
-              {textoCerrar}
+              {onAtras ? (
+                <>
+                  <IconoChevronIzquierda className="-ml-1 size-5" />
+                  Atrás
+                </>
+              ) : (
+                textoCerrar
+              )}
             </Link>
             <h2 id={idTitulo} className="max-w-[60vw] truncate text-[17px] font-semibold">
               {titulo}
