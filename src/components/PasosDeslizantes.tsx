@@ -41,15 +41,17 @@ export function PasosDeslizantes({ paso, pasos }: PropsPasos) {
 interface PropsProgreso {
   paso: number;
   etiquetas: readonly string[];
+  // Nombre del flujo para el lector de pantalla ("Progreso del movimiento").
+  descripcion?: string;
 }
 
 // Una barra por paso. La del paso actual y las anteriores se llenan con
 // scaleX (transform), con la misma curva que el deslizamiento.
-export function ProgresoPasos({ paso, etiquetas }: PropsProgreso) {
+export function ProgresoPasos({ paso, etiquetas, descripcion = 'Progreso' }: PropsProgreso) {
   return (
     <div
       role="progressbar"
-      aria-label="Progreso del movimiento"
+      aria-label={descripcion}
       aria-valuemin={1}
       aria-valuemax={etiquetas.length}
       aria-valuenow={paso + 1}

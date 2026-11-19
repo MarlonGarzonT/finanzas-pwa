@@ -2,7 +2,8 @@ import { Block, BlockTitle, Button, List, ListItem, Progressbar } from 'konsta/r
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type { Transaccion } from '../types';
 import { formatearFechaCorta, formatearMonto } from '../utils/fechas';
-import { formatearDia, type EstadoPrestamo } from '../utils/prestamos';
+import { describirVencimiento, formatearDia, type EstadoPrestamo, type TonoVencimiento } from '../utils/prestamos';
+import { AvatarPersona } from './AvatarPersona';
 import { DialogoConfirmar } from './DialogoConfirmar';
 import { HojaInferior } from './HojaInferior';
 import { IconoPapelera } from './Iconos';
@@ -29,15 +30,19 @@ interface Props {
   onEliminarAbono: (abono: Transaccion) => Promise<void>;
 }
 
-function lineaVencimiento(p: EstadoPrestamo): { texto: string; clase: string } {
-  if (p.pagado) {
-    return { texto: p.fechaPago ? `Te pagó todo el ${formatearFechaCorta(p.fechaPago)}` : 'Te pagó todo', clase: 'text-ingreso' };
-  }
-  const cuando = `Quedó de pagarte el ${formatearDia(p.fechaDevolucion)}`;
-  if (!p.vencido) return { texto: cuando, clase: 'text-secundario' };
-  const atraso = p.diasVencido === 1 ? 'venció ayer' : `venció hace ${p.diasVencido} días`;
-  return { texto: `${cuando} · ${atraso}`, clase: 'text-alerta' };
-}
+const COLOR_ESTADO: Record<TonoVencimiento, string> = {
+  tranquilo: 'text-secundario',
+  pronto: 'text-black/75 dark:text-white/80',
+  vencido: 'text-alerta',
+  pagado: 'text-ingreso',
+};
+
+const COLOR_PUNTO: Record<TonoVencimiento, string> = {
+  tranquilo: 'bg-black/25 dark:bg-white/30',
+  pronto: 'bg-primary',
+  vencido: 'bg-alerta',
+  pagado: 'bg-ingreso',
+};
 
 export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbonar, onEditar, onEliminar, onEliminarAbono }: Props) {
   const chispasRef = useRef<ClickSparkHandle>(null);
@@ -65,7 +70,7 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
     }
   }
 
-  const vencimiento = prestamo ? lineaVencimiento(prestamo) : null;
+  const vencimiento = prestamo ? describirVencimiento(prestamo) : null;
   const progreso = prestamo && prestamo.monto > 0 ? prestamo.abonado / prestamo.monto : 0;
 
   return (
@@ -85,7 +90,7 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
             )}
             {prestamo && !prestamo.pagado && (
               <Button large rounded onClick={onAbonar} disabled={ocupado}>
-                Registrar abono
+                Registrar pago
               </Button>
             )}
           </>
@@ -94,7 +99,8 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
         {prestamo && vencimiento && (
           <>
             <Block className="my-2 flex flex-col items-center gap-1 text-center">
-              <span className="text-[15px] font-medium text-secundario">{prestamo.pagado ? 'Te pagó' : 'Te debe'}</span>
+              <AvatarPersona persona={prestamo.persona} id={prestamo.id} grande />
+              <span className="mt-2 text-[15px] font-medium text-secundario">{prestamo.pagado ? 'Te pagó' : 'Te debe'}</span>
               <ClickSpark
                 ref={chispasRef}
                 manual
@@ -115,25 +121,47 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
                 De <span className="cifras">{formatearMonto(prestamo.monto)}</span>
                 {prestamo.fechaPrestamo ? ` que le prestaste el ${formatearFechaCorta(prestamo.fechaPrestamo)}` : ''}
               </p>
-              <p className={`m-0 text-[15px] font-medium text-balance ${vencimiento.clase}`}>{vencimiento.texto}</p>
-              {prestamo.abonado > 0 && !prestamo.pagado && (
-                <Progressbar
-                  progress={progreso}
-                  className="mt-3 h-2 w-full"
-                  role="progressbar"
-                  aria-label={`Te ha pagado ${formatearMonto(prestamo.abonado)} de ${formatearMonto(prestamo.monto)}`}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={Math.round(progreso * 100)}
-                />
+              <p className={`m-0 mt-1 flex items-center justify-center gap-1.5 text-[15px] font-medium ${COLOR_ESTADO[vencimiento.tono]}`}>
+                <span className={`size-2 shrink-0 rounded-full ${COLOR_PUNTO[vencimiento.tono]}`} aria-hidden="true" />
+                {vencimiento.texto}
+                {!prestamo.pagado && (
+                  <span className="font-normal text-secundario"> · quedó para el {formatearDia(prestamo.fechaDevolucion)}</span>
+                )}
+              </p>
+              {!prestamo.pagado && (
+                <div className="mt-3 flex w-full flex-col gap-1.5">
+                  <Progressbar
+                    progress={progreso}
+                    className="h-2 w-full"
+                    role="progressbar"
+                    aria-label={`Te ha pagado ${formatearMonto(prestamo.abonado)} de ${formatearMonto(prestamo.monto)}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(progreso * 100)}
+                  />
+                  <p className="m-0 text-[13px] text-secundario">
+                    {prestamo.abonado > 0 ? (
+                      <>
+                        Ya te pagó <span className="font-semibold text-ingreso cifras">{formatearMonto(prestamo.abonado)}</span>
+                      </>
+                    ) : (
+                      'Todavía no te ha pagado nada'
+                    )}
+                  </p>
+                </div>
               )}
             </Block>
 
-            {prestamo.nota && <Block className="my-2 text-[15px] leading-snug">{prestamo.nota}</Block>}
+            {prestamo.nota && (
+              <Block className="my-2 text-[15px] leading-snug">
+                <span className="text-secundario">Nota: </span>
+                {prestamo.nota}
+              </Block>
+            )}
 
             {prestamo.abonos.length > 0 && (
               <>
-                <BlockTitle>Abonos</BlockTitle>
+                <BlockTitle>Pagos que te hizo</BlockTitle>
                 <List strong inset dividers>
                   {prestamo.abonos.map((a) => (
                     <ListItem
@@ -144,7 +172,7 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
                         <button
                           type="button"
                           className="-mr-2 flex size-11 items-center justify-center rounded-full text-alerta active:opacity-60 disabled:opacity-40"
-                          aria-label={`Eliminar abono de ${formatearMonto(a.monto)} del ${formatearFechaCorta(a.fecha)}`}
+                          aria-label={`Eliminar pago de ${formatearMonto(a.monto)} del ${formatearFechaCorta(a.fecha)}`}
                           onClick={() => setAbonoPorEliminar(a)}
                           disabled={ocupado}
                         >
@@ -183,7 +211,7 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
       <DialogoConfirmar
         abierto={confirmandoEliminar}
         titulo={`¿Eliminar el préstamo a ${prestamo?.persona ?? ''}?`}
-        mensaje="Se borran el préstamo, su salida y los abonos. Tu Disponible queda como si nunca lo hubieras registrado."
+        mensaje="Se borran el préstamo, la salida de plata y los pagos. Tu Disponible queda como si nunca lo hubieras registrado."
         textoConfirmar="Eliminar"
         onConfirmar={() => {
           setConfirmandoEliminar(false);
@@ -194,7 +222,7 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
 
       <DialogoConfirmar
         abierto={abonoPorEliminar !== null}
-        titulo="¿Eliminar este abono?"
+        titulo="¿Eliminar este pago?"
         mensaje={
           abonoPorEliminar
             ? `${formatearMonto(abonoPorEliminar.monto)} vuelve a sumar a lo que te debe y sale de tu Disponible.`
@@ -204,7 +232,7 @@ export function DetallePrestamoSheet({ ref, abierto, prestamo, onCerrar, onAbona
         onConfirmar={() => {
           const abono = abonoPorEliminar;
           setAbonoPorEliminar(null);
-          if (abono) ejecutar(() => onEliminarAbono(abono), 'No se pudo eliminar el abono. Intenta de nuevo.');
+          if (abono) ejecutar(() => onEliminarAbono(abono), 'No se pudo eliminar el pago. Intenta de nuevo.');
         }}
         onCancelar={() => setAbonoPorEliminar(null)}
       />

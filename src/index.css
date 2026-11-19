@@ -276,6 +276,26 @@ textarea {
   transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* El Fab de Konsta (iOS) pone su texto en mayúsculas; en la app los botones
+   con texto van en tipo oración, como el resto de las etiquetas. */
+.fab-sobre-pestanas .uppercase {
+  text-transform: none;
+}
+
+/* Barras de progreso de Préstamos (lo devuelto): se llenan al entrar, desde
+   cero, con la curva de iOS; si cambia el pago se deslizan al nuevo valor.
+   Solo transform. */
+@keyframes barra-entra {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.barra-progreso {
+  transition: transform 600ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: barra-entra 700ms cubic-bezier(0.32, 0.72, 0, 1) 150ms backwards;
+}
+
 /* Flecha de la tarjeta de exportar: baja como si cayera en la bandeja y
    descansa; el ciclo de 2.8s invita a tocar sin distraer. */
 @keyframes exportar-flecha {

@@ -240,7 +240,7 @@ export function NuevoMovimientoSheet({
               {campoMonto}
             </div>
           ) : (
-            <ProgresoPasos paso={f.paso} etiquetas={PASOS_MOVIMIENTO} />
+            <ProgresoPasos paso={f.paso} etiquetas={PASOS_MOVIMIENTO} descripcion="Progreso del movimiento" />
           )
         }
         pie={
