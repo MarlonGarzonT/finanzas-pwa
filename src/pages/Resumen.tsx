@@ -1,9 +1,9 @@
-import { Block, BlockTitle, Fab, Navbar, Page } from 'konsta/react';
+import { Block, BlockTitle, Navbar, Page } from 'konsta/react';
 import { useMemo, useState } from 'react';
 import { BalanceCard } from '../components/BalanceCard';
 import { Cargando } from '../components/Cargando';
 import { GraficoGastos } from '../components/GraficoGastos';
-import { IconoMas } from '../components/Iconos';
+import { BotonFlotante } from '../components/BotonFlotante';
 import { NuevoMovimientoSheet } from '../components/NuevoMovimientoSheet';
 import { SelectorMes } from '../components/SelectorMes';
 import { UltimosMovimientos } from '../components/UltimosMovimientos';
@@ -105,12 +105,7 @@ export function Resumen() {
         </div>
       )}
 
-      <Fab
-        className="fab-sobre-pestanas fixed right-4 z-20 size-14"
-        icon={<IconoMas className="size-7" />}
-        onClick={() => setSheetAbierto(true)}
-        aria-label="Nuevo movimiento"
-      />
+      <BotonFlotante etiqueta="Nuevo movimiento" onClick={() => setSheetAbierto(true)} />
 
       <NuevoMovimientoSheet
         abierto={sheetAbierto || editando !== null}

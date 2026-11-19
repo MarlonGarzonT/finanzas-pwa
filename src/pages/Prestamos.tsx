@@ -1,4 +1,4 @@
-import { Fab, Link, Navbar, Page } from 'konsta/react';
+import { Link, Navbar, Page } from 'konsta/react';
 import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AbonoSheet } from '../components/AbonoSheet';
@@ -7,7 +7,8 @@ import { CabeceraPrestamos } from '../components/CabeceraPrestamos';
 import { Cargando } from '../components/Cargando';
 import { DetallePrestamoSheet, type DetallePrestamoHandle } from '../components/DetallePrestamoSheet';
 import { EditarPrestamoSheet } from '../components/EditarPrestamoSheet';
-import { IconoCampana, IconoMas } from '../components/Iconos';
+import { BotonFlotante } from '../components/BotonFlotante';
+import { IconoCampana } from '../components/Iconos';
 import { ListaPrestamos } from '../components/ListaPrestamos';
 import { NuevoPrestamoSheet } from '../components/NuevoPrestamoSheet';
 import { PrestamosVacio } from '../components/PrestamosVacio';
@@ -126,12 +127,10 @@ export function Prestamos() {
       )}
 
       {/* Con texto, no solo "+": en esta pestaña el botón dice qué hace. */}
-      <Fab
-        className={`fab-sobre-pestanas fixed right-4 z-20 h-14 normal-case ${botonCompacto ? 'size-14' : ''}`}
-        icon={<IconoMas className="size-6" />}
-        text={botonCompacto ? undefined : 'Nuevo préstamo'}
+      <BotonFlotante
+        etiqueta="Nuevo préstamo"
+        texto={botonCompacto ? undefined : 'Nuevo préstamo'}
         onClick={() => setFormulario('nuevo')}
-        aria-label="Nuevo préstamo"
       />
 
       <AvisosPrestamosSheet abierto={avisosAbierto} onCerrar={() => setAvisosAbierto(false)} push={push} />
