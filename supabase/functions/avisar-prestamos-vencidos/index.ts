@@ -4,9 +4,11 @@
 // sin verificación de JWT (--no-verify-jwt) y en su lugar exige el encabezado
 // x-cron-secret: así nadie más puede dispararla.
 //
-// Secrets: CRON_SECRET, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
-// (mailto:tu-correo). SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY los inyecta
-// Supabase.
+// Secrets obligatorios: CRON_SECRET y VAPID_PRIVATE_KEY. La clave pública y el
+// "subject" son públicos: van aquí por defecto (la clave pública debe ser la
+// misma de src/data/notificacionesPush.ts) y se pueden sobrescribir con los
+// secrets VAPID_PUBLIC_KEY y VAPID_SUBJECT. SUPABASE_URL y
+// SUPABASE_SERVICE_ROLE_KEY los inyecta Supabase.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
@@ -25,6 +27,12 @@ interface Suscripcion {
   p256dh: string;
   auth: string;
 }
+
+const VAPID_PUBLIC_KEY_POR_DEFECTO =
+  'BN6gLX5cpn8uozfEuKkMqfOUmvB51GIY8ZsGHMKb33eeO-AVCbQsBZpBvyl9u2bT5NcB7TiN89jO-Rdy2Uy84rM';
+// El servicio de push lo usa para contactar a quien envía; una dirección de la
+// app basta (no hace falta un correo personal).
+const VAPID_SUBJECT_POR_DEFECTO = 'https://micuadre-app.vercel.app';
 
 const json = (datos: unknown, status = 200) =>
   new Response(JSON.stringify(datos), { status, headers: { 'Content-Type': 'application/json' } });
@@ -67,10 +75,12 @@ Deno.serve(async (req: Request) => {
   if (req.headers.get('x-cron-secret') !== secreto) return json({ error: 'No autorizado' }, 401);
 
   try {
+    const clavePrivada = Deno.env.get('VAPID_PRIVATE_KEY');
+    if (!clavePrivada) return json({ error: 'Falta el secret VAPID_PRIVATE_KEY' }, 500);
     webpush.setVapidDetails(
-      Deno.env.get('VAPID_SUBJECT')!,
-      Deno.env.get('VAPID_PUBLIC_KEY')!,
-      Deno.env.get('VAPID_PRIVATE_KEY')!
+      Deno.env.get('VAPID_SUBJECT') ?? VAPID_SUBJECT_POR_DEFECTO,
+      Deno.env.get('VAPID_PUBLIC_KEY') ?? VAPID_PUBLIC_KEY_POR_DEFECTO,
+      clavePrivada
     );
 
     // Service role: lee los préstamos y suscripciones de todas las cuentas.

@@ -1,13 +1,13 @@
-import { Fab, Navbar, Page } from 'konsta/react';
+import { Fab, Link, Navbar, Page } from 'konsta/react';
 import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AbonoSheet } from '../components/AbonoSheet';
-import { AvisosPrestamos } from '../components/AvisosPrestamos';
+import { AvisosPrestamosSheet } from '../components/AvisosPrestamosSheet';
 import { CabeceraPrestamos } from '../components/CabeceraPrestamos';
 import { Cargando } from '../components/Cargando';
 import { DetallePrestamoSheet, type DetallePrestamoHandle } from '../components/DetallePrestamoSheet';
 import { EditarPrestamoSheet } from '../components/EditarPrestamoSheet';
-import { IconoMas } from '../components/Iconos';
+import { IconoCampana, IconoMas } from '../components/Iconos';
 import { ListaPrestamos } from '../components/ListaPrestamos';
 import { NuevoPrestamoSheet } from '../components/NuevoPrestamoSheet';
 import { PrestamosVacio } from '../components/PrestamosVacio';
@@ -15,6 +15,7 @@ import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import type { EstadoPrestamo } from '../utils/prestamos';
 import type { EstadoNavegacionPrestamos } from '../components/useAbrirMovimiento';
 import { useFinanzas } from '../data/FinanzasContext';
+import { useNotificacionesPush } from '../data/useNotificacionesPush';
 import { usePrestamos } from '../data/usePrestamos';
 
 // Hoja abierta encima de la lista: préstamo nuevo, edición o pago.
@@ -24,6 +25,8 @@ type Vista = 'por-cobrar' | 'pagados';
 // Lo que tarda en bajar la hoja del pago: las chispas salen cuando ya se ve
 // el detalle, no detrás de la hoja que se está cerrando.
 const ESPERA_CIERRE_HOJA_MS = 450;
+
+const UMBRAL_BOTON_COMPACTO_PX = 48;
 
 export function Prestamos() {
   const { cargando, crearPrestamo, actualizarPrestamo, eliminarPrestamo, registrarAbono, eliminarMovimiento } = useFinanzas();
@@ -37,6 +40,11 @@ export function Prestamos() {
   const [detalleAbierto, setDetalleAbierto] = useState(idInicial !== null);
   const [formulario, setFormulario] = useState<Formulario>(null);
   const [filtro, setFiltro] = useState<Vista>('por-cobrar');
+  const [avisosAbierto, setAvisosAbierto] = useState(false);
+  // Al bajar por una lista larga el botón flotante se queda solo con el "+":
+  // con el texto tapaba el monto y el estado de las tarjetas que pasan por debajo.
+  const [botonCompacto, setBotonCompacto] = useState(false);
+  const push = useNotificacionesPush();
   const detalleRef = useRef<DetallePrestamoHandle>(null);
 
   const activo = activoId ? (porId(activoId) ?? null) : null;
@@ -57,8 +65,25 @@ export function Prestamos() {
   }
 
   return (
-    <Page className="pagina-con-fab">
-      <Navbar centerTitle title="Préstamos" />
+    <Page className="pagina-con-fab" onScroll={(e: React.UIEvent<HTMLElement>) => setBotonCompacto(e.currentTarget.scrollTop > UMBRAL_BOTON_COMPACTO_PX)}>
+      <Navbar
+        centerTitle
+        title="Préstamos"
+        right={
+          <Link
+            iconOnly
+            onClick={() => setAvisosAbierto(true)}
+            aria-label={`Avisos de cobro, ${push.estado === 'encendido' ? 'activados' : 'apagados'}`}
+            className="relative"
+          >
+            <IconoCampana className="size-7" />
+            {/* Punto verde: los avisos están encendidos (el estado también se lee en la hoja). */}
+            {push.estado === 'encendido' && (
+              <span className="absolute top-2 right-2 size-2.5 rounded-full bg-ingreso-relleno ring-2 ring-ios-light-surface dark:ring-black" aria-hidden="true" />
+            )}
+          </Link>
+        }
+      />
 
       {cargando ? (
         <Cargando />
@@ -97,21 +122,19 @@ export function Prestamos() {
           ) : (
             <PrestamosVacio onAgregar={() => setFormulario('nuevo')} />
           )}
-
-          <div className="mt-8">
-            <AvisosPrestamos />
-          </div>
         </div>
       )}
 
       {/* Con texto, no solo "+": en esta pestaña el botón dice qué hace. */}
       <Fab
-        className="fab-sobre-pestanas fixed right-4 z-20 h-14 normal-case"
+        className={`fab-sobre-pestanas fixed right-4 z-20 h-14 normal-case ${botonCompacto ? 'size-14' : ''}`}
         icon={<IconoMas className="size-6" />}
-        text="Nuevo préstamo"
+        text={botonCompacto ? undefined : 'Nuevo préstamo'}
         onClick={() => setFormulario('nuevo')}
         aria-label="Nuevo préstamo"
       />
+
+      <AvisosPrestamosSheet abierto={avisosAbierto} onCerrar={() => setAvisosAbierto(false)} push={push} />
 
       <DetallePrestamoSheet
         ref={detalleRef}

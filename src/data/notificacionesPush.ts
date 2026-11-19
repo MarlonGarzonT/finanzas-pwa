@@ -5,7 +5,7 @@ import * as db from '../db';
 // vive solo en los secrets de la Edge Function avisar-prestamos-vencidos: si
 // se cambia una, hay que cambiar la otra.
 const CLAVE_PUBLICA_VAPID: string | undefined =
-  'BOr8aN92T66CdKggvy7DpxD-6anyUWzxA0lh6tZlT9NWFue54hWhnwJItzRpx16ZiPvr2Ow4BosnDIQfqmdPuv4';
+  'BN6gLX5cpn8uozfEuKkMqfOUmvB51GIY8ZsGHMKb33eeO-AVCbQsBZpBvyl9u2bT5NcB7TiN89jO-Rdy2Uy84rM';
 
 export type EstadoPush =
   | 'cargando'
@@ -46,6 +46,17 @@ async function registroListo(): Promise<ServiceWorkerRegistration | undefined> {
   ]);
 }
 
+// Una suscripción creada con otra clave pública (se cambió el par VAPID) ya no
+// sirve: el servidor no puede enviarle nada y el navegador no deja crear otra
+// encima sin borrarla antes.
+function esDeEstaClave(suscripcion: PushSubscription): boolean {
+  const clave = suscripcion.options.applicationServerKey;
+  if (!clave || !CLAVE_PUBLICA_VAPID) return false;
+  const actual = base64UrlABytes(CLAVE_PUBLICA_VAPID);
+  const guardada = new Uint8Array(clave);
+  return guardada.length === actual.length && guardada.every((byte, i) => byte === actual[i]);
+}
+
 export interface ConsultaPush {
   estado: EstadoPush;
   registro?: ServiceWorkerRegistration;
@@ -60,7 +71,9 @@ export async function consultarPush(): Promise<ConsultaPush> {
   if (!registro) return { estado: 'sin-service-worker' };
   if (Notification.permission === 'denied') return { estado: 'bloqueado', registro };
   const suscripcion = await registro.pushManager.getSubscription();
-  const encendido = suscripcion !== null && Notification.permission === 'granted';
+  // Una suscripción de otra clave cuenta como apagada: así la persona la
+  // vuelve a encender y queda una nueva que sí recibe los avisos.
+  const encendido = suscripcion !== null && esDeEstaClave(suscripcion) && Notification.permission === 'granted';
   return { estado: encendido ? 'encendido' : 'apagado', registro };
 }
 
@@ -70,6 +83,12 @@ export async function activarPush(registro: ServiceWorkerRegistration): Promise<
   if (!CLAVE_PUBLICA_VAPID) return 'no-configurado';
   let suscripcion: PushSubscription;
   try {
+    // Con el permiso ya concedido no hay ventana que pedir, así que esperar
+    // aquí no rompe la regla del gesto de Safari.
+    if (Notification.permission === 'granted') {
+      const previa = await registro.pushManager.getSubscription();
+      if (previa && !esDeEstaClave(previa)) await previa.unsubscribe();
+    }
     // Si ya hay una suscripción con esta clave, subscribe la devuelve tal cual.
     suscripcion = await registro.pushManager.subscribe({
       userVisibleOnly: true,
