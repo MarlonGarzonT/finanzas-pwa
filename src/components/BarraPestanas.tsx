@@ -1,6 +1,7 @@
 import { Badge, Tabbar, TabbarLink, ToolbarPane } from 'konsta/react';
 import type { ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useCreditos } from '../data/useCreditos';
 import { usePrestamos } from '../data/usePrestamos';
 import { IconoHistorial, IconoPerfil, IconoPrestamos, IconoReportes, IconoResumen } from './Iconos';
 
@@ -24,7 +25,8 @@ const PESTANAS: Pestana[] = [
 // teclado y lector de pantalla, no solo con el dedo.
 export function BarraPestanas() {
   const { pathname } = useLocation();
-  const vencidos = usePrestamos().resumen.vencidos;
+  // Lo vencido de las dos direcciones: préstamos que no te pagaron y cuotas de créditos atrasadas.
+  const vencidos = usePrestamos().resumen.vencidos + useCreditos().resumen.vencidos;
 
   function estaActiva(ruta: string) {
     return ruta === '/' ? pathname === '/' : pathname.startsWith(ruta);

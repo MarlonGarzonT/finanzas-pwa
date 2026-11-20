@@ -34,8 +34,11 @@ export function naturalezaEfectiva(t: Transaccion, categoria?: Categoria): Natur
 }
 
 // Un movimiento de un préstamo se reconoce por su prestamoId, no por la
-// categoría: no es gasto ni ingreso, pero sí mueve el Disponible.
+// categoría: no es gasto ni ingreso, pero sí mueve el Disponible. El pago de
+// la cuota de un crédito se reconoce por su creditoId y cuenta como gasto de
+// deuda (la cuota completa, como sale de tu cuenta).
 export function clasificar(t: Transaccion, categoria?: Categoria): Clase {
+  if (t.creditoId) return 'gasto_deuda';
   if (t.prestamoId) return t.tipo === 'egreso' ? 'prestamo_dado' : 'prestamo_cobrado';
   return CLASE_POR_NATURALEZA[naturalezaEfectiva(t, categoria)];
 }

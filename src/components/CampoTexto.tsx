@@ -17,6 +17,9 @@ interface Props {
   required?: boolean;
   // Solo para type="date": día mínimo, 'AAAA-MM-DD'.
   min?: string;
+  // Campo de cifras: solo deja dígitos y teclado numérico. Con 'monto' se
+  // muestra con separador de miles (el valor que sube sigue siendo solo dígitos).
+  numerico?: 'monto' | 'entero';
   // Botón al final del campo (ej. mostrar/ocultar contraseña).
   accion?: ReactNode;
 }
@@ -38,6 +41,7 @@ export function CampoTexto({
   onEnter,
   required,
   min,
+  numerico,
   accion,
 }: Props) {
   const id = useId();
@@ -49,8 +53,8 @@ export function CampoTexto({
           <input
             id={id}
             type={type}
-            value={valor}
-            onChange={(e) => onCambiar(e.target.value)}
+            value={numerico === 'monto' && valor ? Number(valor).toLocaleString('es-CO') : valor}
+            onChange={(e) => onCambiar(numerico ? e.target.value.replace(/\D/g, '') : e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && onEnter) {
                 e.preventDefault();
@@ -58,7 +62,7 @@ export function CampoTexto({
               }
             }}
             placeholder={placeholder}
-            inputMode={inputMode}
+            inputMode={numerico ? 'numeric' : inputMode}
             autoComplete={autoComplete}
             autoCapitalize={autoCapitalize}
             enterKeyHint={enterKeyHint}

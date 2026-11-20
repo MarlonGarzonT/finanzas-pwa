@@ -6,8 +6,10 @@ import { conMovimientos } from '../utils/ordenMovimientos';
 import type {
   CambiosCategoria,
   Categoria,
+  Credito,
   GastoAnual,
   NuevaTransaccion,
+  NuevoCredito,
   NuevoGastoAnual,
   NuevoPrestamo,
   Prestamo,
@@ -20,6 +22,7 @@ interface FinanzasContextValue {
   categorias: Categoria[];
   gastosAnuales: GastoAnual[];
   prestamos: Prestamo[];
+  creditos: Credito[];
   cargando: boolean;
   crearMovimiento: (datos: NuevaTransaccion, fecha: Date) => Promise<void>;
   actualizarMovimiento: (id: string, datos: Partial<NuevaTransaccion>, fecha: Date) => Promise<void>;
@@ -34,6 +37,10 @@ interface FinanzasContextValue {
   actualizarPrestamo: (id: string, cambios: Pick<NuevoPrestamo, 'persona' | 'fechaDevolucion' | 'nota'>) => Promise<void>;
   eliminarPrestamo: (id: string) => Promise<void>;
   registrarAbono: (prestamo: Prestamo, monto: number) => Promise<void>;
+  crearCredito: (nuevo: NuevoCredito) => Promise<void>;
+  actualizarCredito: (id: string, cambios: Pick<NuevoCredito, 'nombre' | 'entidad' | 'fechaPrimeraCuota'>) => Promise<void>;
+  eliminarCredito: (id: string) => Promise<void>;
+  registrarPagoCredito: (credito: Credito, monto: number, fecha: Date) => Promise<void>;
 }
 
 const FinanzasContext = createContext<FinanzasContextValue | undefined>(undefined);
@@ -45,6 +52,7 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [gastosAnuales, setGastosAnuales] = useState<GastoAnual[]>([]);
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
+  const [creditos, setCreditos] = useState<Credito[]>([]);
   const [cargando, setCargando] = useState(true);
 
   // Último texto guardado/recibido: sirve para no volver a pintar (ni a
@@ -62,6 +70,7 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
       setTransacciones(copia.transacciones);
       setGastosAnuales(copia.gastosAnuales);
       setPrestamos(copia.prestamos);
+      setCreditos(copia.creditos);
       setCargando(false);
       // Copia de hace instantes: no hay nada nuevo que pedir.
       if (!forzar && edadCache(userId) < FRESCURA_MS) return;
@@ -69,19 +78,21 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
       setCargando(true);
     }
     try {
-      const [cats, trans, anuales, prest] = await Promise.all([
+      const [cats, trans, anuales, prest, cred] = await Promise.all([
         db.obtenerCategorias(userId),
         db.obtenerTransacciones(),
         db.obtenerGastosAnuales(),
         db.obtenerPrestamos(),
+        db.obtenerCreditos(),
       ]);
-      const texto = serializar({ categorias: cats, transacciones: trans, gastosAnuales: anuales, prestamos: prest });
+      const texto = serializar({ categorias: cats, transacciones: trans, gastosAnuales: anuales, prestamos: prest, creditos: cred });
       if (texto !== textoVigente.current) {
         textoVigente.current = texto;
         setCategorias(cats);
         setTransacciones(trans);
         setGastosAnuales(anuales);
         setPrestamos(prest);
+        setCreditos(cred);
         guardarTextoCache(userId, texto);
       } else {
         marcarCacheAlDia(userId);
@@ -115,13 +126,13 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!userId || cargando) return;
     const id = window.setTimeout(() => {
-      const texto = serializar({ categorias, transacciones, gastosAnuales, prestamos });
+      const texto = serializar({ categorias, transacciones, gastosAnuales, prestamos, creditos });
       if (texto === textoVigente.current) return;
       textoVigente.current = texto;
       guardarTextoCache(userId, texto);
     }, 800);
     return () => window.clearTimeout(id);
-  }, [userId, cargando, categorias, transacciones, gastosAnuales, prestamos]);
+  }, [userId, cargando, categorias, transacciones, gastosAnuales, prestamos, creditos]);
 
   async function crearMovimiento(datos: NuevaTransaccion, fecha: Date) {
     if (!userId) return;
@@ -199,6 +210,29 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
     setTransacciones((prev) => conMovimientos(prev, [abono]));
   }
 
+  async function crearCredito(nuevo: NuevoCredito) {
+    const creado = await db.crearCredito(nuevo);
+    setCreditos((prev) => [...prev, creado]);
+  }
+
+  async function actualizarCredito(id: string, cambios: Pick<NuevoCredito, 'nombre' | 'entidad' | 'fechaPrimeraCuota'>) {
+    const actualizado = await db.actualizarCredito(id, cambios);
+    setCreditos((prev) => prev.map((c) => (c.id === id ? actualizado : c)));
+    setTransacciones((prev) => prev.map((t) => (t.creditoId === id ? { ...t, item: `Cuota ${actualizado.nombre}` } : t)));
+  }
+
+  // La base borra en cascada los pagos; aquí se refleja igual.
+  async function eliminarCredito(id: string) {
+    await db.eliminarCredito(id);
+    setCreditos((prev) => prev.filter((c) => c.id !== id));
+    setTransacciones((prev) => prev.filter((t) => t.creditoId !== id));
+  }
+
+  async function registrarPagoCredito(credito: Credito, monto: number, fecha: Date) {
+    const pago = await db.registrarPagoCredito(credito, monto, fecha);
+    setTransacciones((prev) => conMovimientos(prev, [pago]));
+  }
+
   return (
     <FinanzasContext.Provider
       value={{
@@ -206,6 +240,7 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         categorias,
         gastosAnuales,
         prestamos,
+        creditos,
         cargando,
         crearMovimiento,
         actualizarMovimiento,
@@ -220,6 +255,10 @@ export function FinanzasProvider({ children }: { children: ReactNode }) {
         actualizarPrestamo,
         eliminarPrestamo,
         registrarAbono,
+        crearCredito,
+        actualizarCredito,
+        eliminarCredito,
+        registrarPagoCredito,
       }}
     >
       {children}

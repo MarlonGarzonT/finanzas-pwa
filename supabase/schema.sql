@@ -509,3 +509,40 @@ as $$
 $$;
 revoke execute on function prestamos_por_avisar() from public, anon, authenticated;
 grant execute on function prestamos_por_avisar() to service_role;
+
+-- ============================================================================
+-- Créditos: créditos de cuota fija que el usuario paga (moto, carro, vivienda,
+-- libre inversión). La app calcula los intereses, la tasa y el saldo (ver
+-- src/utils/creditos.ts): aquí solo va lo que dice el contrato.
+-- Correr ANTES de publicar la versión de la app que los usa: la lectura de
+-- transacciones pide la columna credito_id.
+-- ============================================================================
+
+create table if not exists creditos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  nombre text not null check (length(trim(nombre)) > 0),
+  entidad text,
+  -- Lo que el banco prestó (el capital), sin intereses.
+  monto_financiado numeric not null check (monto_financiado > 0),
+  cuota numeric not null check (cuota > 0),
+  plazo_meses int not null check (plazo_meses between 1 and 600),
+  -- Cuotas que ya estaban pagadas cuando se empezó a llevar en la app.
+  cuotas_pagadas_inicial int not null default 0 check (cuotas_pagadas_inicial >= 0),
+  -- Día en que vence la cuota 1, en hora de Colombia: cada cuota vence ese día del mes.
+  fecha_primera_cuota date not null,
+  created_at timestamptz not null default now(),
+  constraint creditos_pagadas_dentro_del_plazo check (cuotas_pagadas_inicial <= plazo_meses),
+  -- Si las cuotas no suman al menos lo prestado, el contrato no tiene sentido.
+  constraint creditos_cuotas_cubren_el_monto check (cuota * plazo_meses >= monto_financiado)
+);
+create index if not exists creditos_user_idx on creditos (user_id);
+alter table creditos enable row level security;
+drop policy if exists "usuario ve/edita solo sus creditos" on creditos;
+create policy "usuario ve/edita solo sus creditos" on creditos
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Cada pago de cuota es un egreso enlazado al crédito. Borrar el crédito borra
+-- sus pagos: deshace todo lo que se registró con él.
+alter table transacciones add column if not exists credito_id uuid references creditos(id) on delete cascade;
+create index if not exists transacciones_credito_idx on transacciones (credito_id) where credito_id is not null;

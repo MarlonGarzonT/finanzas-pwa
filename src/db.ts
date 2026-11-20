@@ -2,10 +2,12 @@ import { supabase } from './supabaseClient';
 import type {
   CambiosCategoria,
   Categoria,
+  Credito,
   GastoAnual,
   Naturaleza,
   NuevaTransaccion,
   NuevoGastoAnual,
+  NuevoCredito,
   NuevoPrestamo,
   Prestamo,
   Tipo,
@@ -57,6 +59,7 @@ interface FilaTransaccion {
   tipo: 'ingreso' | 'egreso';
   monto: number;
   prestamo_id: string | null;
+  credito_id: string | null;
 }
 
 function mapTransaccion(row: FilaTransaccion): Transaccion {
@@ -68,13 +71,14 @@ function mapTransaccion(row: FilaTransaccion): Transaccion {
     tipo: row.tipo,
     monto: Number(row.monto),
     prestamoId: row.prestamo_id ?? null,
+    creditoId: row.credito_id ?? null,
   };
 }
 
 const COLUMNAS_CATEGORIA = 'id, nombre, emoji, tipo, naturaleza, es_fijo';
 // semana_del_mes ya no se lee (C3), pero se sigue escribiendo mientras haya
 // teléfonos con la versión anterior, que la exigen al leer.
-const COLUMNAS_TRANSACCION = 'id, fecha, item, categoria_id, tipo, monto, prestamo_id';
+const COLUMNAS_TRANSACCION = 'id, fecha, item, categoria_id, tipo, monto, prestamo_id, credito_id';
 
 export async function obtenerCategorias(userId: string): Promise<Categoria[]> {
   const { data, error } = await supabase
@@ -374,6 +378,108 @@ export async function registrarAbono(prestamo: Prestamo, monto: number, fecha: D
       monto,
       semana_del_mes: calcularSemanaDelMes(fecha),
       prestamo_id: prestamo.id,
+    })
+    .select(COLUMNAS_TRANSACCION)
+    .single();
+  if (error) throw error;
+  return mapTransaccion(data);
+}
+
+// ---- Créditos ----
+
+const COLUMNAS_CREDITO =
+  'id, nombre, entidad, monto_financiado, cuota, plazo_meses, cuotas_pagadas_inicial, fecha_primera_cuota';
+
+interface FilaCredito {
+  id: string;
+  nombre: string;
+  entidad: string | null;
+  monto_financiado: number;
+  cuota: number;
+  plazo_meses: number;
+  cuotas_pagadas_inicial: number;
+  fecha_primera_cuota: string;
+}
+
+function mapCredito(row: FilaCredito): Credito {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    entidad: row.entidad,
+    montoFinanciado: Number(row.monto_financiado),
+    cuota: Number(row.cuota),
+    plazoMeses: row.plazo_meses,
+    cuotasPagadasInicial: row.cuotas_pagadas_inicial,
+    fechaPrimeraCuota: row.fecha_primera_cuota,
+  };
+}
+
+export async function obtenerCreditos(): Promise<Credito[]> {
+  const { data, error } = await supabase
+    .from('creditos')
+    .select(COLUMNAS_CREDITO)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapCredito);
+}
+
+export async function crearCredito(nuevo: NuevoCredito): Promise<Credito> {
+  const { data, error } = await supabase
+    .from('creditos')
+    .insert({
+      nombre: nuevo.nombre,
+      entidad: nuevo.entidad,
+      monto_financiado: nuevo.montoFinanciado,
+      cuota: nuevo.cuota,
+      plazo_meses: nuevo.plazoMeses,
+      cuotas_pagadas_inicial: nuevo.cuotasPagadasInicial,
+      fecha_primera_cuota: nuevo.fechaPrimeraCuota,
+    })
+    .select(COLUMNAS_CREDITO)
+    .single();
+  if (error) throw error;
+  return mapCredito(data);
+}
+
+// Las cifras del contrato (monto, cuota, plazo) no se editan: cambiarían los
+// intereses de todas las cuotas ya pagadas. Para corregirlas, se elimina el
+// crédito y se registra de nuevo.
+export async function actualizarCredito(
+  id: string,
+  cambios: Pick<NuevoCredito, 'nombre' | 'entidad' | 'fechaPrimeraCuota'>
+): Promise<Credito> {
+  const { data, error } = await supabase
+    .from('creditos')
+    .update({ nombre: cambios.nombre, entidad: cambios.entidad, fecha_primera_cuota: cambios.fechaPrimeraCuota })
+    .eq('id', id)
+    .select(COLUMNAS_CREDITO)
+    .single();
+  if (error) throw error;
+  // El nombre va en la descripción de cada pago; se mantiene al día. Si falla,
+  // solo queda un texto viejo en el historial: el dinero no cambia.
+  await supabase.from('transacciones').update({ item: `Cuota ${cambios.nombre}` }).eq('credito_id', id);
+  return mapCredito(data);
+}
+
+// Borra también los pagos registrados (on delete cascade en la base).
+export async function eliminarCredito(id: string): Promise<void> {
+  const { error } = await supabase.from('creditos').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// Un pago de cuota es un egreso enlazado al crédito: baja el Disponible y
+// cuenta como gasto de deuda (ver utils/contabilidad.ts).
+export async function registrarPagoCredito(credito: Credito, monto: number, fecha: Date = new Date()): Promise<Transaccion> {
+  const { data, error } = await supabase
+    .from('transacciones')
+    .insert({
+      fecha: fecha.toISOString(),
+      item: `Cuota ${credito.nombre}`,
+      categoria_id: null,
+      tipo: 'egreso',
+      monto,
+      semana_del_mes: calcularSemanaDelMes(fecha),
+      credito_id: credito.id,
     })
     .select(COLUMNAS_TRANSACCION)
     .single();

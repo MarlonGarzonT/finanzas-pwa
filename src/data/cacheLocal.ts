@@ -1,4 +1,4 @@
-import type { Categoria, GastoAnual, Prestamo, Transaccion } from '../types';
+import type { Categoria, Credito, GastoAnual, Prestamo, Transaccion } from '../types';
 
 // Copia local de los datos del usuario para abrir la app al instante: se
 // muestra lo último que se vio y, en segundo plano, se pide lo nuevo a
@@ -13,6 +13,7 @@ export interface InstantaneaDatos {
   transacciones: Transaccion[];
   gastosAnuales: GastoAnual[];
   prestamos: Prestamo[];
+  creditos: Credito[];
 }
 
 // Una copia de hace menos de esto se considera al día y no se vuelve a pedir.
@@ -65,6 +66,7 @@ export function leerCache(userId: string): InstantaneaDatos | null {
       transacciones: datos.transacciones,
       gastosAnuales: Array.isArray(datos.gastosAnuales) ? datos.gastosAnuales : [],
       prestamos: Array.isArray(datos.prestamos) ? datos.prestamos : [],
+      creditos: Array.isArray(datos.creditos) ? datos.creditos : [],
     };
   } catch {
     return null;
