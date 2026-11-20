@@ -34,6 +34,9 @@ export interface Transaccion {
   // Si es la salida de un préstamo (egreso) o un abono que te hicieron
   // (ingreso). Esos movimientos no son gasto ni ingreso: ver contabilidad.ts.
   prestamoId: string | null;
+  // Si es el pago de una cuota de un crédito tuyo (egreso). Cuenta como gasto
+  // de deuda y se muestra en Préstamos → Debes: ver utils/creditos.ts.
+  creditoId: string | null;
 }
 
 export interface NuevaTransaccion {
@@ -74,4 +77,33 @@ export interface NuevoPrestamo {
   monto: number;
   fechaDevolucion: string;
   nota: string | null;
+}
+
+// Crédito de cuota fija que tú pagas (moto, carro, vivienda, libre inversión).
+// Se guarda lo que el usuario sabe de su contrato; los intereses, la tasa y el
+// saldo no se guardan: salen de calcularlos (utils/creditos.ts) y de los pagos
+// registrados (movimientos de egreso con su creditoId).
+export interface Credito {
+  id: string;
+  nombre: string;
+  entidad: string | null;
+  // Lo que el banco prestó (el capital), sin intereses.
+  montoFinanciado: number;
+  cuota: number;
+  plazoMeses: number;
+  // Cuotas que ya estaban pagadas cuando empezó a llevarlo en la app.
+  cuotasPagadasInicial: number;
+  // Día de vencimiento de la cuota 1, hora de Colombia: 'AAAA-MM-DD'. La
+  // cuota n vence ese mismo día n-1 meses después.
+  fechaPrimeraCuota: string;
+}
+
+export interface NuevoCredito {
+  nombre: string;
+  entidad: string | null;
+  montoFinanciado: number;
+  cuota: number;
+  plazoMeses: number;
+  cuotasPagadasInicial: number;
+  fechaPrimeraCuota: string;
 }

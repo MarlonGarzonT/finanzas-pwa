@@ -13,10 +13,11 @@ export function movimiento(
   monto: number,
   categoriaId: string,
   tipo: Tipo = 'egreso',
-  prestamoId: string | null = null
+  prestamoId: string | null = null,
+  creditoId: string | null = null
 ): Transaccion {
   siguienteId += 1;
-  return { id: `t${siguienteId}`, fecha: fecha.toISOString(), item: 'prueba', categoriaId, tipo, monto, prestamoId };
+  return { id: `t${siguienteId}`, fecha: fecha.toISOString(), item: 'prueba', categoriaId, tipo, monto, prestamoId, creditoId };
 }
 
 export function gastoAnual(nombre: string, montoEstimado: number, mesVencimiento: number, categoriaId: string | null = null): GastoAnual {

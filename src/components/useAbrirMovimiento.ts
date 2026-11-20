@@ -3,6 +3,7 @@ import type { Transaccion } from '../types';
 
 export interface EstadoNavegacionPrestamos {
   prestamoId?: string;
+  creditoId?: string;
 }
 
 // Un movimiento de préstamo (la salida o un abono) no se edita como un gasto
@@ -11,7 +12,11 @@ export interface EstadoNavegacionPrestamos {
 export function useAbrirMovimiento(editar: (t: Transaccion) => void): (t: Transaccion) => void {
   const navegar = useNavigate();
   return (t) => {
-    if (t.prestamoId) {
+    if (t.creditoId) {
+      // El pago de una cuota se ve (y se borra) desde su crédito.
+      const estado: EstadoNavegacionPrestamos = { creditoId: t.creditoId };
+      navegar('/prestamos', { state: estado });
+    } else if (t.prestamoId) {
       const estado: EstadoNavegacionPrestamos = { prestamoId: t.prestamoId };
       navegar('/prestamos', { state: estado });
     } else {

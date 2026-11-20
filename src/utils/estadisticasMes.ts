@@ -1,6 +1,7 @@
 import type { Categoria, GastoAnual, Transaccion } from '../types';
 import { clasificar, esGasto, esIngreso, resumirMes, type ResumenContable } from './contabilidad';
 import { claveMes, claveMesDeFecha } from './fechas';
+import { presentacionMovimiento } from './presentacionMovimiento';
 import { esPagoDeGastoAnual } from './provisiones';
 
 export interface SegmentoCategoria {
@@ -21,20 +22,24 @@ export function desglosePorCategoria(
   tipo: 'ingreso' | 'egreso'
 ): SegmentoCategoria[] {
   const cuenta = tipo === 'egreso' ? esGasto : esIngreso;
-  const totales = new Map<string, number>();
+  // Las cuotas de créditos no tienen categoría: van juntas en su propio
+  // segmento ("Cuota de crédito"), no mezcladas con los "Otros".
+  const totales = new Map<string, { monto: number; muestra: Transaccion }>();
   let total = 0;
   for (const t of transaccionesDelMes) {
     if (!cuenta(clasificar(t, categoriaPorId(t.categoriaId)))) continue;
-    totales.set(t.categoriaId, (totales.get(t.categoriaId) ?? 0) + t.monto);
+    const clave = t.creditoId ? 'credito' : t.categoriaId;
+    const previo = totales.get(clave);
+    totales.set(clave, { monto: (previo?.monto ?? 0) + t.monto, muestra: previo?.muestra ?? t });
     total += t.monto;
   }
   return Array.from(totales.entries())
-    .map(([categoriaId, monto]) => {
-      const cat = categoriaPorId(categoriaId);
+    .map(([categoriaId, { monto, muestra }]) => {
+      const { nombre, emoji } = presentacionMovimiento(muestra, categoriaPorId(muestra.categoriaId));
       return {
         categoriaId,
-        nombre: cat?.nombre ?? 'Otros',
-        emoji: cat?.emoji ?? '🏷️',
+        nombre,
+        emoji,
         monto,
         porcentaje: total > 0 ? (monto / total) * 100 : 0,
       };
@@ -59,7 +64,8 @@ export function fijoVsVariable(
   for (const t of transaccionesDelMes) {
     const categoria = categoriaPorId(t.categoriaId);
     if (!esGasto(clasificar(t, categoria))) continue;
-    if (categoria?.esFijo) fijo += t.monto;
+    // La cuota de un crédito es un gasto fijo: llega igual cada mes.
+    if (categoria?.esFijo || t.creditoId) fijo += t.monto;
     else variable += t.monto;
   }
   const total = fijo + variable;
@@ -115,7 +121,7 @@ export function compararConMesAnterior(
   let anterior = 0;
   for (const t of transacciones) {
     const categoria = categoriaPorId(t.categoriaId);
-    if (!esGasto(clasificar(t, categoria)) || categoria?.esFijo) continue;
+    if (!esGasto(clasificar(t, categoria)) || categoria?.esFijo || t.creditoId) continue;
     if (esPagoDeGastoAnual(t, gastosAnuales)) continue;
     const fecha = new Date(t.fecha);
     const clave = claveMesDeFecha(fecha);

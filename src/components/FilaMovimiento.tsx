@@ -24,7 +24,7 @@ export function FilaMovimiento({ transaccion, categoria, onSeleccionar, detalle 
       linkComponent="button"
       linkProps={{ type: 'button', 'aria-label': `${transaccion.item}, ${esIngreso ? 'ingreso' : 'gasto'} de ${formatearMonto(transaccion.monto)}. Editar` }}
       onClick={() => onSeleccionar(transaccion)}
-      media={<AvatarEmoji emoji={emoji} color={colorCategoria(transaccion.prestamoId ?? transaccion.categoriaId)} />}
+      media={<AvatarEmoji emoji={emoji} color={colorCategoria(transaccion.creditoId ?? transaccion.prestamoId ?? transaccion.categoriaId)} />}
       title={<span className="block truncate">{transaccion.item}</span>}
       subtitle={<span className="block truncate text-secundario">{detalle ?? nombre}</span>}
       after={

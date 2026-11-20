@@ -109,13 +109,13 @@ export async function exportarTransaccionesExcel(
   for (const t of ordenadas) {
     // Los movimientos de préstamos no tienen categoría: van en su propia fila
     // y no se mezclan con los de categorías borradas.
-    const clave = t.prestamoId ? `prestamo-${t.tipo}` : t.categoriaId;
+    const clave = t.creditoId ? 'credito' : t.prestamoId ? `prestamo-${t.tipo}` : t.categoriaId;
     if (!porCategoria.has(clave)) {
       const cat = categoriaPorId(t.categoriaId);
       porCategoria.set(clave, {
         nombre: presentacionMovimiento(t, cat).nombre,
         tipo: t.tipo,
-        naturaleza: t.prestamoId ? 'Préstamo' : etiquetaNaturaleza(naturalezaEfectiva(t, cat)),
+        naturaleza: t.creditoId ? 'Crédito' : t.prestamoId ? 'Préstamo' : etiquetaNaturaleza(naturalezaEfectiva(t, cat)),
         esGasto: esGasto(clasificar(t, cat)),
         total: 0,
         conteo: 0,
