@@ -6,7 +6,7 @@ import {
   costoPorMil,
   describirProximaCuota,
   emojiCredito,
-  formatearDiaConAnio,
+  formatearMesConAnio,
   type EstadoCredito,
 } from '../utils/creditos';
 import { formatearFechaCorta, formatearMonto } from '../utils/fechas';
@@ -132,9 +132,7 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                 <TiraCuotas plazo={credito.plazoMeses} pagadas={credito.cuotasPagadas} atrasada={credito.vencida} />
               </div>
               <p className="m-0 mt-2 text-[13px] text-secundario">
-                {credito.saldado
-                  ? `Terminaste el ${formatearDiaConAnio(credito.fechaFinal)}`
-                  : `Llevas ${credito.cuotasPagadas} · faltan ${credito.cuotasRestantes} · terminas el ${formatearDiaConAnio(credito.fechaFinal)}`}
+                {credito.saldado ? 'Terminaste de pagar en' : 'Terminas de pagar en'} {formatearMesConAnio(credito.fechaFinal)}
               </p>
             </section>
 
@@ -216,7 +214,7 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                       key={fila.numero}
                       title={
                         <span className={pagada ? 'text-secundario' : 'font-medium'}>
-                          Cuota {fila.numero} · {formatearDiaConAnio(fila.fecha)}
+                          Cuota {fila.numero} · {formatearMesConAnio(fila.fecha)}
                         </span>
                       }
                       text={

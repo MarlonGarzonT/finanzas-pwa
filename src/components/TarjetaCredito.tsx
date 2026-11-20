@@ -1,5 +1,5 @@
 import { colorCategoria } from '../utils/colorCategoria';
-import { describirProximaCuota, emojiCredito, formatearDiaConAnio, type EstadoCredito } from '../utils/creditos';
+import { describirProximaCuota, emojiCredito, formatearMesConAnio, type EstadoCredito } from '../utils/creditos';
 import { formatearMonto } from '../utils/fechas';
 import type { TonoVencimiento } from '../utils/prestamos';
 import { AvatarEmoji } from './AvatarEmoji';
@@ -83,9 +83,7 @@ export function TarjetaCredito({ credito: c, onAbrir, onRegistrarPago, conEfecto
           <TiraCuotas plazo={c.plazoMeses} pagadas={c.cuotasPagadas} atrasada={c.vencida} />
         </span>
         <span className="mt-2 block text-[13px] text-secundario">
-          {c.saldado
-            ? `Terminaste el ${formatearDiaConAnio(c.fechaFinal)}`
-            : `Faltan ${c.cuotasRestantes} cuotas · terminas el ${formatearDiaConAnio(c.fechaFinal)}`}
+          {c.saldado ? 'Terminaste de pagar en' : 'Terminas de pagar en'} {formatearMesConAnio(c.fechaFinal)}
         </span>
 
         <span className="mt-3 grid grid-cols-2 gap-3 border-t border-black/[0.07] pt-3 dark:border-white/10">

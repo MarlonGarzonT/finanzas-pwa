@@ -1,7 +1,7 @@
 import { List } from 'konsta/react';
 import { useEffect, type ReactNode } from 'react';
 import type { NuevoCredito } from '../types';
-import { fechaDeCuota, fechaPrimeraCuotaDesdeProxima, formatearDiaConAnio, NOMBRES_SUGERIDOS_CREDITO } from '../utils/creditos';
+import { fechaDeCuota, fechaPrimeraCuotaDesdeProxima, formatearMesConAnio, NOMBRES_SUGERIDOS_CREDITO } from '../utils/creditos';
 import { formatearMonto } from '../utils/fechas';
 import { BotonPrincipal } from './BotonPrincipal';
 import { CampoTexto } from './CampoTexto';
@@ -156,7 +156,7 @@ export function NuevoCreditoSheet({ abierto, onCerrar, onGuardar }: Props) {
             <p className="m-0 px-6 text-[14px] leading-snug text-secundario">
               Vas por la cuota <span className="font-semibold cifras">{f.pagadasNum + 1}</span> de{' '}
               <span className="cifras">{f.plazoNum}</span>
-              {fechaFinal ? `, y terminas de pagar el ${formatearDiaConAnio(fechaFinal)}` : ''}. Cada mes la cuota vence el mismo día.
+              {fechaFinal ? `, y terminas de pagar en ${formatearMesConAnio(fechaFinal)}` : ''}. Cada mes la cuota vence el mismo día.
             </p>
           ) : (
             <p className="m-0 px-6 text-[14px] leading-snug text-alerta" role="alert">

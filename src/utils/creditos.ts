@@ -243,7 +243,8 @@ export function emojiCredito(nombre: string): string {
   return '🏦';
 }
 
-// '2028-11-05' → "5 nov 2028". Lleva el año porque un crédito dura años.
-export function formatearDiaConAnio(iso: string): string {
-  return fechaDesdeISO(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+// '2028-01-05' → "enero de 2028": cuándo se termina de pagar, sin el día.
+export function formatearMesConAnio(iso: string): string {
+  const fecha = fechaDesdeISO(iso);
+  return `${fecha.toLocaleDateString('es-CO', { month: 'long' })} de ${fecha.getFullYear()}`;
 }
