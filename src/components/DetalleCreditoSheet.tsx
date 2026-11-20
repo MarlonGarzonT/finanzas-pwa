@@ -17,6 +17,7 @@ import { BotonPrincipal } from './BotonPrincipal';
 import { DialogoConfirmar } from './DialogoConfirmar';
 import { HojaInferior } from './HojaInferior';
 import { IconoCheck, IconoPapelera } from './Iconos';
+import { SuperficieVidrio } from './SuperficieVidrio';
 import { TiraCuotas } from './TiraCuotas';
 
 interface Props {
@@ -42,8 +43,6 @@ const COLOR_PUNTO: Record<TonoVencimiento, string> = {
   vencido: 'bg-alerta',
   pagado: 'bg-ingreso',
 };
-
-const TARJETA_CLARA = 'rounded-[24px] bg-ios-light-surface-1 p-4 dark:bg-ios-dark-surface-1';
 
 function porcentaje(valor: number, decimales: number): string {
   return `${valor.toLocaleString('es-CO', { minimumFractionDigits: decimales, maximumFractionDigits: decimales })} %`;
@@ -98,7 +97,7 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
         {credito && estado && (
           <>
             {/* 1 · En qué cuota vas */}
-            <section className={`mx-4 mt-1 ${TARJETA_CLARA}`} aria-label={`Avance del crédito ${credito.nombre}`}>
+            <SuperficieVidrio className="mx-4 mt-1 p-4">
               <div className="flex items-center gap-3">
                 <AvatarEmoji emoji={emojiCredito(credito.nombre)} color={colorCategoria(credito.id)} />
                 <div className="min-w-0 flex-1">
@@ -134,11 +133,11 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
               <p className="m-0 mt-2 text-[13px] text-secundario">
                 {credito.saldado ? 'Terminaste de pagar en' : 'Terminas de pagar en'} {formatearMesConAnio(credito.fechaFinal)}
               </p>
-            </section>
+            </SuperficieVidrio>
 
             {/* 2 · Cómo se reparte tu plata */}
             <BlockTitle className="mt-6!">Cómo se reparte tu plata</BlockTitle>
-            <div className={`mx-4 flex flex-col gap-5 ${TARJETA_CLARA}`}>
+            <SuperficieVidrio className="mx-4 flex flex-col gap-5 p-4">
               <div>
                 <div className="mb-3 flex items-baseline justify-between gap-3">
                   <h3 className="m-0 text-[16px] font-semibold">Lo que ya pagaste</h3>
@@ -165,11 +164,11 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                   Hasta hoy pagaste <span className="cifras">{formatearMonto(credito.totalPagado)}</span> en total; el reparto usa la cuota de {formatearMonto(credito.cuota)} de cada mes.
                 </p>
               )}
-            </div>
+            </SuperficieVidrio>
 
             {/* 3 · Cuánto cuesta */}
             <BlockTitle className="mt-6!">Lo que cuesta este crédito</BlockTitle>
-            <div className={`mx-4 ${TARJETA_CLARA}`}>
+            <SuperficieVidrio className="mx-4 p-4">
               <p className="m-0 text-[15px] text-secundario">Por cada $1.000 que te prestaron pagas</p>
               <p className="m-0 mt-0.5 text-[40px] leading-[1.05] font-bold tracking-[-0.03em] cifras">{formatearMonto(costoPorMil(credito))}</p>
               <dl className="m-0 mt-4 grid grid-cols-2 gap-3 border-t border-black/[0.07] pt-4 dark:border-white/10">
@@ -192,7 +191,7 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                 Tasa aproximada: {porcentaje(credito.tasaMensual * 100, 2)} mensual · {porcentaje(credito.tasaEfectivaAnual, 1)} efectivo anual. La
                 calculamos con tus cuotas, así que incluye seguros u otros cobros que el banco sume a la cuota.
               </p>
-            </div>
+            </SuperficieVidrio>
 
             {/* 4 · Detalle */}
             <div className="px-4 pt-5 pb-1">

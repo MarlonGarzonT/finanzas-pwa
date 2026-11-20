@@ -1,6 +1,7 @@
 import type { ResumenCreditos } from '../utils/creditos';
 import { formatearMonto } from '../utils/fechas';
 import { BarraReparto } from './BarraReparto';
+import { SuperficieVidrio } from './SuperficieVidrio';
 
 interface Props {
   resumen: ResumenCreditos;
@@ -12,7 +13,8 @@ interface Props {
 export function ResumenInteresesCreditos({ resumen }: Props) {
   const { porPagar, interesesPagados, interesesPorPagar, capitalPagado } = resumen;
   return (
-    <section aria-label="Todos tus créditos juntos" className="mx-4 rounded-[24px] bg-ios-light-surface-1 p-4 dark:bg-ios-dark-surface-1">
+    <section aria-label="Todos tus créditos juntos" className="mx-4">
+      <SuperficieVidrio className="p-4">
       <h2 className="m-0 text-[17px] font-semibold">Todos tus créditos juntos</h2>
 
       <dl className="m-0 mt-3 grid grid-cols-2 gap-3">
@@ -32,6 +34,7 @@ export function ResumenInteresesCreditos({ resumen }: Props) {
           <BarraReparto capital={capitalPagado} intereses={interesesPagados} />
         </div>
       )}
+      </SuperficieVidrio>
     </section>
   );
 }
