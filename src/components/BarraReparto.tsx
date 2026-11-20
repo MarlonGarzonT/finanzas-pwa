@@ -4,7 +4,6 @@ interface Props {
   // Lo que baja la deuda y lo que se va en intereses.
   capital: number;
   intereses: number;
-  sobreOscuro?: boolean;
   // Lo que se lee bajo cada parte: lo pagado ("Bajó tu deuda") o lo que falta ("Aún debes").
   etiquetaCapital?: string;
   etiquetaIntereses?: string;
@@ -13,15 +12,15 @@ interface Props {
 const VERDE = '#31d494';
 const CORAL = '#ff7080';
 
-function Parte({ color, etiqueta, monto, porcentaje, sobreOscuro }: { color: string; etiqueta: string; monto: number; porcentaje: number; sobreOscuro: boolean }) {
+function Parte({ color, etiqueta, monto, porcentaje }: { color: string; etiqueta: string; monto: number; porcentaje: number }) {
   return (
     <div className="min-w-0 flex-1">
-      <span className={`flex items-center gap-1.5 text-[13px] ${sobreOscuro ? 'text-white/75' : 'text-secundario'}`}>
+      <span className="flex items-center gap-1.5 text-[13px] text-secundario">
         <span className="size-2 shrink-0 rounded-full" style={{ background: color }} aria-hidden="true" />
         <span className="truncate">{etiqueta}</span>
       </span>
       <span className="mt-0.5 block text-[19px] leading-tight font-bold tracking-[-0.01em] cifras">{formatearMonto(Math.round(monto))}</span>
-      <span className={`text-[13px] cifras ${sobreOscuro ? 'text-white/60' : 'text-secundario'}`}>{Math.round(porcentaje)} %</span>
+      <span className="text-[13px] text-secundario cifras">{Math.round(porcentaje)} %</span>
     </div>
   );
 }
@@ -32,7 +31,6 @@ function Parte({ color, etiqueta, monto, porcentaje, sobreOscuro }: { color: str
 export function BarraReparto({
   capital,
   intereses,
-  sobreOscuro = false,
   etiquetaCapital = 'Bajó tu deuda',
   etiquetaIntereses = 'Fue en intereses',
 }: Props) {
@@ -44,7 +42,7 @@ export function BarraReparto({
       <div
         role="img"
         aria-label={`De ${formatearMonto(Math.round(total))}, ${formatearMonto(Math.round(capital))} bajaron la deuda y ${formatearMonto(Math.round(intereses))} fueron intereses`}
-        className={`h-3 overflow-hidden rounded-full ${sobreOscuro ? 'bg-white/15' : 'bg-black/10 dark:bg-white/15'}`}
+        className="h-3 overflow-hidden rounded-full bg-black/10 dark:bg-white/15"
       >
         <div className="barra-progreso flex h-full origin-left gap-[2px]" style={{ transform: 'scaleX(1)' }}>
           <span className="h-full rounded-full" style={{ width: `${pCapital}%`, background: VERDE }} />
@@ -52,8 +50,8 @@ export function BarraReparto({
         </div>
       </div>
       <div className="mt-3 flex gap-4">
-        <Parte color={VERDE} etiqueta={etiquetaCapital} monto={capital} porcentaje={pCapital} sobreOscuro={sobreOscuro} />
-        <Parte color={CORAL} etiqueta={etiquetaIntereses} monto={intereses} porcentaje={pIntereses} sobreOscuro={sobreOscuro} />
+        <Parte color={VERDE} etiqueta={etiquetaCapital} monto={capital} porcentaje={pCapital} />
+        <Parte color={CORAL} etiqueta={etiquetaIntereses} monto={intereses} porcentaje={pIntereses} />
       </div>
     </div>
   );

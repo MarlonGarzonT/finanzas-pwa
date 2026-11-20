@@ -7,7 +7,7 @@ import Aurora from './reactbits/Aurora';
 const COLORES = ['#4a6bb5', '#1f9d6c', '#14452f'];
 
 // Respaldo sin movimiento: los mismos tres colores en manchas quietas.
-export const RESPALDO =
+const RESPALDO =
   'radial-gradient(60% 50% at 18% 12%, rgb(74 107 181 / 0.7), transparent 70%), radial-gradient(55% 55% at 88% 30%, rgb(31 157 108 / 0.55), transparent 70%), radial-gradient(70% 45% at 50% 100%, rgb(20 69 47 / 0.7), transparent 70%)';
 
 // Por debajo de estos cuadros por segundo el fondo se queda quieto: un

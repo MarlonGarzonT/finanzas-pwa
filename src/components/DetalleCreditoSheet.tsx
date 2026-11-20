@@ -11,10 +11,10 @@ import {
 } from '../utils/creditos';
 import { formatearFechaCorta, formatearMonto } from '../utils/fechas';
 import type { TonoVencimiento } from '../utils/prestamos';
+import { AvatarEmoji } from './AvatarEmoji';
 import { BarraReparto } from './BarraReparto';
 import { BotonPrincipal } from './BotonPrincipal';
 import { DialogoConfirmar } from './DialogoConfirmar';
-import { RESPALDO } from './FondoVidrio';
 import { HojaInferior } from './HojaInferior';
 import { IconoCheck, IconoPapelera } from './Iconos';
 import { TiraCuotas } from './TiraCuotas';
@@ -29,11 +29,18 @@ interface Props {
   onEliminarPago: (pago: Transaccion) => Promise<void>;
 }
 
-const PILDORA: Record<TonoVencimiento, { fondo: string; texto: string; punto: string }> = {
-  tranquilo: { fondo: 'rgb(255 255 255 / 0.1)', texto: 'rgb(255 255 255 / 0.85)', punto: 'rgb(255 255 255 / 0.5)' },
-  pronto: { fondo: 'rgb(10 132 255 / 0.22)', texto: '#a9d2ff', punto: '#4aa3ff' },
-  vencido: { fondo: 'rgb(255 112 128 / 0.2)', texto: '#ff9aa5', punto: '#ff7080' },
-  pagado: { fondo: 'rgb(49 212 148 / 0.18)', texto: '#4ee0a8', punto: '#31d494' },
+const COLOR_ESTADO: Record<TonoVencimiento, string> = {
+  tranquilo: 'text-secundario',
+  pronto: 'text-black/75 dark:text-white/80',
+  vencido: 'font-medium text-alerta',
+  pagado: 'text-ingreso',
+};
+
+const COLOR_PUNTO: Record<TonoVencimiento, string> = {
+  tranquilo: 'bg-black/25 dark:bg-white/30',
+  pronto: 'bg-primary',
+  vencido: 'bg-alerta',
+  pagado: 'bg-ingreso',
 };
 
 const TARJETA_CLARA = 'rounded-[24px] bg-ios-light-surface-1 p-4 dark:bg-ios-dark-surface-1';
@@ -66,7 +73,6 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
   }
 
   const estado = credito ? describirProximaCuota(credito) : null;
-  const pildora = estado ? PILDORA[estado.tono] : null;
 
   return (
     <>
@@ -89,53 +95,43 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
           </>
         }
       >
-        {credito && estado && pildora && (
+        {credito && estado && (
           <>
             {/* 1 · En qué cuota vas */}
-            <section
-              className="dark mx-4 mt-1 overflow-hidden rounded-[28px] bg-[#0a1522] p-4 text-white ring-1 ring-white/10"
-              style={{ backgroundImage: RESPALDO }}
-              aria-label={`Avance del crédito ${credito.nombre}`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span
-                  className="flex size-12 shrink-0 items-center justify-center rounded-full text-[24px]"
-                  style={{ background: `color-mix(in srgb, ${colorCategoria(credito.id)} 30%, transparent)` }}
-                  aria-hidden="true"
-                >
-                  {emojiCredito(credito.nombre)}
-                </span>
-                <span
-                  className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-semibold"
-                  style={{ background: pildora.fondo, color: pildora.texto }}
-                >
-                  {estado.tono === 'pagado' ? (
-                    <IconoCheck className="size-3.5" />
-                  ) : (
-                    <span className="size-1.5 rounded-full" style={{ background: pildora.punto }} aria-hidden="true" />
-                  )}
-                  {estado.texto}
-                </span>
+            <section className={`mx-4 mt-1 ${TARJETA_CLARA}`} aria-label={`Avance del crédito ${credito.nombre}`}>
+              <div className="flex items-center gap-3">
+                <AvatarEmoji emoji={emojiCredito(credito.nombre)} color={colorCategoria(credito.id)} />
+                <div className="min-w-0 flex-1">
+                  <p className="m-0 truncate text-[17px] font-semibold">
+                    {credito.nombre}
+                    {credito.entidad && <span className="font-normal text-secundario"> · {credito.entidad}</span>}
+                  </p>
+                  <p className={`m-0 mt-0.5 flex items-center gap-1.5 text-[14px] ${COLOR_ESTADO[estado.tono]}`}>
+                    {estado.tono === 'pagado' ? (
+                      <IconoCheck className="size-3.5" />
+                    ) : (
+                      <span className={`size-1.5 shrink-0 rounded-full ${COLOR_PUNTO[estado.tono]}`} aria-hidden="true" />
+                    )}
+                    {estado.texto}
+                  </p>
+                </div>
               </div>
 
               <div className="mt-4 flex items-end justify-between gap-3">
-                <div>
-                  <p className="m-0 text-[13px] font-medium text-white/60">{credito.saldado ? 'Cuotas pagadas' : 'Vas en la cuota'}</p>
-                  <p className="m-0 text-[52px] leading-none font-bold tracking-[-0.03em] cifras">
-                    <span style={{ color: '#4ee0a8' }}>{credito.saldado ? credito.plazoMeses : credito.cuotasPagadas + 1}</span>
-                    <span className="text-[26px] font-semibold text-white/50"> de {credito.plazoMeses}</span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="m-0 text-[22px] leading-tight font-bold cifras">{formatearMonto(credito.cuota)}</p>
-                  <p className="m-0 text-[13px] text-white/60">por cuota</p>
+                <p className="m-0 text-[48px] leading-none font-bold tracking-[-0.03em] cifras">
+                  {credito.saldado ? credito.plazoMeses : credito.cuotasPagadas + 1}
+                  <span className="text-[24px] font-semibold text-secundario"> de {credito.plazoMeses}</span>
+                </p>
+                <div className="pb-1 text-right">
+                  <p className="m-0 text-[19px] leading-tight font-semibold cifras">{formatearMonto(credito.cuota)}</p>
+                  <p className="m-0 text-[13px] text-secundario">por cuota</p>
                 </div>
               </div>
 
               <div className="mt-4">
-                <TiraCuotas plazo={credito.plazoMeses} pagadas={credito.cuotasPagadas} sobreOscuro atrasada={credito.vencida} />
+                <TiraCuotas plazo={credito.plazoMeses} pagadas={credito.cuotasPagadas} atrasada={credito.vencida} />
               </div>
-              <p className="m-0 mt-2 text-[13px] text-white/65">
+              <p className="m-0 mt-2 text-[13px] text-secundario">
                 {credito.saldado
                   ? `Terminaste el ${formatearDiaConAnio(credito.fechaFinal)}`
                   : `Llevas ${credito.cuotasPagadas} · faltan ${credito.cuotasRestantes} · terminas el ${formatearDiaConAnio(credito.fechaFinal)}`}
@@ -187,9 +183,9 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                   <dt className="text-[13px] text-secundario">Pagarás en total</dt>
                   <dd className="m-0 text-[17px] font-semibold cifras">{formatearMonto(credito.totalAPagar)}</dd>
                 </div>
-                <div className="col-span-2 rounded-2xl px-3.5 py-3" style={{ background: 'rgb(255 112 128 / 0.12)' }}>
+                <div className="col-span-2 rounded-2xl bg-intereses/10 px-3.5 py-3">
                   <dt className="text-[13px] text-secundario">De eso, solo en intereses</dt>
-                  <dd className="m-0 text-[24px] leading-tight font-bold cifras" style={{ color: '#e04a5f' }}>
+                  <dd className="m-0 text-[24px] leading-tight font-bold text-intereses cifras">
                     {formatearMonto(Math.round(credito.interesesTotal))}
                   </dd>
                 </div>

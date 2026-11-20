@@ -2,8 +2,8 @@ import { colorCategoria } from '../utils/colorCategoria';
 import { describirProximaCuota, emojiCredito, formatearDiaConAnio, type EstadoCredito } from '../utils/creditos';
 import { formatearMonto } from '../utils/fechas';
 import type { TonoVencimiento } from '../utils/prestamos';
+import { AvatarEmoji } from './AvatarEmoji';
 import { BotonPrincipal } from './BotonPrincipal';
-import { RESPALDO } from './FondoVidrio';
 import { IconoCheck } from './Iconos';
 import { TiraCuotas } from './TiraCuotas';
 
@@ -11,31 +11,35 @@ interface Props {
   credito: EstadoCredito;
   onAbrir: (credito: EstadoCredito) => void;
   onRegistrarPago: (credito: EstadoCredito) => void;
-  // Con luz en el botón (cada una es un lienzo animado): solo las primeras tarjetas.
+  // El botón con luz es lo único que llama la atención de la pantalla: solo
+  // lo lleva la cuota más urgente; las demás tienen el mismo botón, quieto.
   conEfectos?: boolean;
 }
 
-// El estado en una píldora con punto: las palabras mandan, el color refuerza.
-const PILDORA: Record<TonoVencimiento, { fondo: string; texto: string; punto: string }> = {
-  tranquilo: { fondo: 'rgb(255 255 255 / 0.1)', texto: 'rgb(255 255 255 / 0.85)', punto: 'rgb(255 255 255 / 0.5)' },
-  pronto: { fondo: 'rgb(10 132 255 / 0.22)', texto: '#a9d2ff', punto: '#4aa3ff' },
-  vencido: { fondo: 'rgb(255 112 128 / 0.2)', texto: '#ff9aa5', punto: '#ff7080' },
-  pagado: { fondo: 'rgb(49 212 148 / 0.18)', texto: '#4ee0a8', punto: '#31d494' },
+// El estado se dice con palabras y un punto; el color solo lo refuerza (igual
+// que en las tarjetas de préstamos).
+const COLOR_ESTADO: Record<TonoVencimiento, string> = {
+  tranquilo: 'text-secundario',
+  pronto: 'text-black/75 dark:text-white/80',
+  vencido: 'font-medium text-alerta',
+  pagado: 'text-secundario',
 };
 
-// Un crédito como tarjeta de vidrio oscuro (la misma de la brecha de Reportes,
-// con el fondo quieto para no cargar un WebGL por crédito): qué es, en qué cuota
-// va (en grande), las rayitas de las cuotas, cuánto se ha ido en intereses y el
-// botón para anotar el pago.
+const COLOR_PUNTO: Record<TonoVencimiento, string> = {
+  tranquilo: 'bg-black/25 dark:bg-white/30',
+  pronto: 'bg-primary',
+  vencido: 'bg-alerta',
+  pagado: 'bg-ingreso',
+};
+
+// Un crédito: qué es, en qué cuota va (lo más grande de la tarjeta), la tira
+// con una rayita por cuota, cuánto se ha ido en intereses y el botón para
+// anotar el pago. Superficie neutra como el resto de la app: el color vive solo
+// en los datos (verde las cuotas pagadas, coral los intereses).
 export function TarjetaCredito({ credito: c, onAbrir, onRegistrarPago, conEfectos = false }: Props) {
   const { texto, tono } = describirProximaCuota(c);
-  const pildora = PILDORA[tono];
-  const color = colorCategoria(c.id);
   return (
-    <li
-      className="dark overflow-hidden rounded-[28px] bg-[#0a1522] text-white shadow-[0_8px_24px_rgb(0_0_0/0.18)] ring-1 ring-white/10"
-      style={{ backgroundImage: RESPALDO }}
-    >
+    <li className="overflow-hidden rounded-[24px] bg-ios-light-surface-1 dark:bg-ios-dark-surface-1">
       <button
         type="button"
         onClick={() => onAbrir(c)}
@@ -44,66 +48,54 @@ export function TarjetaCredito({ credito: c, onAbrir, onRegistrarPago, conEfecto
             ? `${c.nombre}, crédito pagado. Ver detalle`
             : `${c.nombre}, cuota ${c.cuotasPagadas + 1} de ${c.plazoMeses}, ${formatearMonto(c.cuota)} al mes. ${texto}. Ver detalle`
         }
-        className="block w-full px-4 pt-4 pb-3 text-left transition-colors active:bg-white/5"
+        className="block w-full px-4 pt-4 pb-3 text-left transition-colors active:bg-black/5 dark:active:bg-white/8"
       >
-        <span className="flex items-start gap-3">
-          <span
-            className="flex size-11 shrink-0 items-center justify-center rounded-full text-[22px]"
-            style={{ background: `color-mix(in srgb, ${color} 30%, transparent)` }}
-            aria-hidden="true"
-          >
-            {emojiCredito(c.nombre)}
-          </span>
+        <span className="flex items-center gap-3">
+          <AvatarEmoji emoji={emojiCredito(c.nombre)} color={colorCategoria(c.id)} />
           <span className="min-w-0 flex-1">
-            <span className="line-clamp-2 block text-[18px] leading-tight font-semibold break-words">{c.nombre}</span>
-            {c.entidad && <span className="block truncate text-[13px] text-white/60">{c.entidad}</span>}
-          </span>
-          <span
-            className="flex max-w-[44%] shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] leading-tight font-semibold"
-            style={{ background: pildora.fondo, color: pildora.texto }}
-          >
-            {tono === 'pagado' ? (
-              <IconoCheck className="size-3.5" />
-            ) : (
-              <span className="size-1.5 rounded-full" style={{ background: pildora.punto }} aria-hidden="true" />
-            )}
-            {texto}
+            <span className="block truncate text-[17px] font-semibold">
+              {c.nombre}
+              {c.entidad && <span className="font-normal text-secundario"> · {c.entidad}</span>}
+            </span>
+            <span className={`mt-0.5 flex items-center gap-1.5 text-[14px] ${COLOR_ESTADO[tono]}`}>
+              {tono === 'pagado' ? (
+                <IconoCheck className="size-3.5 text-ingreso" />
+              ) : (
+                <span className={`size-1.5 shrink-0 rounded-full ${COLOR_PUNTO[tono]}`} aria-hidden="true" />
+              )}
+              <span className="truncate">{texto}</span>
+            </span>
           </span>
         </span>
 
         <span className="mt-4 flex items-end justify-between gap-3">
-          <span>
-            <span className="block text-[13px] font-medium text-white/60">{c.saldado ? 'Cuotas pagadas' : 'Vas en la cuota'}</span>
-            <span className="block text-[44px] leading-[1] font-bold tracking-[-0.03em] cifras">
-              <span style={{ color: '#4ee0a8' }}>{c.saldado ? c.plazoMeses : c.cuotasPagadas + 1}</span>
-              <span className="text-[24px] font-semibold text-white/50"> de {c.plazoMeses}</span>
-            </span>
+          <span className="block text-[40px] leading-none font-bold tracking-[-0.03em] cifras">
+            {c.saldado ? c.plazoMeses : c.cuotasPagadas + 1}
+            <span className="text-[22px] font-semibold text-secundario"> de {c.plazoMeses}</span>
           </span>
-          <span className="text-right">
-            <span className="block text-[20px] leading-tight font-bold cifras">{formatearMonto(c.cuota)}</span>
-            <span className="block text-[13px] text-white/60">por cuota</span>
+          <span className="pb-0.5 text-right">
+            <span className="block text-[17px] leading-tight font-semibold cifras">{formatearMonto(c.cuota)}</span>
+            <span className="block text-[13px] text-secundario">por cuota</span>
           </span>
         </span>
 
         <span className="mt-3 block">
-          <TiraCuotas plazo={c.plazoMeses} pagadas={c.cuotasPagadas} sobreOscuro atrasada={c.vencida} />
+          <TiraCuotas plazo={c.plazoMeses} pagadas={c.cuotasPagadas} atrasada={c.vencida} />
         </span>
-        <span className="mt-2 block text-[13px] text-white/65">
+        <span className="mt-2 block text-[13px] text-secundario">
           {c.saldado
             ? `Terminaste el ${formatearDiaConAnio(c.fechaFinal)}`
-            : `Faltan ${c.cuotasRestantes} · terminas el ${formatearDiaConAnio(c.fechaFinal)}`}
+            : `Faltan ${c.cuotasRestantes} cuotas · terminas el ${formatearDiaConAnio(c.fechaFinal)}`}
         </span>
 
-        <span className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
+        <span className="mt-3 grid grid-cols-2 gap-3 border-t border-black/[0.07] pt-3 dark:border-white/10">
           <span>
-            <span className="block text-[12px] text-white/55">Intereses pagados</span>
-            <span className="block text-[16px] font-semibold cifras" style={{ color: '#ff8c99' }}>
-              {formatearMonto(Math.round(c.interesesPagados))}
-            </span>
+            <span className="block text-[13px] text-secundario">Intereses pagados</span>
+            <span className="block text-[17px] font-semibold text-intereses cifras">{formatearMonto(Math.round(c.interesesPagados))}</span>
           </span>
           <span>
-            <span className="block text-[12px] text-white/55">Falta pagar</span>
-            <span className="block text-[16px] font-semibold cifras">{formatearMonto(c.porPagar)}</span>
+            <span className="block text-[13px] text-secundario">Falta pagar</span>
+            <span className="block text-[17px] font-semibold cifras">{formatearMonto(c.porPagar)}</span>
           </span>
         </span>
       </button>

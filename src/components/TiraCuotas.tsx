@@ -1,8 +1,6 @@
 interface Props {
   plazo: number;
   pagadas: number;
-  // Sobre fondo oscuro (tarjetas de vidrio) o sobre la hoja clara.
-  sobreOscuro?: boolean;
   // Cuota que toca pagar y está atrasada: la siguiente se marca en coral.
   atrasada?: boolean;
 }
@@ -12,12 +10,12 @@ const CORAL = '#ff7080';
 // Con más cuotas que esto los segmentos serían rayitas ilegibles: barra continua.
 const MAXIMO_SEGMENTOS = 60;
 
-// Una rayita por cuota: las pagadas en verde, la que toca con un latido suave
-// (coral si está atrasada) y las que faltan apagadas. De un vistazo se ve en
+// Una rayita por cuota: las pagadas en verde, la que toca en azul (coral si
+// está atrasada) y las que faltan apagadas. De un vistazo se ve en
 // qué cuota vas y cuántas faltan, sin leer números. Entran en cascada con
 // transform y opacity (reglas `.tira-cuota` en index.css).
-export function TiraCuotas({ plazo, pagadas, sobreOscuro = false, atrasada = false }: Props) {
-  const apagado = sobreOscuro ? 'bg-white/15' : 'bg-black/10 dark:bg-white/15';
+export function TiraCuotas({ plazo, pagadas, atrasada = false }: Props) {
+  const apagado = 'bg-black/10 dark:bg-white/15';
 
   if (plazo > MAXIMO_SEGMENTOS) {
     return (
@@ -39,7 +37,7 @@ export function TiraCuotas({ plazo, pagadas, sobreOscuro = false, atrasada = fal
             style={
               {
                 '--i': i,
-                background: estado === 'pagada' ? VERDE : estado === 'siguiente' ? (atrasada ? CORAL : sobreOscuro ? '#ffffff' : 'var(--color-primary)') : undefined,
+                background: estado === 'pagada' ? VERDE : estado === 'siguiente' ? (atrasada ? CORAL : 'var(--color-primary)') : undefined,
               } as React.CSSProperties
             }
           />

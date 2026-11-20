@@ -3,13 +3,13 @@ import { useFinanzas } from '../data/FinanzasContext';
 import { useCreditos } from '../data/useCreditos';
 import type { EstadoCredito } from '../utils/creditos';
 import { BotonFlotante } from './BotonFlotante';
-import { CabeceraCreditos } from './CabeceraCreditos';
 import { Cargando } from './Cargando';
 import { CreditosVacio } from './CreditosVacio';
 import { DetalleCreditoSheet } from './DetalleCreditoSheet';
 import { EditarCreditoSheet } from './EditarCreditoSheet';
 import { NuevoCreditoSheet } from './NuevoCreditoSheet';
 import { PagoCreditoSheet } from './PagoCreditoSheet';
+import { ResumenInteresesCreditos } from './ResumenInteresesCreditos';
 import { TarjetaCredito } from './TarjetaCredito';
 
 // Hoja abierta encima de la lista: crédito nuevo, edición o pago de cuota.
@@ -54,13 +54,18 @@ export function VistaCreditos({ botonCompacto, idInicial }: Props) {
         <div className="aparecer-suave">
           {hayCreditos ? (
             <>
-              <CabeceraCreditos resumen={resumen} />
+              {/* Lo primero son los créditos; solo el botón de pago del más urgente lleva luz. */}
               {activos.length > 0 && (
-                <ul aria-label="Créditos activos" className="m-0 mt-4 flex list-none flex-col gap-4 px-4 py-0">
+                <ul aria-label="Créditos activos" className="m-0 flex list-none flex-col gap-4 px-4 py-0">
                   {activos.map((c, indice) => (
-                    <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} conEfectos={indice < 2} />
+                    <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} conEfectos={indice === 0} />
                   ))}
                 </ul>
+              )}
+              {activos.length + saldados.length > 1 && (
+                <div className="mt-4">
+                  <ResumenInteresesCreditos resumen={resumen} />
+                </div>
               )}
               {saldados.length > 0 && (
                 <>
@@ -83,6 +88,7 @@ export function VistaCreditos({ botonCompacto, idInicial }: Props) {
         etiqueta="Nuevo crédito"
         texto={botonCompacto ? undefined : 'Nuevo crédito'}
         onClick={() => setFormulario('nuevo')}
+        efectos={false}
       />
 
       <DetalleCreditoSheet
