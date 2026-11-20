@@ -1,6 +1,6 @@
 import type { Credito, Transaccion } from '../types';
 import { fechaDesdeISO, fechaLocalISO } from './fechas';
-import { formatearDia, type TonoVencimiento } from './prestamos';
+import type { TonoVencimiento } from './prestamos';
 
 const MS_POR_DIA = 86_400_000;
 // Un crédito de consumo normal no llega ni cerca; sirve de tope a la búsqueda.
@@ -212,18 +212,22 @@ export function costoPorMil(estado: Pick<EstadoCredito, 'totalAPagar' | 'montoFi
   return estado.montoFinanciado > 0 ? Math.round((estado.totalAPagar / estado.montoFinanciado) * 1000) : 1000;
 }
 
-// Cuándo vence la próxima cuota, dicho como lo diría una persona. Mismo
-// lenguaje de colores y tonos que los préstamos (utils/prestamos.ts).
-export function describirProximaCuota(estado: EstadoCredito): { texto: string; tono: TonoVencimiento } {
+// "diciembre", o "diciembre de 2027" si no es de este año.
+function mesDeCuota(fechaIso: string, hoy: Date): string {
+  const fecha = fechaDesdeISO(fechaIso);
+  const mes = fecha.toLocaleDateString('es-CO', { month: 'long' });
+  return fecha.getFullYear() === hoy.getFullYear() ? mes : `${mes} de ${fecha.getFullYear()}`;
+}
+
+// Qué cuota sigue, en general: "Siguiente cuota es de diciembre". Sin el día
+// exacto, que cada banco maneja a su manera. El tono (punto de color) sí
+// distingue lo que está cerca y lo que ya se pasó; mismos tonos que los
+// préstamos (utils/prestamos.ts).
+export function describirProximaCuota(estado: EstadoCredito, hoy: Date = new Date()): { texto: string; tono: TonoVencimiento } {
   if (estado.saldado || !estado.proximaCuota || estado.diasParaProxima === null) return { texto: 'Crédito pagado', tono: 'pagado' };
-  if (estado.vencida) {
-    return { texto: estado.diasVencida === 1 ? 'Venció ayer' : `Venció hace ${estado.diasVencida} días`, tono: 'vencido' };
-  }
-  const dias = estado.diasParaProxima;
-  if (dias === 0) return { texto: 'Vence hoy', tono: 'pronto' };
-  if (dias === 1) return { texto: 'Vence mañana', tono: 'pronto' };
-  if (dias <= 7) return { texto: `Vence en ${dias} días`, tono: 'pronto' };
-  return { texto: `Vence el ${formatearDia(estado.proximaCuota.fecha)}`, tono: 'tranquilo' };
+  const mes = mesDeCuota(estado.proximaCuota.fecha, hoy);
+  if (estado.vencida) return { texto: `La cuota de ${mes} está atrasada`, tono: 'vencido' };
+  return { texto: `Siguiente cuota es de ${mes}`, tono: estado.diasParaProxima <= 7 ? 'pronto' : 'tranquilo' };
 }
 
 export const NOMBRES_SUGERIDOS_CREDITO = ['Moto', 'Carro', 'Vivienda', 'Libre inversión', 'Estudio'];

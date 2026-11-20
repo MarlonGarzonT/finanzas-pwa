@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Credito } from '../types';
-import { costoPorMil, estadosCreditos, fechaDeCuota, fechaPrimeraCuotaDesdeProxima, resumirCreditos, tablaAmortizacion, tasaEfectivaAnual, tasaMensualDeCredito } from './creditos';
+import { costoPorMil, describirProximaCuota, estadosCreditos, fechaDeCuota, fechaPrimeraCuotaDesdeProxima, resumirCreditos, tablaAmortizacion, tasaEfectivaAnual, tasaMensualDeCredito } from './creditos';
 import { clasificar, esGasto } from './contabilidad';
 import { desglosePorCategoria, fijoVsVariable } from './estadisticasMes';
 import { buscador, categoria, movimiento } from './pruebasDatos';
@@ -163,5 +163,34 @@ describe('el pago de una cuota en las cuentas', () => {
     const { fijo, variable } = fijoVsVariable([pago, cena], categorias);
     expect(fijo).toBe(700_000);
     expect(variable).toBe(50_000);
+  });
+});
+
+describe('describirProximaCuota', () => {
+  const tresPagos = [pagoDe(new Date(2026, 0, 5)), pagoDe(new Date(2026, 1, 5)), pagoDe(new Date(2026, 2, 4))];
+  const textoEn = (hoy: Date, credito: Credito = moto, pagos = tresPagos) =>
+    describirProximaCuota(estadosCreditos([credito], pagos, hoy)[0], hoy);
+
+  it('dice el mes de la siguiente cuota, sin el día', () => {
+    expect(textoEn(new Date(2026, 3, 2))).toEqual({ texto: 'Siguiente cuota es de abril', tono: 'pronto' });
+    expect(textoEn(new Date(2026, 3, 1)).tono).toBe('pronto');
+  });
+
+  it('lejos de la fecha el tono es tranquilo', () => {
+    expect(textoEn(new Date(2026, 2, 10)).tono).toBe('tranquilo');
+  });
+
+  it('pasada la fecha dice que la cuota de ese mes está atrasada', () => {
+    expect(textoEn(new Date(2026, 3, 9))).toEqual({ texto: 'La cuota de abril está atrasada', tono: 'vencido' });
+  });
+
+  it('si la cuota es de otro año lo dice', () => {
+    const casi = { ...moto, cuotasPagadasInicial: 12 };
+    expect(textoEn(new Date(2026, 11, 20), casi, []).texto).toBe('Siguiente cuota es de enero de 2027');
+  });
+
+  it('saldado dice que el crédito está pagado', () => {
+    const todas = Array.from({ length: 24 }, (_, i) => pagoDe(new Date(2026, i, 5)));
+    expect(textoEn(new Date(2028, 1, 1), moto, todas)).toEqual({ texto: 'Crédito pagado', tono: 'pagado' });
   });
 });
