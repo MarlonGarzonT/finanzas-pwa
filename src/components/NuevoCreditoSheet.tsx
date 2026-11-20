@@ -1,13 +1,14 @@
 import { List } from 'konsta/react';
 import { useEffect, type ReactNode } from 'react';
 import type { NuevoCredito } from '../types';
-import { fechaDeCuota, fechaPrimeraCuotaDesdeProxima, formatearMesConAnio, NOMBRES_SUGERIDOS_CREDITO } from '../utils/creditos';
+import { fechaDeCuota, fechaPrimeraCuotaDesdeProxima, mesCortoConAnio, NOMBRES_SUGERIDOS_CREDITO } from '../utils/creditos';
 import { formatearMonto } from '../utils/fechas';
 import { BotonPrincipal } from './BotonPrincipal';
 import { CampoTexto } from './CampoTexto';
 import { ChipOpcion } from './ChipOpcion';
 import { HojaInferior } from './HojaInferior';
 import { PasosDeslizantes, ProgresoPasos } from './PasosDeslizantes';
+import { Segmentos } from './Segmentos';
 import { PASOS_CREDITO, useFormularioCredito } from './useFormularioCredito';
 
 interface Props {
@@ -122,14 +123,20 @@ export function NuevoCreditoSheet({ abierto, onCerrar, onGuardar }: Props) {
             </p>
           )}
           {f.calculo && (
-            <div className="mx-4 rounded-2xl bg-primary/10 px-4 py-3.5" aria-live="polite">
-              <p className="m-0 text-[15px] leading-snug">
-                Pagarás en total <span className="font-semibold cifras">{formatearMonto(f.calculo.totalAPagar)}</span>. De eso,{' '}
-                <span className="font-semibold cifras">{formatearMonto(Math.round(f.calculo.intereses))}</span> son intereses.
-              </p>
-              <p className="m-0 mt-1.5 text-[13px] text-secundario cifras">
-                Tasa aproximada: {porcentaje(f.calculo.tasaMensual * 100)} mensual · {porcentaje(f.calculo.tasaEfectivaAnual, 1)} efectivo anual
-              </p>
+            <div className="mx-4 flex flex-col gap-2" aria-live="polite">
+              <Segmentos
+                etiqueta="Costo del crédito"
+                items={[
+                  { etiqueta: 'Pagarás en total', valor: formatearMonto(f.calculo.totalAPagar) },
+                  { etiqueta: 'En intereses', valor: formatearMonto(Math.round(f.calculo.intereses)), tono: 'intereses' },
+                ]}
+              />
+              <Segmentos
+                items={[
+                  { etiqueta: 'Tasa mensual', valor: porcentaje(f.calculo.tasaMensual * 100) },
+                  { etiqueta: 'Efectiva anual', valor: porcentaje(f.calculo.tasaEfectivaAnual, 1) },
+                ]}
+              />
             </div>
           )}
         </div>
@@ -153,11 +160,15 @@ export function NuevoCreditoSheet({ abierto, onCerrar, onGuardar }: Props) {
             <CampoTexto etiqueta="Fecha de tu próxima cuota" type="date" valor={f.proxima} onCambiar={f.setProxima} />
           </List>
           {f.pagadasValidas ? (
-            <p className="m-0 px-6 text-[14px] leading-snug text-secundario">
-              Vas por la cuota <span className="font-semibold cifras">{f.pagadasNum + 1}</span> de{' '}
-              <span className="cifras">{f.plazoNum}</span>
-              {fechaFinal ? `, y terminas de pagar en ${formatearMesConAnio(fechaFinal)}` : ''}. Cada mes la cuota vence el mismo día.
-            </p>
+            <div className="mx-4">
+              <Segmentos
+                etiqueta="Tu avance"
+                items={[
+                  { etiqueta: 'Vas en la cuota', valor: `${f.pagadasNum + 1} de ${f.plazoNum}` },
+                  { etiqueta: 'Termina', valor: fechaFinal ? mesCortoConAnio(fechaFinal) : '—' },
+                ]}
+              />
+            </div>
           ) : (
             <p className="m-0 px-6 text-[14px] leading-snug text-alerta" role="alert">
               Las cuotas pagadas deben ser menos que el total ({f.plazoNum || '—'}).

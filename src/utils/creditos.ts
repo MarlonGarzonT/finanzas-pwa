@@ -230,6 +230,50 @@ export function describirProximaCuota(estado: EstadoCredito, hoy: Date = new Dat
   return { texto: `Siguiente cuota es de ${mes}`, tono: estado.diasParaProxima <= 7 ? 'pronto' : 'tranquilo' };
 }
 
+export interface SegmentoCredito {
+  etiqueta: string;
+  valor: string;
+  tono: 'normal' | 'alerta' | 'ingreso';
+}
+
+// "Diciembre", o "Enero 2027" si no es de este año.
+function mesCapitalizado(fechaIso: string, hoy: Date): string {
+  const fecha = fechaDesdeISO(fechaIso);
+  const mes = fecha.toLocaleDateString('es-CO', { month: 'long' });
+  const nombre = mes.charAt(0).toUpperCase() + mes.slice(1);
+  return fecha.getFullYear() === hoy.getFullYear() ? nombre : `${nombre} ${fecha.getFullYear()}`;
+}
+
+// "Ene 2028": mes corto y año, para cuándo termina.
+export function mesCortoConAnio(fechaIso: string): string {
+  const fecha = fechaDesdeISO(fechaIso);
+  const mes = fecha.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+  return `${mes.charAt(0).toUpperCase() + mes.slice(1)} ${fecha.getFullYear()}`;
+}
+
+// El estado de la cuota en tres segmentos (etiqueta corta + valor), en vez de
+// una frase: qué mes toca, cuántas faltan y cuándo termina. Sin el día exacto.
+// Atrasada: el primero cambia a "Atrasada" con el mes en tono de alerta.
+export function segmentosCredito(estado: EstadoCredito, hoy: Date = new Date()): SegmentoCredito[] {
+  const termina = mesCortoConAnio(estado.fechaFinal);
+  if (estado.saldado || !estado.proximaCuota) {
+    return [
+      { etiqueta: 'Estado', valor: 'Pagado', tono: 'ingreso' },
+      { etiqueta: 'Cuotas', valor: `${estado.plazoMeses} de ${estado.plazoMeses}`, tono: 'normal' },
+      { etiqueta: 'Terminó', valor: termina, tono: 'normal' },
+    ];
+  }
+  return [
+    {
+      etiqueta: estado.vencida ? 'Atrasada' : 'Próxima',
+      valor: mesCapitalizado(estado.proximaCuota.fecha, hoy),
+      tono: estado.vencida ? 'alerta' : 'normal',
+    },
+    { etiqueta: 'Faltan', valor: `${estado.cuotasRestantes} ${estado.cuotasRestantes === 1 ? 'cuota' : 'cuotas'}`, tono: 'normal' },
+    { etiqueta: 'Termina', valor: termina, tono: 'normal' },
+  ];
+}
+
 export const NOMBRES_SUGERIDOS_CREDITO = ['Moto', 'Carro', 'Vivienda', 'Libre inversión', 'Estudio'];
 
 // Un emoji que se parezca a lo que se financió; sin pista, el banco.

@@ -7,16 +7,17 @@ import {
   describirProximaCuota,
   emojiCredito,
   formatearMesConAnio,
+  segmentosCredito,
   type EstadoCredito,
 } from '../utils/creditos';
 import { formatearFechaCorta, formatearMonto } from '../utils/fechas';
-import type { TonoVencimiento } from '../utils/prestamos';
 import { AvatarEmoji } from './AvatarEmoji';
 import { BarraReparto } from './BarraReparto';
 import { BotonPrincipal } from './BotonPrincipal';
 import { DialogoConfirmar } from './DialogoConfirmar';
 import { HojaInferior } from './HojaInferior';
 import { IconoCheck, IconoPapelera } from './Iconos';
+import { Aviso, Segmentos } from './Segmentos';
 import { SuperficieVidrio } from './SuperficieVidrio';
 import { TiraCuotas } from './TiraCuotas';
 
@@ -29,20 +30,6 @@ interface Props {
   onEliminar: () => Promise<void>;
   onEliminarPago: (pago: Transaccion) => Promise<void>;
 }
-
-const COLOR_ESTADO: Record<TonoVencimiento, string> = {
-  tranquilo: 'text-secundario',
-  pronto: 'text-black/75 dark:text-white/80',
-  vencido: 'font-medium text-alerta',
-  pagado: 'text-ingreso',
-};
-
-const COLOR_PUNTO: Record<TonoVencimiento, string> = {
-  tranquilo: 'bg-black/25 dark:bg-white/30',
-  pronto: 'bg-primary',
-  vencido: 'bg-alerta',
-  pagado: 'bg-ingreso',
-};
 
 function porcentaje(valor: number, decimales: number): string {
   return `${valor.toLocaleString('es-CO', { minimumFractionDigits: decimales, maximumFractionDigits: decimales })} %`;
@@ -105,14 +92,6 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                     {credito.nombre}
                     {credito.entidad && <span className="font-normal text-secundario"> · {credito.entidad}</span>}
                   </p>
-                  <p className={`m-0 mt-0.5 flex items-center gap-1.5 text-[14px] ${COLOR_ESTADO[estado.tono]}`}>
-                    {estado.tono === 'pagado' ? (
-                      <IconoCheck className="size-3.5" />
-                    ) : (
-                      <span className={`size-1.5 shrink-0 rounded-full ${COLOR_PUNTO[estado.tono]}`} aria-hidden="true" />
-                    )}
-                    {estado.texto}
-                  </p>
                 </div>
               </div>
 
@@ -130,9 +109,9 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
               <div className="mt-4">
                 <TiraCuotas plazo={credito.plazoMeses} pagadas={credito.cuotasPagadas} atrasada={credito.vencida} />
               </div>
-              <p className="m-0 mt-2 text-[13px] text-secundario">
-                {credito.saldado ? 'Terminaste de pagar en' : 'Terminas de pagar en'} {formatearMesConAnio(credito.fechaFinal)}
-              </p>
+              <div className="mt-4">
+                <Segmentos etiqueta={estado.texto} items={segmentosCredito(credito)} />
+              </div>
             </SuperficieVidrio>
 
             {/* 2 · Cómo se reparte tu plata */}
@@ -160,9 +139,10 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                 </div>
               )}
               {credito.totalPagado !== Math.round(credito.capitalPagado + credito.interesesPagados) && (
-                <p className="m-0 text-[13px] text-secundario">
-                  Hasta hoy pagaste <span className="cifras">{formatearMonto(credito.totalPagado)}</span> en total; el reparto usa la cuota de {formatearMonto(credito.cuota)} de cada mes.
-                </p>
+                <Aviso>
+                  Hasta hoy pagaste <span className="font-semibold cifras">{formatearMonto(credito.totalPagado)}</span>. El reparto cuenta cada mes a la cuota de{' '}
+                  <span className="cifras">{formatearMonto(credito.cuota)}</span>.
+                </Aviso>
               )}
             </SuperficieVidrio>
 
@@ -187,10 +167,15 @@ export function DetalleCreditoSheet({ abierto, credito, onCerrar, onPagar, onEdi
                   </dd>
                 </div>
               </dl>
-              <p className="m-0 mt-3 text-[13px] leading-snug text-secundario cifras">
-                Tasa aproximada: {porcentaje(credito.tasaMensual * 100, 2)} mensual · {porcentaje(credito.tasaEfectivaAnual, 1)} efectivo anual. La
-                calculamos con tus cuotas, así que incluye seguros u otros cobros que el banco sume a la cuota.
-              </p>
+              <div className="mt-3 flex flex-col gap-2">
+                <Segmentos
+                  items={[
+                    { etiqueta: 'Tasa mensual', valor: porcentaje(credito.tasaMensual * 100, 2) },
+                    { etiqueta: 'Efectiva anual', valor: porcentaje(credito.tasaEfectivaAnual, 1) },
+                  ]}
+                />
+                <Aviso>Tasa aproximada, calculada con tus cuotas: incluye seguros u otros cobros que el banco sume a la cuota.</Aviso>
+              </div>
             </SuperficieVidrio>
 
             {/* 4 · Detalle */}

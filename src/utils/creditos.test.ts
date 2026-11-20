@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Credito } from '../types';
-import { costoPorMil, describirProximaCuota, estadosCreditos, fechaDeCuota, fechaPrimeraCuotaDesdeProxima, resumirCreditos, tablaAmortizacion, tasaEfectivaAnual, tasaMensualDeCredito } from './creditos';
+import { costoPorMil, describirProximaCuota, estadosCreditos, fechaDeCuota, fechaPrimeraCuotaDesdeProxima, resumirCreditos, segmentosCredito, tablaAmortizacion, tasaEfectivaAnual, tasaMensualDeCredito } from './creditos';
 import { clasificar, esGasto } from './contabilidad';
 import { desglosePorCategoria, fijoVsVariable } from './estadisticasMes';
 import { buscador, categoria, movimiento } from './pruebasDatos';
@@ -192,5 +192,37 @@ describe('describirProximaCuota', () => {
   it('saldado dice que el crédito está pagado', () => {
     const todas = Array.from({ length: 24 }, (_, i) => pagoDe(new Date(2026, i, 5)));
     expect(textoEn(new Date(2028, 1, 1), moto, todas)).toEqual({ texto: 'Crédito pagado', tono: 'pagado' });
+  });
+});
+
+describe('segmentosCredito', () => {
+  const tresPagos = [pagoDe(new Date(2026, 0, 5)), pagoDe(new Date(2026, 1, 5)), pagoDe(new Date(2026, 2, 4))];
+  const segmentosEn = (hoy: Date, pagos = tresPagos) => segmentosCredito(estadosCreditos([moto], pagos, hoy)[0], hoy);
+
+  it('muestra qué mes toca, cuántas faltan y cuándo termina', () => {
+    expect(segmentosEn(new Date(2026, 3, 2))).toEqual([
+      { etiqueta: 'Próxima', valor: 'Abril', tono: 'normal' },
+      { etiqueta: 'Faltan', valor: '21 cuotas', tono: 'normal' },
+      { etiqueta: 'Termina', valor: 'Dic 2027', tono: 'normal' },
+    ]);
+  });
+
+  it('atrasada marca el primero en alerta', () => {
+    const [primero] = segmentosEn(new Date(2026, 3, 9));
+    expect(primero).toEqual({ etiqueta: 'Atrasada', valor: 'Abril', tono: 'alerta' });
+  });
+
+  it('la última cuota dice "1 cuota" en singular', () => {
+    const casi = Array.from({ length: 23 }, (_, i) => pagoDe(new Date(2026, i, 5)));
+    expect(segmentosEn(new Date(2027, 11, 1), casi)[1].valor).toBe('1 cuota');
+  });
+
+  it('saldado muestra el estado pagado', () => {
+    const todas = Array.from({ length: 24 }, (_, i) => pagoDe(new Date(2026, i, 5)));
+    expect(segmentosEn(new Date(2028, 1, 1), todas)).toEqual([
+      { etiqueta: 'Estado', valor: 'Pagado', tono: 'ingreso' },
+      { etiqueta: 'Cuotas', valor: '24 de 24', tono: 'normal' },
+      { etiqueta: 'Terminó', valor: 'Dic 2027', tono: 'normal' },
+    ]);
   });
 });

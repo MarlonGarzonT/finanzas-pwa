@@ -1,4 +1,4 @@
-import { Block, List } from 'konsta/react';
+import { List } from 'konsta/react';
 import { useState } from 'react';
 import type { EstadoCredito } from '../utils/creditos';
 import { fechaConHora, fechaLocalISO, formatearMonto } from '../utils/fechas';
@@ -7,6 +7,7 @@ import { CampoMonto } from './CampoMonto';
 import { CampoTexto } from './CampoTexto';
 import { ChipOpcion } from './ChipOpcion';
 import { HojaInferior } from './HojaInferior';
+import { Aviso, Segmentos } from './Segmentos';
 
 interface Props {
   abierto: boolean;
@@ -80,17 +81,18 @@ export function PagoCreditoSheet({ abierto, credito, onCerrar, onGuardar }: Prop
         </>
       }
     >
-      <Block className="my-2 text-center">
+      <div className="my-2 flex flex-col gap-2 px-4">
         {cuota && (
-          <p className="m-0 text-[15px] leading-snug text-balance text-secundario">
-            De esta cuota, unos <span className="font-semibold cifras">{formatearMonto(Math.round(cuota.interes))}</span> son intereses y{' '}
-            <span className="font-semibold cifras">{formatearMonto(Math.round(cuota.capital))}</span> bajan tu deuda.
-          </p>
+          <Segmentos
+            etiqueta="Así se reparte esta cuota"
+            items={[
+              { etiqueta: 'Intereses', valor: formatearMonto(Math.round(cuota.interes)), tono: 'intereses' },
+              { etiqueta: 'Baja tu deuda', valor: formatearMonto(Math.round(cuota.capital)), tono: 'ingreso' },
+            ]}
+          />
         )}
-        <p className="m-0 mt-2 text-[14px] leading-snug text-balance text-secundario">
-          Cuenta como gasto del mes en que la pagaste y baja tu Disponible.
-        </p>
-      </Block>
+        <Aviso>Cuenta como gasto del mes en que la pagaste y baja tu Disponible.</Aviso>
+      </div>
 
       <List strong inset className="mt-3 mb-2">
         <CampoTexto etiqueta="Fecha del pago" type="date" valor={dia} onCambiar={setDia} />
