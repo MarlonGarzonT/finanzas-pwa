@@ -1,8 +1,9 @@
-import { Button, List } from 'konsta/react';
+import { List } from 'konsta/react';
 import { useEffect, type ReactNode } from 'react';
 import type { NuevoCredito } from '../types';
 import { fechaDeCuota, fechaPrimeraCuotaDesdeProxima, formatearDiaConAnio, NOMBRES_SUGERIDOS_CREDITO } from '../utils/creditos';
 import { formatearMonto } from '../utils/fechas';
+import { BotonPrincipal } from './BotonPrincipal';
 import { CampoTexto } from './CampoTexto';
 import { ChipOpcion } from './ChipOpcion';
 import { HojaInferior } from './HojaInferior';
@@ -183,14 +184,11 @@ export function NuevoCreditoSheet({ abierto, onCerrar, onGuardar }: Props) {
               {f.error}
             </p>
           )}
-          <Button
-            large
-            rounded
+          <BotonPrincipal
+            texto={f.guardando ? 'Guardando…' : ultimoPaso ? 'Registrar crédito' : 'Continuar'}
             onClick={ultimoPaso ? f.guardar : continuar}
             disabled={f.guardando || !f.puedeContinuar}
-          >
-            {f.guardando ? 'Guardando…' : ultimoPaso ? 'Registrar crédito' : 'Continuar'}
-          </Button>
+          />
         </>
       }
     >

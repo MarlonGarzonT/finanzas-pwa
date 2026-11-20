@@ -1,7 +1,8 @@
-import { BlockFooter, Button, List } from 'konsta/react';
+import { BlockFooter, List } from 'konsta/react';
 import { useState } from 'react';
 import type { Credito, NuevoCredito } from '../types';
 import { fechaDeCuota, fechaPrimeraCuotaDesdeProxima } from '../utils/creditos';
+import { BotonPrincipal } from './BotonPrincipal';
 import { CampoTexto } from './CampoTexto';
 import { HojaInferior } from './HojaInferior';
 
@@ -69,9 +70,7 @@ export function EditarCreditoSheet({ abierto, credito, cuotasPagadas, onCerrar, 
               {error}
             </p>
           )}
-          <Button large rounded onClick={manejarGuardar} disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar'}
-          </Button>
+          <BotonPrincipal texto={guardando ? 'Guardando…' : 'Guardar'} onClick={manejarGuardar} disabled={guardando} />
         </>
       }
     >

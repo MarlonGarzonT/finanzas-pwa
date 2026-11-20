@@ -1,7 +1,8 @@
-import { Block, Button, List } from 'konsta/react';
+import { Block, List } from 'konsta/react';
 import { useState } from 'react';
 import type { EstadoCredito } from '../utils/creditos';
 import { fechaConHora, fechaLocalISO, formatearMonto } from '../utils/fechas';
+import { BotonPrincipal } from './BotonPrincipal';
 import { CampoMonto } from './CampoMonto';
 import { CampoTexto } from './CampoTexto';
 import { ChipOpcion } from './ChipOpcion';
@@ -75,9 +76,7 @@ export function PagoCreditoSheet({ abierto, credito, onCerrar, onGuardar }: Prop
               {error}
             </p>
           )}
-          <Button large rounded onClick={manejarGuardar} disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar pago'}
-          </Button>
+          <BotonPrincipal texto={guardando ? 'Guardando…' : 'Guardar pago'} onClick={manejarGuardar} disabled={guardando} />
         </>
       }
     >

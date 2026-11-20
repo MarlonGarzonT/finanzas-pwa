@@ -56,16 +56,16 @@ export function VistaCreditos({ botonCompacto, idInicial }: Props) {
             <>
               <CabeceraCreditos resumen={resumen} />
               {activos.length > 0 && (
-                <ul aria-label="Créditos activos" className="m-0 flex list-none flex-col gap-3 px-4 py-0">
-                  {activos.map((c) => (
-                    <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} />
+                <ul aria-label="Créditos activos" className="m-0 mt-4 flex list-none flex-col gap-4 px-4 py-0">
+                  {activos.map((c, indice) => (
+                    <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} conEfectos={indice < 2} />
                   ))}
                 </ul>
               )}
               {saldados.length > 0 && (
                 <>
                   <h2 className="m-0 px-8 pt-6 pb-2 text-[13px] font-medium text-secundario">Ya terminados</h2>
-                  <ul aria-label="Créditos pagados" className="m-0 flex list-none flex-col gap-3 px-4 py-0">
+                  <ul aria-label="Créditos pagados" className="m-0 flex list-none flex-col gap-4 px-4 py-0">
                     {saldados.map((c) => (
                       <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} />
                     ))}

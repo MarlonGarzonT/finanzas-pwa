@@ -176,15 +176,26 @@ export interface ResumenCreditos {
   vencidos: number;
   interesesPagados: number;
   interesesPorPagar: number;
+  // Lo que ya bajó la deuda de todos los créditos (capital de las cuotas pagadas).
+  capitalPagado: number;
   // Cuotas que vencen este mes (o ya vencidas sin pagar), sumadas.
   cuotasDelMes: number;
 }
 
 export function resumirCreditos(estados: EstadoCredito[], hoy: Date = new Date()): ResumenCreditos {
   const claveMes = fechaLocalISO(hoy).slice(0, 7);
-  const resumen: ResumenCreditos = { porPagar: 0, activos: 0, vencidos: 0, interesesPagados: 0, interesesPorPagar: 0, cuotasDelMes: 0 };
+  const resumen: ResumenCreditos = {
+    porPagar: 0,
+    activos: 0,
+    vencidos: 0,
+    interesesPagados: 0,
+    interesesPorPagar: 0,
+    capitalPagado: 0,
+    cuotasDelMes: 0,
+  };
   for (const e of estados) {
     resumen.interesesPagados += e.interesesPagados;
+    resumen.capitalPagado += e.capitalPagado;
     if (e.saldado) continue;
     resumen.porPagar += e.porPagar;
     resumen.activos += 1;

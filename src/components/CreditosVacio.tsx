@@ -1,5 +1,5 @@
-import { Block, Button } from 'konsta/react';
-import { IconoMas } from './Iconos';
+import { Block } from 'konsta/react';
+import { BotonPrincipal } from './BotonPrincipal';
 
 interface Props {
   onAgregar: () => void;
@@ -44,10 +44,9 @@ export function CreditosVacio({ onAgregar }: Props) {
         ))}
       </ol>
 
-      <Button large rounded onClick={onAgregar} className="mt-6 gap-2 normal-case">
-        <IconoMas className="size-5" />
-        Registrar mi crédito
-      </Button>
+      <div className="mt-6">
+        <BotonPrincipal texto="Registrar mi crédito" onClick={onAgregar} />
+      </div>
     </Block>
   );
 }
