@@ -6,8 +6,10 @@ import { BrechaHistorica } from '../components/BrechaHistorica';
 import { Cargando } from '../components/Cargando';
 import { ComparacionMes } from '../components/ComparacionMes';
 import { DonaCategorias } from '../components/DonaCategorias';
+import { EncabezadoWeb } from '../components/EncabezadoWeb';
 import { GraficoMensual } from '../components/GraficoMensual';
 import { SelectorMes } from '../components/SelectorMes';
+import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { useMontajeDiferido } from '../components/useMontajeDiferido';
 import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import { useFinanzas } from '../data/FinanzasContext';
@@ -23,6 +25,7 @@ import {
 } from '../utils/estadisticasMes';
 import { capitalizarPrimera, nombreMes } from '../utils/fechas';
 import { historialEnCache } from '../utils/historialAcumulado';
+import { aniosConDatos } from '../utils/tablero';
 
 const MESES_EN_GRAFICO = 6;
 
@@ -60,10 +63,15 @@ export function Reportes() {
   );
   const historial = useMemo(() => historialEnCache(transacciones, categorias), [transacciones, categorias]);
   const proyeccion = contable.gastos > 0 ? proyeccionFinDeMes(transaccionesDelMes, categoriaPorId, mesSeleccionado) : null;
+  const anios = useMemo(() => aniosConDatos(transacciones), [transacciones]);
 
   return (
     <Page className="pagina-con-pestanas">
-      <Navbar centerTitle title="Reportes" />
+      <Navbar className="lg:hidden" centerTitle title="Reportes" />
+      <EncabezadoWeb
+        titulo="Reportes"
+        acciones={<SelectorPeriodo mes={mesSeleccionado} anios={anios} onCambiar={setMesSeleccionado} />}
+      />
 
       {cargando ? (
         <Cargando />
@@ -72,51 +80,64 @@ export function Reportes() {
           Cuando registres movimientos, aquí verás si gastas más de lo que entra, en qué gastas y cómo vas frente a los meses anteriores.
         </Block>
       ) : (
-        <>
-        {/* Lo principal de Reportes: todo el historial, sin depender del mes
-            elegido (por eso va fuera del bloque que se reinicia al cambiarlo). */}
-        {historial.puntos.length > 0 && <BrechaHistorica historial={historial} />}
+        // En escritorio es una cuadrícula de 12 columnas; en el celular, la misma
+        // pila de siempre (el contenedor intermedio `lg:contents` deja que sus
+        // hijos entren a la cuadrícula).
+        <div className="columna-web lg:mx-auto lg:grid lg:max-w-[1480px] lg:grid-cols-12 lg:items-start lg:gap-x-6 lg:px-8">
+          {/* Lo principal de Reportes: todo el historial, sin depender del mes
+              elegido (por eso va fuera del bloque que se reinicia al cambiarlo). */}
+          <div className="lg:col-span-7">{historial.puntos.length > 0 && <BrechaHistorica historial={historial} />}</div>
 
-        {/* La key reinicia las animaciones de los gráficos al cambiar de mes. */}
-        {resto && (
-        <div className="aparecer-suave" key={mesSeleccionado.getTime()}>
-          <BlockTitle className="mt-6">Mes a mes</BlockTitle>
-          <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
+          {/* La key reinicia las animaciones de los gráficos al cambiar de mes. */}
+          {resto && (
+            <div className="aparecer-suave lg:contents" key={mesSeleccionado.getTime()}>
+              <div className="lg:col-span-5">
+                <BlockTitle className="mt-6 lg:hidden">Mes a mes</BlockTitle>
+                <div className="lg:hidden">
+                  <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
+                </div>
 
-          <BalanceMes
-            resumen={resumen}
-            periodo={capitalizarPrimera(nombreMes(mesSeleccionado))}
-            cantidad={transaccionesDelMes.length}
-          />
-          <Block strong inset className="mt-3 mb-0 rounded-3xl p-4">
-            <ComparacionMes comparacion={comparacion} proyeccion={proyeccion} />
-          </Block>
+                <BalanceMes
+                  resumen={resumen}
+                  periodo={capitalizarPrimera(nombreMes(mesSeleccionado))}
+                  cantidad={transaccionesDelMes.length}
+                />
+                <Block strong inset className="mt-3 mb-0 rounded-3xl p-4">
+                  <ComparacionMes comparacion={comparacion} proyeccion={proyeccion} />
+                </Block>
+              </div>
 
-          <BlockTitle>Últimos {MESES_EN_GRAFICO} meses</BlockTitle>
-          <Block strong inset className={TARJETA}>
-            <GraficoMensual datos={ultimosMeses} seleccionado={mesSeleccionado} onSeleccionar={setMesSeleccionado} />
-          </Block>
+              <div className="lg:col-span-6">
+                <BlockTitle>Últimos {MESES_EN_GRAFICO} meses</BlockTitle>
+                <Block strong inset className={TARJETA}>
+                  <GraficoMensual datos={ultimosMeses} seleccionado={mesSeleccionado} onSeleccionar={setMesSeleccionado} />
+                </Block>
+              </div>
 
-          <BlockTitle>Por categoría</BlockTitle>
-          <Block strong inset className={TARJETA}>
-            <SelectorVidrio className="mb-4">
-              <OpcionSelector active={tipoDona === 'egreso'} onClick={() => setTipoDona('egreso')}>
-                Gastos
-              </OpcionSelector>
-              <OpcionSelector active={tipoDona === 'ingreso'} onClick={() => setTipoDona('ingreso')}>
-                Ingresos
-              </OpcionSelector>
-            </SelectorVidrio>
-            <DonaCategorias key={tipoDona} segmentos={segmentosDona} total={totalDona} />
-          </Block>
+              <div className="lg:col-span-6">
+                <BlockTitle>Por categoría</BlockTitle>
+                <Block strong inset className={TARJETA}>
+                  <SelectorVidrio className="mb-4">
+                    <OpcionSelector active={tipoDona === 'egreso'} onClick={() => setTipoDona('egreso')}>
+                      Gastos
+                    </OpcionSelector>
+                    <OpcionSelector active={tipoDona === 'ingreso'} onClick={() => setTipoDona('ingreso')}>
+                      Ingresos
+                    </OpcionSelector>
+                  </SelectorVidrio>
+                  <DonaCategorias key={tipoDona} segmentos={segmentosDona} total={totalDona} />
+                </Block>
+              </div>
 
-          <BlockTitle>Fijo vs. variable</BlockTitle>
-          <Block strong inset className={TARJETA}>
-            <BarraFijoVariable {...fijoVariable} />
-          </Block>
+              <div className="lg:col-span-12">
+                <BlockTitle>Fijo vs. variable</BlockTitle>
+                <Block strong inset className={TARJETA}>
+                  <BarraFijoVariable {...fijoVariable} />
+                </Block>
+              </div>
+            </div>
+          )}
         </div>
-        )}
-        </>
       )}
     </Page>
   );

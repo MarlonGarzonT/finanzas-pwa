@@ -4,6 +4,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { Login } from './auth/Login';
 import { RestablecerPassword } from './auth/RestablecerPassword';
+import { BarraLateral } from './components/BarraLateral';
 import { BarraPestanas } from './components/BarraPestanas';
 import { Cargando } from './components/Cargando';
 import { AvisoActualizacion } from './components/AvisoActualizacion';
@@ -60,17 +61,25 @@ function AppShell() {
   return (
     <FinanzasProvider>
       <HashRouter>
-        <LimiteDeError>
-          <Suspense fallback={<Cargando />}>
-            <Routes>
-              <Route path="/" element={<Inicio />} />
-              <Route path="/historial" element={<Historial />} />
-              <Route path="/reportes" element={<Reportes />} />
-              <Route path="/prestamos" element={<Prestamos />} />
-              <Route path="/perfil" element={<Perfil />} />
-            </Routes>
-          </Suspense>
-        </LimiteDeError>
+        {/* En escritorio: barra lateral a la izquierda y la pantalla a su derecha
+            (cada `Page` de Konsta se posiciona absoluta, por eso el contenedor
+            es `relative`). En el celular el contenedor es solo la pantalla. */}
+        <div className="h-full lg:flex">
+          <BarraLateral />
+          <div className="relative h-full min-w-0 flex-1">
+            <LimiteDeError>
+              <Suspense fallback={<Cargando />}>
+                <Routes>
+                  <Route path="/" element={<Inicio />} />
+                  <Route path="/historial" element={<Historial />} />
+                  <Route path="/reportes" element={<Reportes />} />
+                  <Route path="/prestamos" element={<Prestamos />} />
+                  <Route path="/perfil" element={<Perfil />} />
+                </Routes>
+              </Suspense>
+            </LimiteDeError>
+          </div>
+        </div>
         <BarraPestanas />
       </HashRouter>
     </FinanzasProvider>

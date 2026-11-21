@@ -2,12 +2,13 @@ import { Link, Navbar, Page } from 'konsta/react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AvisosPrestamosSheet } from '../components/AvisosPrestamosSheet';
+import { EncabezadoWeb } from '../components/EncabezadoWeb';
 import { IconoCampana } from '../components/Iconos';
 import { OpcionSelector, SelectorVidrio } from '../components/SelectorVidrio';
 import type { EstadoNavegacionPrestamos } from '../components/useAbrirMovimiento';
 import { VistaCreditos } from '../components/VistaCreditos';
 import { VistaPrestamos } from '../components/VistaPrestamos';
-import { useNotificacionesPush } from '../data/useNotificacionesPush';
+import { useNotificacionesPush, type NotificacionesPush } from '../data/useNotificacionesPush';
 
 type Vista = 'te-deben' | 'debes';
 
@@ -21,6 +22,30 @@ function vistaGuardada(): Vista {
   } catch {
     return 'te-deben';
   }
+}
+
+interface PropsAvisos {
+  push: NotificacionesPush;
+  onAbrir: () => void;
+}
+
+// La campana de los avisos de cobro, en la barra del celular y en el
+// encabezado de escritorio. Punto verde si están encendidos.
+function BotonAvisos({ push, onAbrir }: PropsAvisos) {
+  return (
+    <Link
+      iconOnly
+      onClick={onAbrir}
+      aria-label={`Avisos de cobro, ${push.estado === 'encendido' ? 'activados' : 'apagados'}`}
+      className="relative"
+    >
+      <IconoCampana className="size-7" />
+      {/* Punto verde: los avisos están encendidos (el estado también se lee en la hoja). */}
+      {push.estado === 'encendido' && (
+        <span className="absolute top-2 right-2 size-2.5 rounded-full bg-ingreso-relleno ring-2 ring-ios-light-surface dark:ring-black" aria-hidden="true" />
+      )}
+    </Link>
+  );
 }
 
 // Una sola pestaña para toda la plata prestada, en las dos direcciones: lo que
@@ -44,40 +69,39 @@ export function Prestamos() {
     }
   }
 
+  const selector = (
+    <SelectorVidrio>
+      <OpcionSelector active={vista === 'te-deben'} onClick={() => elegirVista('te-deben')}>
+        Te deben
+      </OpcionSelector>
+      <OpcionSelector active={vista === 'debes'} onClick={() => elegirVista('debes')}>
+        Debes
+      </OpcionSelector>
+    </SelectorVidrio>
+  );
+
   return (
     <Page
       className="pagina-con-fab"
       onScroll={(e: React.UIEvent<HTMLElement>) => setBotonCompacto(e.currentTarget.scrollTop > UMBRAL_BOTON_COMPACTO_PX)}
     >
       <Navbar
+        className="lg:hidden"
         centerTitle
         title="Préstamos"
-        right={
-          <Link
-            iconOnly
-            onClick={() => setAvisosAbierto(true)}
-            aria-label={`Avisos de cobro, ${push.estado === 'encendido' ? 'activados' : 'apagados'}`}
-            className="relative"
-          >
-            <IconoCampana className="size-7" />
-            {/* Punto verde: los avisos están encendidos (el estado también se lee en la hoja). */}
-            {push.estado === 'encendido' && (
-              <span className="absolute top-2 right-2 size-2.5 rounded-full bg-ingreso-relleno ring-2 ring-ios-light-surface dark:ring-black" aria-hidden="true" />
-            )}
-          </Link>
+        right={<BotonAvisos push={push} onAbrir={() => setAvisosAbierto(true)} />}
+      />
+      <EncabezadoWeb
+        titulo="Préstamos"
+        acciones={
+          <>
+            <div className="w-[260px]">{selector}</div>
+            <BotonAvisos push={push} onAbrir={() => setAvisosAbierto(true)} />
+          </>
         }
       />
 
-      <div className="px-4 pb-4">
-        <SelectorVidrio>
-          <OpcionSelector active={vista === 'te-deben'} onClick={() => elegirVista('te-deben')}>
-            Te deben
-          </OpcionSelector>
-          <OpcionSelector active={vista === 'debes'} onClick={() => elegirVista('debes')}>
-            Debes
-          </OpcionSelector>
-        </SelectorVidrio>
-      </div>
+      <div className="px-4 pb-4 lg:hidden">{selector}</div>
 
       {vista === 'te-deben' ? (
         <VistaPrestamos botonCompacto={botonCompacto} idInicial={estadoNavegacion?.prestamoId ?? null} />

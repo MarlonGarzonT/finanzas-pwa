@@ -13,7 +13,7 @@ export function CabeceraPrestamos({ resumen }: Props) {
   const { pendiente, pendientes, vencidos, prestadoPendientes, devueltoPendientes } = resumen;
   const progreso = prestadoPendientes > 0 ? devueltoPendientes / prestadoPendientes : 0;
   return (
-    <section className="flex flex-col items-center gap-0.5 px-4 pt-1 pb-3 text-center" aria-label="Lo que te deben">
+    <section className="flex flex-col items-center gap-0.5 px-4 pt-1 pb-3 text-center lg:items-start lg:px-0 lg:pb-6 lg:text-left" aria-label="Lo que te deben">
       <p className="m-0 text-[48px] leading-[1.1] font-bold tracking-[-0.03em] cifras">
         <MontoAnimado monto={pendiente} />
       </p>

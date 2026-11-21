@@ -5,6 +5,7 @@ import { CabeceraPerfil } from '../components/CabeceraPerfil';
 import { Cargando } from '../components/Cargando';
 import { ConstanciaMeses } from '../components/ConstanciaMeses';
 import { DialogoConfirmar } from '../components/DialogoConfirmar';
+import { EncabezadoWeb } from '../components/EncabezadoWeb';
 import { GastosAnualesSheet } from '../components/GastosAnualesSheet';
 import { GestionCategorias } from '../components/GestionCategorias';
 import { IconoAjuste } from '../components/IconoAjuste';
@@ -58,12 +59,14 @@ export function Perfil() {
 
   return (
     <Page className="pagina-con-pestanas">
-      <Navbar centerTitle title="Perfil" />
+      <Navbar className="lg:hidden" centerTitle title="Perfil" />
+      <EncabezadoWeb titulo="Perfil" />
 
       {cargando || !perfil ? (
         <Cargando />
       ) : (
-        <>
+        <div className="columna-web lg:mx-auto lg:grid lg:max-w-[1480px] lg:grid-cols-12 lg:items-start lg:gap-x-8 lg:px-8">
+          <div className="lg:col-span-5">
           <CabeceraPerfil perfil={perfil} />
 
           <TarjetaAntiguedad antiguedad={perfil.antiguedad} desde={perfil.miembroDesde} />
@@ -76,7 +79,9 @@ export function Perfil() {
             mesesRegistrados={perfil.mesesRegistrados}
           />
 
-          <BlockTitle>Preferencias</BlockTitle>
+          </div>
+          <div className="lg:col-span-7">
+          <BlockTitle className="lg:mt-0!">Preferencias</BlockTitle>
           <List strong inset>
             <ListItem
               media={
@@ -183,7 +188,8 @@ export function Perfil() {
           <p className="m-0 mt-8 text-center text-[13px] text-secundario cifras">
             Mi Cuadre · versión {__VERSION_APP__}
           </p>
-        </>
+          </div>
+        </div>
       )}
 
       <GestionCategorias

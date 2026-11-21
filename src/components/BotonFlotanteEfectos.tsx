@@ -7,6 +7,7 @@ interface Props {
   etiqueta: string;
   texto?: string;
   onClick: () => void;
+  soloMovil?: boolean;
 }
 
 // Versión con efectos de React Bits del botón flotante principal: una luz
@@ -14,7 +15,7 @@ interface Props {
 // botón lleva texto, un destello recorre las letras (ShinyText). Va en su
 // propio chunk (se carga con `lazy` desde BotonFlotante) para que los efectos
 // no pesen en el arranque de la app.
-export default function BotonFlotanteEfectos({ etiqueta, texto, onClick }: Props) {
+export default function BotonFlotanteEfectos({ etiqueta, texto, onClick, soloMovil = false }: Props) {
   return (
     <StarBorder
       as="button"
@@ -35,7 +36,7 @@ export default function BotonFlotanteEfectos({ etiqueta, texto, onClick }: Props
       sparkle
       hover="none"
       // `!` porque la base de StarBorder fija su propio padding y `relative`.
-      className={`${CLASES_BOTON_FLOTANTE} fixed! px-0! py-0! ${texto ? 'min-w-14 px-5!' : 'size-14'}`}
+      className={`${CLASES_BOTON_FLOTANTE} fixed! px-0! py-0! ${texto ? 'min-w-14 px-5!' : 'size-14'} ${soloMovil ? 'lg:hidden!' : ''}`}
     >
       <IconoMas className="size-7" />
       {texto && (

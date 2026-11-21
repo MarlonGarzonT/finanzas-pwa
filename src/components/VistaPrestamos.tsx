@@ -4,6 +4,7 @@ import { usePrestamos } from '../data/usePrestamos';
 import type { EstadoPrestamo } from '../utils/prestamos';
 import { AbonoSheet } from './AbonoSheet';
 import { BotonFlotante } from './BotonFlotante';
+import { BotonPrincipal } from './BotonPrincipal';
 import { CabeceraPrestamos } from './CabeceraPrestamos';
 import { Cargando } from './Cargando';
 import { DetallePrestamoSheet, type DetallePrestamoHandle } from './DetallePrestamoSheet';
@@ -62,13 +63,21 @@ export function VistaPrestamos({ botonCompacto, idInicial }: Props) {
       {cargando ? (
         <Cargando />
       ) : (
-        <div className="aparecer-suave">
+        <div className="aparecer-suave columna-web lg:mx-auto lg:max-w-[1480px] lg:px-8">
           {hayPrestamos ? (
             <>
-              <CabeceraPrestamos resumen={resumen} />
+              {/* En escritorio la acción va junto al total, no en un botón flotante. */}
+              <div className="lg:flex lg:items-start lg:justify-between lg:gap-6">
+                <div className="lg:flex-1">
+                  <CabeceraPrestamos resumen={resumen} />
+                </div>
+                <div className="hidden w-[230px] shrink-0 lg:block">
+                  <BotonPrincipal texto="Nuevo préstamo" onClick={() => setFormulario('nuevo')} efectos={false} />
+                </div>
+              </div>
 
               {pagados.length > 0 && (
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-4 lg:max-w-[360px] lg:px-0">
                   <SelectorVidrio>
                     <OpcionSelector active={vista === 'por-cobrar'} onClick={() => setFiltro('por-cobrar')}>
                       Por cobrar · {pendientes.length}
@@ -94,7 +103,9 @@ export function VistaPrestamos({ botonCompacto, idInicial }: Props) {
               )}
             </>
           ) : (
-            <PrestamosVacio onAgregar={() => setFormulario('nuevo')} />
+            <div className="lg:mx-auto lg:max-w-2xl">
+              <PrestamosVacio onAgregar={() => setFormulario('nuevo')} />
+            </div>
           )}
         </div>
       )}
@@ -104,6 +115,7 @@ export function VistaPrestamos({ botonCompacto, idInicial }: Props) {
         etiqueta="Nuevo préstamo"
         texto={botonCompacto ? undefined : 'Nuevo préstamo'}
         onClick={() => setFormulario('nuevo')}
+        soloMovil
       />
 
       <DetallePrestamoSheet

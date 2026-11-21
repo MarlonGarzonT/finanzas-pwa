@@ -130,6 +130,38 @@ html.dark,
   bottom: calc(var(--alto-pestanas) + 0.75rem);
 }
 
+/* En escritorio no hay barra de pestañas (hay barra lateral): todo lo que se
+   medía contra ella vuelve a medir contra el borde. */
+@media (min-width: 1024px) {
+  .k-app {
+    --margen-inferior: 0px;
+    --alto-pestanas: 0px;
+  }
+
+  .fab-sobre-pestanas {
+    bottom: 1.5rem;
+  }
+}
+
+/* Columnas de las pantallas de escritorio: los bloques, listas y tarjetas que en
+   el celular llevan 16 px de margen a cada lado se alinean al borde de su
+   columna (el margen lo da la columna, con su separación entre ellas). */
+@media (min-width: 1024px) {
+  .columna-web .k-block,
+  .columna-web .k-list,
+  .columna-web [class~='mx-4'] {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .columna-web .k-block-title,
+  .columna-web .k-block-header,
+  .columna-web .k-block-footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 .pagina-con-pestanas {
   padding-bottom: calc(var(--alto-pestanas) + 1.5rem);
 }

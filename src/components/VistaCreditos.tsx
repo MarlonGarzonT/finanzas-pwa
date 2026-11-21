@@ -3,6 +3,7 @@ import { useFinanzas } from '../data/FinanzasContext';
 import { useCreditos } from '../data/useCreditos';
 import type { EstadoCredito } from '../utils/creditos';
 import { BotonFlotante } from './BotonFlotante';
+import { BotonPrincipal } from './BotonPrincipal';
 import { Cargando } from './Cargando';
 import { CreditosVacio } from './CreditosVacio';
 import { DetalleCreditoSheet } from './DetalleCreditoSheet';
@@ -51,35 +52,45 @@ export function VistaCreditos({ botonCompacto, idInicial }: Props) {
       {cargando ? (
         <Cargando />
       ) : (
-        <div className="aparecer-suave">
+        <div className="aparecer-suave columna-web lg:mx-auto lg:max-w-[1480px] lg:px-8">
           {hayCreditos ? (
-            <>
-              {/* Lo primero son los créditos; solo el botón de pago del más urgente lleva luz. */}
-              {activos.length > 0 && (
-                <ul aria-label="Créditos activos" className="m-0 flex list-none flex-col gap-4 px-4 py-0">
-                  {activos.map((c, indice) => (
-                    <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} conEfectos={indice === 0} />
-                  ))}
-                </ul>
-              )}
-              {activos.length + saldados.length > 1 && (
-                <div className="mt-4">
-                  <ResumenInteresesCreditos resumen={resumen} />
-                </div>
-              )}
-              {saldados.length > 0 && (
-                <>
-                  <h2 className="m-0 px-8 pt-6 pb-2 text-[13px] font-medium text-secundario">Ya terminados</h2>
-                  <ul aria-label="Créditos pagados" className="m-0 flex list-none flex-col gap-4 px-4 py-0">
-                    {saldados.map((c) => (
-                      <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} />
+            // En escritorio: los créditos a la izquierda y, a la derecha, el botón
+            // de crear y el total de todos juntos (siempre, aunque haya uno solo).
+            <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
+              <div className="lg:col-span-8">
+                {/* Lo primero son los créditos; solo el botón de pago del más urgente lleva luz. */}
+                {activos.length > 0 && (
+                  <ul aria-label="Créditos activos" className="m-0 flex list-none flex-col gap-4 px-4 py-0 lg:grid lg:grid-cols-2 lg:px-0">
+                    {activos.map((c, indice) => (
+                      <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} conEfectos={indice === 0} />
                     ))}
                   </ul>
-                </>
-              )}
-            </>
+                )}
+                {activos.length + saldados.length > 1 && (
+                  <div className="mt-4 lg:hidden">
+                    <ResumenInteresesCreditos resumen={resumen} />
+                  </div>
+                )}
+                {saldados.length > 0 && (
+                  <>
+                    <h2 className="m-0 px-8 pt-6 pb-2 text-[13px] font-medium text-secundario lg:px-0">Ya terminados</h2>
+                    <ul aria-label="Créditos pagados" className="m-0 flex list-none flex-col gap-4 px-4 py-0 lg:grid lg:grid-cols-2 lg:px-0">
+                      {saldados.map((c) => (
+                        <TarjetaCredito key={c.id} credito={c} onAbrir={abrirDetalle} onRegistrarPago={pagoRapido} />
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+              <aside className="hidden flex-col gap-4 lg:col-span-4 lg:flex" aria-label="Resumen y acciones">
+                <BotonPrincipal texto="Nuevo crédito" onClick={() => setFormulario('nuevo')} efectos={false} />
+                <ResumenInteresesCreditos resumen={resumen} />
+              </aside>
+            </div>
           ) : (
-            <CreditosVacio onAgregar={() => setFormulario('nuevo')} />
+            <div className="lg:mx-auto lg:max-w-2xl">
+              <CreditosVacio onAgregar={() => setFormulario('nuevo')} />
+            </div>
           )}
         </div>
       )}
@@ -89,6 +100,7 @@ export function VistaCreditos({ botonCompacto, idInicial }: Props) {
         texto={botonCompacto ? undefined : 'Nuevo crédito'}
         onClick={() => setFormulario('nuevo')}
         efectos={false}
+        soloMovil
       />
 
       <DetalleCreditoSheet

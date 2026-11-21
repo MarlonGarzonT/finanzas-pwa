@@ -52,8 +52,8 @@ export function SaldosTablero({ datos }: Props) {
   const { resumenDelMes, ahorroTotal, prestamos, creditos } = datos;
   const enNegativo = resumenDelMes.disponible < 0;
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1">
-      <div className="aparecer-suave md:col-span-2 lg:col-span-3 xl:col-span-1">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 min-[1400px]:grid-cols-1">
+      <div className="aparecer-suave md:col-span-2 lg:col-span-3 min-[1400px]:col-span-1">
         <BorderGlow
           backgroundColor="#0e2a24"
           glowColor="158 66 52"

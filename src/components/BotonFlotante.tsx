@@ -16,18 +16,20 @@ interface Props {
   onClick: () => void;
   // Con false, sin la luz: cuando otro botón de la pantalla ya es el que llama la atención.
   efectos?: boolean;
+  // Solo en el celular: en escritorio la pantalla trae su propio botón.
+  soloMovil?: boolean;
 }
 
 // Botón flotante de la pestaña (nuevo movimiento, nuevo préstamo). Mientras
 // llega el chunk de los efectos se ve el mismo botón sin ellos, del mismo
 // tamaño, así que no hay salto cuando aparecen.
-export function BotonFlotante({ etiqueta, texto, onClick, efectos = true }: Props) {
+export function BotonFlotante({ etiqueta, texto, onClick, efectos = true, soloMovil = false }: Props) {
   const plano = (
     <button
       type="button"
       aria-label={etiqueta}
       onClick={onClick}
-      className={`${CLASES_BOTON_FLOTANTE} fixed bg-primary ${texto ? 'min-w-14 px-5' : 'size-14'}`}
+      className={`${CLASES_BOTON_FLOTANTE} fixed bg-primary ${texto ? 'min-w-14 px-5' : 'size-14'} ${soloMovil ? 'lg:hidden' : ''}`}
     >
       <IconoMas className="size-7" />
       {texto && <span className="text-[16px] font-semibold">{texto}</span>}
@@ -36,7 +38,7 @@ export function BotonFlotante({ etiqueta, texto, onClick, efectos = true }: Prop
   if (!efectos) return plano;
   return (
     <Suspense fallback={plano}>
-      <ConEfectos etiqueta={etiqueta} texto={texto} onClick={onClick} />
+      <ConEfectos etiqueta={etiqueta} texto={texto} onClick={onClick} soloMovil={soloMovil} />
     </Suspense>
   );
 }

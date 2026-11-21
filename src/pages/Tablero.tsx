@@ -65,7 +65,7 @@ export function Tablero() {
             )}
 
             {/* Izquierda: lo que tienes y cómo se repartió lo que entró. */}
-            <div className="col-span-12 flex flex-col gap-5 xl:col-span-3">
+            <div className="col-span-12 flex flex-col gap-5 min-[1400px]:col-span-3">
               <SaldosTablero datos={datos} />
               <PanelTablero titulo="Lo que te quedó" retraso={260} className="flex-1">
                 <DonaAhorroTablero reparto={datos.reparto} />
@@ -73,7 +73,7 @@ export function Tablero() {
             </div>
 
             {/* Centro: las dos tablas por categoría contra su promedio. */}
-            <div className="col-span-12 flex flex-col gap-5 lg:col-span-6 xl:col-span-5">
+            <div className="col-span-12 flex flex-col gap-5 lg:col-span-6 min-[1400px]:col-span-5">
               <PanelTablero
                 titulo="Ingresos por categoría"
                 ficha={{ etiqueta: 'Total', valor: formatearMonto(datos.ingresos.total), tono: 'ingreso' }}
@@ -94,7 +94,7 @@ export function Tablero() {
             </div>
 
             {/* Derecha: las mismas dos tablas, en barras. */}
-            <div className="col-span-12 flex flex-col gap-5 lg:col-span-6 xl:col-span-4">
+            <div className="col-span-12 flex flex-col gap-5 lg:col-span-6 min-[1400px]:col-span-4">
               <PanelTablero titulo="Ingresos contra el promedio" retraso={200}>
                 <GraficoComparativo filas={datos.ingresos.filas} colorTotal={VERDE} etiquetaTotal="Este mes" />
               </PanelTablero>

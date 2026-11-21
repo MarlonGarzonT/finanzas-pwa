@@ -1,7 +1,8 @@
 import { Link, Sheet } from 'konsta/react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { IconoChevronIzquierda } from './Iconos';
+import { IconoChevronIzquierda, IconoCerrar } from './Iconos';
+import { useEsEscritorio } from './useEsEscritorio';
 import { useBloqueoDeFondo, useGestosHoja } from './useComportamientoSheet';
 
 interface Props {
@@ -32,6 +33,8 @@ interface Contenido {
 
 const DURACION_TRANSICION_MS = 400;
 
+// En el celular, un bottom sheet; en escritorio (desde 1024 px), un panel que
+// entra por la derecha (patrón web), con la misma cabecera, contenido y pie.
 // Bottom sheet de toda la app sobre el Sheet de Konsta. Agrega lo que el
 // Sheet no trae: montaje diferido con animación de salida, asa para cerrar
 // arrastrando, anclaje al teclado de iOS, cierre con Escape y semántica de
@@ -50,6 +53,7 @@ export function HojaInferior({
   reiniciarScroll,
 }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null);
+  const esEscritorio = useEsEscritorio();
   const idTitulo = useId();
   const [montada, setMontada] = useState(abierto);
   const [visible, setVisible] = useState(false);
@@ -108,6 +112,62 @@ export function HojaInferior({
   if (!montada) return null;
 
   const destino = document.getElementById('capa-hojas') ?? document.body;
+
+  if (esEscritorio) {
+    return createPortal(
+      <div className={`fixed inset-0 z-40 ${visible ? '' : 'pointer-events-none'}`}>
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
+          onClick={cerrar}
+          aria-hidden="true"
+        />
+        <aside
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={idTitulo}
+          className={`absolute top-0 right-0 flex h-full w-[500px] max-w-full flex-col bg-ios-light-surface shadow-[-12px_0_40px_rgb(0_0_0/0.18)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-ios-dark-surface-2 ${
+            visible ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <header className="flex h-16 shrink-0 items-center gap-1 px-3">
+            {onAtras && (
+              <Link
+                component="button"
+                linkProps={{ type: 'button', disabled: cierreBloqueado }}
+                className="min-h-11 gap-0.5 px-2 text-[16px] disabled:opacity-40"
+                onClick={onAtras}
+              >
+                <IconoChevronIzquierda className="-ml-1 size-5" />
+                Atrás
+              </Link>
+            )}
+            <h2 id={idTitulo} className="m-0 min-w-0 flex-1 truncate px-2 text-[19px] font-semibold tracking-[-0.01em]">
+              {titulo}
+            </h2>
+            <button
+              type="button"
+              onClick={cerrar}
+              disabled={cierreBloqueado}
+              aria-label={`${textoCerrar === 'Cancelar' ? 'Cerrar' : textoCerrar}`}
+              className="flex size-11 items-center justify-center rounded-full text-secundario transition-colors hover:bg-black/[0.06] focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-40 dark:hover:bg-white/[0.1]"
+            >
+              <IconoCerrar className="size-5" />
+            </button>
+          </header>
+          {vista.cabecera}
+          <div ref={contenedorRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="flex flex-col gap-1 pb-4">{vista.children}</div>
+          </div>
+          {vista.pie && (
+            <div className="flex shrink-0 flex-col gap-2 border-t border-black/[0.07] bg-ios-light-surface px-5 py-4 dark:border-white/10 dark:bg-ios-dark-surface-2">
+              {vista.pie}
+            </div>
+          )}
+        </aside>
+      </div>,
+      destino
+    );
+  }
 
   return createPortal(
     <Sheet
