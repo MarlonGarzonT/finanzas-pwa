@@ -5,7 +5,7 @@ import { useCreditos } from '../data/useCreditos';
 import { usePerfil } from '../data/usePerfil';
 import { usePrestamos } from '../data/usePrestamos';
 import { AvatarUsuario } from './AvatarUsuario';
-import { IconoHistorial, IconoPerfil, IconoPrestamos, IconoReportes, IconoResumen } from './Iconos';
+import { IconoHistorial, IconoPrestamos, IconoReportes, IconoResumen } from './Iconos';
 import { SuperficieVidrio } from './SuperficieVidrio';
 
 interface Seccion {
@@ -14,21 +14,22 @@ interface Seccion {
   icono: ReactNode;
 }
 
-// En escritorio la entrada ("/") es el tablero, no el Resumen del celular.
+// En escritorio la entrada ("/") es el tablero, no el Resumen del celular. El
+// Perfil no va en la lista: es la tarjeta de la cuenta, abajo.
 const SECCIONES: Seccion[] = [
   { ruta: '/', etiqueta: 'Tablero', icono: <IconoResumen className="size-6" /> },
   { ruta: '/historial', etiqueta: 'Historial', icono: <IconoHistorial className="size-6" /> },
   { ruta: '/reportes', etiqueta: 'Reportes', icono: <IconoReportes className="size-6" /> },
   { ruta: '/prestamos', etiqueta: 'Préstamos', icono: <IconoPrestamos className="size-6" /> },
-  { ruta: '/perfil', etiqueta: 'Perfil', icono: <IconoPerfil className="size-6" /> },
 ];
 
 const BASE = import.meta.env.BASE_URL;
 
 // Navegación de escritorio: una barra lateral de vidrio fija a la izquierda,
 // que reemplaza a la barra de pestañas del celular (que solo se ve por debajo
-// de 1024 px). Las mismas cinco secciones; la activa va en azul tintado y
-// Préstamos lleva la insignia de lo vencido, como en la barra de pestañas.
+// de 1024 px). Las secciones de trabajo arriba (la activa en azul tintado y
+// Préstamos con la insignia de lo vencido) y, abajo, la cuenta, que es la
+// entrada al Perfil.
 export function BarraLateral() {
   const perfil = usePerfil();
   const vencidos = usePrestamos().resumen.vencidos + useCreditos().resumen.vencidos;
@@ -76,8 +77,14 @@ export function BarraLateral() {
         {perfil && (
           <NavLink
             to="/perfil"
-            aria-label={`Tu cuenta: ${perfil.nombre}`}
-            className="mt-auto flex items-center gap-3 rounded-2xl bg-black/[0.04] p-3 transition-colors hover:bg-black/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-white/[0.07] dark:hover:bg-white/[0.11]"
+            aria-label={`Perfil de ${perfil.nombre}`}
+            className={({ isActive }) =>
+              `mt-auto flex items-center gap-3 rounded-2xl p-3 ring-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                isActive
+                  ? 'bg-primary/12 ring-primary/50'
+                  : 'bg-black/[0.04] ring-transparent hover:bg-black/[0.07] dark:bg-white/[0.07] dark:hover:bg-white/[0.11]'
+              }`
+            }
           >
             <AvatarUsuario nombre={perfil.nombre} fotoUrl={perfil.fotoUrl} className="size-10 text-[15px]" />
             <span className="min-w-0 flex-1">
