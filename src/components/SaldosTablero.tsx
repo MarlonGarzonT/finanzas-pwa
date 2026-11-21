@@ -23,7 +23,7 @@ interface PropsTarjeta {
 // llama la atención es la del Disponible.
 function TarjetaSaldo({ emoji, color, titulo, monto, pie, retraso }: PropsTarjeta) {
   return (
-    <div className="aparecer-suave" style={{ animationDelay: `${retraso}ms` }}>
+    <div className="aparecer-suave col-span-12 lg:col-span-4" style={{ animationDelay: `${retraso}ms` }}>
       <SuperficieVidrio className="p-4">
         <div className="flex items-center gap-3">
           <AvatarEmoji emoji={emoji} color={color} />
@@ -44,16 +44,18 @@ interface Props {
   datos: DatosTablero;
 }
 
-// Columna izquierda del tablero. Arriba el Disponible del mes, que es lo que la
-// persona viene a mirar, con la luz de BorderGlow y los dígitos que ruedan
-// (Counter): es lo único del tablero que llama la atención. Debajo, lo demás
-// que tiene o debe: ahorro apartado, lo que le deben y lo que debe en créditos.
+// Primera franja del tablero (celdas de su cuadrícula de 12 columnas). Una
+// banda ancha con el Disponible del mes, que es lo que la persona viene a
+// mirar, con la luz de BorderGlow y los dígitos que ruedan (Counter): es lo
+// único del tablero que llama la atención. Debajo, en tres tarjetas iguales,
+// lo demás que tiene o debe: ahorro apartado, lo que le deben y lo que debe
+// en créditos.
 export function SaldosTablero({ datos }: Props) {
   const { resumenDelMes, ahorroTotal, prestamos, creditos } = datos;
   const enNegativo = resumenDelMes.disponible < 0;
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 min-[1400px]:grid-cols-1">
-      <div className="aparecer-suave md:col-span-2 lg:col-span-3 min-[1400px]:col-span-1">
+    <>
+      <div className="aparecer-suave col-span-12">
         <BorderGlow
           backgroundColor="#0e2a24"
           glowColor="158 66 52"
@@ -63,14 +65,16 @@ export function SaldosTablero({ datos }: Props) {
           fillOpacity={0.35}
           className="min-w-0"
         >
-          <div className="p-5 text-white">
-            <p className="m-0 text-[15px] font-semibold" style={{ color: '#4ee0a8' }}>
-              Disponible del mes
-            </p>
-            <p className={`m-0 mt-1 text-[44px] leading-[1.05] font-bold tracking-[-0.03em] cifras ${enNegativo ? 'text-[#ff8c99]' : ''}`}>
-              <MontoAnimado monto={Math.abs(resumenDelMes.disponible)} signo={enNegativo ? '−' : ''} intro />
-            </p>
-            <div className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-5 p-7 text-white">
+            <div>
+              <p className="m-0 text-[16px] font-semibold" style={{ color: '#4ee0a8' }}>
+                Disponible del mes
+              </p>
+              <p className={`m-0 mt-2 text-[64px] leading-none font-bold tracking-[-0.035em] cifras ${enNegativo ? 'text-[#ff8c99]' : ''}`}>
+                <MontoAnimado monto={Math.abs(resumenDelMes.disponible)} signo={enNegativo ? '−' : ''} intro />
+              </p>
+            </div>
+            <div className="w-full max-w-[420px] min-w-[300px] flex-1">
               <Segmentos
                 sobreOscuro
                 etiqueta="Ingresos y gastos del mes"
@@ -122,6 +126,6 @@ export function SaldosTablero({ datos }: Props) {
           />
         }
       />
-    </div>
+    </>
   );
 }

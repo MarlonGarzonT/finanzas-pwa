@@ -22,9 +22,10 @@ function primerDiaDelMes(fecha: Date): Date {
 }
 
 // El tablero de escritorio (desde 1024 px), pensado como el tablero de Excel de
-// finanzas personales: periodo arriba, saldos a la izquierda, ingresos y gastos
-// por categoría contra su promedio al centro con su gráfica al lado, el reparto
-// de lo que entró y, abajo, los doce meses. Los datos y las reglas son los de
+// finanzas personales, en el orden en que se mira: periodo arriba, el
+// Disponible del mes en una banda ancha, las tres tarjetas de saldo, después las
+// tablas por categoría contra su promedio (izquierda) con sus gráficas
+// (derecha) y, abajo, los doce meses. Los datos y las reglas son los de
 // siempre; lo único nuevo es cómo se acomodan para verlos todos a la vez.
 export function Tablero() {
   const { transacciones, categorias, crearMovimiento, crearCategoria } = useFinanzas();
@@ -64,16 +65,11 @@ export function Tablero() {
               </div>
             )}
 
-            {/* Izquierda: lo que tienes y cómo se repartió lo que entró. */}
-            <div className="col-span-12 flex flex-col gap-5 min-[1400px]:col-span-3">
-              <SaldosTablero datos={datos} />
-              <PanelTablero titulo="Lo que te quedó" retraso={260} className="flex-1">
-                <DonaAhorroTablero reparto={datos.reparto} />
-              </PanelTablero>
-            </div>
+            <SaldosTablero datos={datos} />
 
-            {/* Centro: las dos tablas por categoría contra su promedio. */}
-            <div className="col-span-12 flex flex-col gap-5 lg:col-span-6 min-[1400px]:col-span-5">
+            {/* Izquierda: las dos tablas por categoría contra su promedio y lo
+                que más pesó. */}
+            <div className="col-span-12 flex flex-col gap-5 min-[1280px]:col-span-7">
               <PanelTablero
                 titulo="Ingresos por categoría"
                 ficha={{ etiqueta: 'Total', valor: formatearMonto(datos.ingresos.total), tono: 'ingreso' }}
@@ -93,13 +89,16 @@ export function Tablero() {
               </PanelTablero>
             </div>
 
-            {/* Derecha: las mismas dos tablas, en barras. */}
-            <div className="col-span-12 flex flex-col gap-5 lg:col-span-6 min-[1400px]:col-span-4">
+            {/* Derecha: las mismas dos tablas, en barras, y el reparto de lo que entró. */}
+            <div className="col-span-12 flex flex-col gap-5 min-[1280px]:col-span-5">
               <PanelTablero titulo="Ingresos contra el promedio" retraso={200}>
                 <GraficoComparativo filas={datos.ingresos.filas} colorTotal={VERDE} etiquetaTotal="Este mes" />
               </PanelTablero>
-              <PanelTablero titulo="Gastos contra el promedio" retraso={320} className="flex-1">
+              <PanelTablero titulo="Gastos contra el promedio" retraso={320}>
                 <GraficoComparativo filas={datos.gastos.filas} colorTotal={CORAL} etiquetaTotal="Este mes" />
+              </PanelTablero>
+              <PanelTablero titulo="Lo que te quedó" retraso={400} className="flex-1">
+                <DonaAhorroTablero reparto={datos.reparto} />
               </PanelTablero>
             </div>
 

@@ -86,12 +86,14 @@ export function Reportes() {
         <div className="columna-web lg:mx-auto lg:grid lg:max-w-[1480px] lg:grid-cols-12 lg:items-start lg:gap-x-6 lg:px-8">
           {/* Lo principal de Reportes: todo el historial, sin depender del mes
               elegido (por eso va fuera del bloque que se reinicia al cambiarlo). */}
-          <div className="lg:col-span-7">{historial.puntos.length > 0 && <BrechaHistorica historial={historial} />}</div>
+          <div className="lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+            {historial.puntos.length > 0 && <BrechaHistorica historial={historial} />}
+          </div>
 
           {/* La key reinicia las animaciones de los gráficos al cambiar de mes. */}
           {resto && (
             <div className="aparecer-suave lg:contents" key={mesSeleccionado.getTime()}>
-              <div className="lg:col-span-5">
+              <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1">
                 <BlockTitle className="mt-6 lg:hidden">Mes a mes</BlockTitle>
                 <div className="lg:hidden">
                   <SelectorMes mes={mesSeleccionado} onCambiar={setMesSeleccionado} />
@@ -129,7 +131,9 @@ export function Reportes() {
                 </Block>
               </div>
 
-              <div className="lg:col-span-12">
+              {/* En escritorio sube junto al balance del mes: así la columna del mes
+                  llega a la misma altura que la brecha y no queda un hueco debajo. */}
+              <div className="lg:col-span-5 lg:col-start-8 lg:row-start-2">
                 <BlockTitle>Fijo vs. variable</BlockTitle>
                 <Block strong inset className={TARJETA}>
                   <BarraFijoVariable {...fijoVariable} />
