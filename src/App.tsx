@@ -9,10 +9,10 @@ import { Cargando } from './components/Cargando';
 import { AvisoActualizacion } from './components/AvisoActualizacion';
 import { LimiteDeError } from './components/LimiteDeError';
 import { FinanzasProvider } from './data/FinanzasContext';
-import { Resumen } from './pages/Resumen';
+import { Inicio } from './pages/Inicio';
 
-// Resumen es la pantalla de entrada y va en el bundle principal; el resto se
-// carga al abrir su pestaña.
+// Inicio (el Resumen del celular) es la pantalla de entrada y va en el bundle
+// principal; el resto se carga al abrir su pestaña.
 const Historial = lazy(() => import('./pages/Historial').then((m) => ({ default: m.Historial })));
 const cargarReportes = () => import('./pages/Reportes');
 const Reportes = lazy(() => cargarReportes().then((m) => ({ default: m.Reportes })));
@@ -63,7 +63,7 @@ function AppShell() {
         <LimiteDeError>
           <Suspense fallback={<Cargando />}>
             <Routes>
-              <Route path="/" element={<Resumen />} />
+              <Route path="/" element={<Inicio />} />
               <Route path="/historial" element={<Historial />} />
               <Route path="/reportes" element={<Reportes />} />
               <Route path="/prestamos" element={<Prestamos />} />
